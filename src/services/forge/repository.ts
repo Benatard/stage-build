@@ -117,8 +117,8 @@ async function sql<T = Record<string, unknown>>(query: string): Promise<ForgeSql
   return response.data;
 }
 
-function ping(): Promise<ForgeSqlResponse<{ ok: number }>> {
-  return sql<{ ok: number }>('select 1 as ok');
+function ping(): Promise<ForgeSqlResponse<Record<string, unknown>>> {
+  return sql<Record<string, unknown>>('SELECT count(*) FROM users');
 }
 
 export const forgeRepository = {

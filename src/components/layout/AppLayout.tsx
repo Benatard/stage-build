@@ -175,7 +175,7 @@ export default function AppLayout() {
 
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-body dark:text-body-dark">
-              Stage Build
+              StageBuild
             </p>
             <h2 className="truncate text-sm font-bold text-black dark:text-white">
               {currentItem?.label ?? 'Espace de gestion'}

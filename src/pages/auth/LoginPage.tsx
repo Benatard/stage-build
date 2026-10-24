@@ -53,7 +53,7 @@ export default function LoginPage() {
         <Link to="/" className="relative flex items-center gap-3">
           <img src="/images/logo-mark.svg" alt={company.name} className="h-11 w-11" />
           <span className="text-xl font-extrabold tracking-tight">
-            FLASH<span className="text-primary">EMPIRE</span>
+            STAGE<span className="text-primary">BUILD</span>
           </span>
         </Link>
 
@@ -108,7 +108,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
-            Portail Stage Build
+            Portail StageBuild
           </p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-black dark:text-white">
             Connexion

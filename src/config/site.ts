@@ -1,17 +1,13 @@
 export const company = {
-  name: 'FLASH EMPIRE',
-  legal: 'FLASH EMPIRE SARL',
-  tagline: 'Solutions TIC, ERP et Industrielles',
+  name: 'StageBuild',
+  legal: 'StageBuild',
+  tagline: 'Gestion et suivi des stagiaires',
   description:
-    "Entreprise congolaise innovante spécialisée dans les technologies de l'information et de la communication (TIC). Nous développons des logiciels ERP, des systèmes embarqués et offrons des services d'infrastructure IT pour répondre aux besoins spécifiques de nos clients.",
-  address: 'Kolwezi, Province du Lualaba\nRépublique Démocratique du Congo',
-  phone: '+243 000 000 000',
-  email: 'contact@flashempire.cd',
-  website: 'www.flashempire.cd',
+    "Plateforme de gestion et de suivi des stagiaires : dossier centralisé, formations, présences, évaluations, compétences, bulletins et pilotage pédagogique.",
 } as const;
 
 export const siteMeta = {
-  title: `${company.name} - Solutions TIC, ERP et Industrielles`,
+  title: 'StageBuild — Gestion et suivi des stagiaires',
   description:
-    "FLASH EMPIRE SARL — Entreprise congolaise spécialisée dans les technologies de l'information et de la communication (TIC), le développement de logiciels ERP et les services industriels.",
+    "StageBuild centralise le cycle de vie du stagiaire, de l'admission à l'archivage : dossier unique, formations, présences, évaluations, compétences, bulletins et rapports.",
 } as const;

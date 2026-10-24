@@ -40,20 +40,12 @@ import StagiairesPage from '@/pages/app/StagiairesPage';
 import TravauxPage from '@/pages/app/TravauxPage';
 import UsersPage from '@/pages/app/UsersPage';
 import LoginPage from '@/pages/auth/LoginPage';
-import AboutPage from '@/pages/AboutPage';
-import ContactPage from '@/pages/ContactPage';
 import ForgeStatusPage from '@/pages/ForgeStatusPage';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
-import PlatformsPage from '@/pages/PlatformsPage';
-import ServicesPage from '@/pages/ServicesPage';
 
 const publicRoutes: RouteObject[] = [
   { index: true, element: <HomePage /> },
-  { path: 'a-propos', element: <AboutPage /> },
-  { path: 'services', element: <ServicesPage /> },
-  { path: 'plateformes', element: <PlatformsPage /> },
-  { path: 'contact', element: <ContactPage /> },
   { path: 'forge', element: <ForgeStatusPage /> },
   { path: '*', element: <NotFoundPage /> },
 ];

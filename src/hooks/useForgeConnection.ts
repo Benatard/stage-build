@@ -21,14 +21,9 @@ export function useForgeConnection() {
     setMessage('');
 
     try {
-      const result = await forgeRepository.ping();
-      const firstRow = result.rows?.[0] ?? result.data?.[0];
+      await forgeRepository.ping();
       setState('success');
-      setMessage(
-        firstRow?.ok === 1
-          ? 'Connexion Forge Console opérationnelle.'
-          : 'Forge Console a répondu à la requête.',
-      );
+      setMessage('Connexion Forge Console opérationnelle.');
     } catch (error) {
       setState('error');
       setMessage(

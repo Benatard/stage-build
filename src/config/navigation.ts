@@ -3,10 +3,15 @@ export type NavItem = {
   label: string;
 };
 
-export const publicRoutes: NavItem[] = [
-  { path: '/', label: 'Accueil' },
-  { path: '/a-propos', label: 'À propos' },
-  { path: '/services', label: 'Services' },
-  { path: '/plateformes', label: 'Plateformes' },
-  { path: '/contact', label: 'Contact' },
+export type AnchorItem = {
+  href: string;
+  label: string;
+};
+
+export const publicRoutes: NavItem[] = [{ path: '/', label: 'Accueil' }];
+
+export const publicAnchors: AnchorItem[] = [
+  { href: '/#modules', label: 'Modules' },
+  { href: '/#parcours', label: 'Parcours' },
+  { href: '/#profils', label: 'Profils' },
 ];

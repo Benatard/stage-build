@@ -90,8 +90,8 @@ export default function BulletinsPage() {
 
     const content = {
       organization: {
-        name: 'FLASH EMPIRE',
-        address: 'Kolwezi, Province du Lualaba, RDC',
+        name: 'StageBuild',
+        address: 'Plateforme de gestion et de suivi des stagiaires',
       },
       stagiaire: {
         id: stagiaire.id,
@@ -267,9 +267,9 @@ export default function BulletinsPage() {
         <div id="print-area" className="mb-6 border border-stroke bg-white p-8 text-black dark:border-white/10">
           <div className="flex items-start justify-between border-b-2 border-black pb-5">
             <div>
-              <p className="text-xl font-extrabold tracking-tight">FLASH EMPIRE</p>
-              <p className="text-xs">Kolwezi, Province du Lualaba, RDC</p>
-              <p className="mt-1 text-xs">Plateforme Stage Build</p>
+              <p className="text-xl font-extrabold tracking-tight">StageBuild</p>
+              <p className="text-xs">Gestion et suivi des stagiaires</p>
+              <p className="mt-1 text-xs">Plateforme pédagogique centralisée</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-bold uppercase tracking-wide">Bulletin de fin de formation</p>
@@ -334,7 +334,7 @@ export default function BulletinsPage() {
 
           <div className="mt-8 flex justify-between text-xs">
             <div>
-              <p>Fait à Kolwezi, le {formatDate(new Date().toISOString())}</p>
+              <p>Fait le {formatDate(new Date().toISOString())}</p>
             </div>
             <div className="text-right">
               <p>La Direction</p>

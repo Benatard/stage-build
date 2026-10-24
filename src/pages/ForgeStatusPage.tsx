@@ -1,7 +1,6 @@
 import {
   FiAlertCircle,
   FiCheckCircle,
-  FiDatabase,
   FiKey,
   FiRefreshCw,
   FiServer,
@@ -43,11 +42,6 @@ const configuration = [
     label: 'Clé API',
     value: maskSecret(forgeConfig.apiKey),
   },
-  {
-    icon: FiDatabase,
-    label: 'Tables',
-    value: `${forgeConfig.tables.contact}, ${forgeConfig.tables.newsletter}`,
-  },
 ];
 
 export default function ForgeStatusPage() {
@@ -88,7 +82,7 @@ export default function ForgeStatusPage() {
           <SectionTitle
             eyebrow="Diagnostic"
             title="Connexion au projet"
-            sub="La requête de test exécute « select 1 as ok » sur le endpoint SQL de votre projet Forge."
+            sub="La requête de test exécute « SELECT count(*) FROM users » sur le endpoint SQL de votre projet Forge."
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -153,7 +147,7 @@ export default function ForgeStatusPage() {
                   <p className="mt-2">x-api-key: {maskSecret(forgeConfig.apiKey)}</p>
                   <p>content-type: application/json</p>
                   <p className="mt-3 text-[#6F7D95]">// Corps</p>
-                  <p className="mt-2">{'{ "sql": "select 1 as ok" }'}</p>
+                  <p className="mt-2">{'{ "sql": "SELECT count(*) FROM users" }'}</p>
                 </div>
 
                 {message && (
@@ -195,7 +189,7 @@ export default function ForgeStatusPage() {
                   'CRUD générique : list, find, create, update, delete',
                   'Endpoints GraphQL et SQL typés',
                   'Authentification signup, login et me',
-                  'Tables contact et newsletter reliées aux formulaires',
+                  'Accès sécurisé aux tables métier du suivi des stagiaires',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <span className="mt-0.5 h-5 w-5 bg-primary/10 flex items-center justify-center flex-shrink-0">

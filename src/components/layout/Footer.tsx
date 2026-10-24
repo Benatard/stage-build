@@ -1,130 +1,119 @@
 import { Link } from 'react-router-dom';
-import {
-  FiFacebook,
-  FiInstagram,
-  FiLinkedin,
-  FiMail,
-  FiMapPin,
-  FiPhone,
-} from 'react-icons/fi';
-import { publicRoutes } from '@/config/navigation';
+import { FiArrowRight, FiCheckCircle, FiLock } from 'react-icons/fi';
+import { publicAnchors } from '@/config/navigation';
 import { company } from '@/config/site';
 
-const socialLinks = [
-  { label: 'Facebook', href: '#', icon: FiFacebook },
-  { label: 'Instagram', href: '#', icon: FiInstagram },
-  { label: 'LinkedIn', href: '#', icon: FiLinkedin },
-];
-
-const footerServices = [
-  'Développement & ERP',
-  'Miner ERP',
-  'Afya ERP',
-  'Infrastructure IT & Réseaux',
+const coverage = [
+  'Dossiers stagiaires',
+  'Formations & promotions',
+  'Présences & assiduité',
+  'Évaluations, notes & QCM',
+  'Compétences & plans d’amélioration',
+  'Bulletins, documents & rapports',
 ];
 
 export function Footer() {
   return (
     <footer className="relative bg-white dark:bg-gray-dark">
       <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-      <div className="page-container pt-16 pb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="page-container pb-8 pt-16">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center gap-3">
               <img src="/images/logo-mark.svg" alt={company.name} className="h-10 w-10" />
               <span className="text-xl font-extrabold tracking-tight text-black dark:text-white">
-                FLASH<span className="text-primary">EMPIRE</span>
+                STAGE<span className="text-primary">BUILD</span>
               </span>
             </Link>
-            <p className="mt-5 text-sm leading-relaxed text-body dark:text-body-dark max-w-xs">
+            <p className="mt-5 max-w-xs text-sm leading-relaxed text-body dark:text-body-dark">
               {company.description}
             </p>
-            <div className="flex items-center gap-3 mt-6">
-              {socialLinks.map(({ label, href, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="h-10 w-10 bg-gray2 dark:bg-[#2C303B] flex items-center justify-center text-dark dark:text-white hover:text-white hover:bg-primary hover:-translate-y-0.5 transition-all duration-300"
+            <div className="mt-6 flex flex-wrap gap-2">
+              {['Dossier unique', 'Permissions par rôle', 'Historique complet'].map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center gap-1.5 bg-primary/10 px-2.5 py-1.5 text-[10px] font-semibold text-primary"
                 >
-                  <Icon className="w-4 h-4" />
-                </a>
+                  <FiCheckCircle className="h-3 w-3" />
+                  {item}
+                </span>
               ))}
             </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-black dark:text-white">Liens rapides</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-black dark:text-white">
+              Plateforme
+            </h3>
             <ul className="mt-5 space-y-3 text-sm text-body dark:text-body-dark">
-              {publicRoutes.map((route) => (
-                <li key={route.path}>
-                  <Link
-                    to={route.path}
-                    className="inline-flex items-center gap-2 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
+              <li>
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 transition-all duration-300 hover:translate-x-0.5 hover:text-primary"
+                >
+                  <span className="h-1 w-1 bg-primary/40" />
+                  Accueil
+                </Link>
+              </li>
+              {publicAnchors.map((anchor) => (
+                <li key={anchor.href}>
+                  <a
+                    href={anchor.href}
+                    className="inline-flex items-center gap-2 transition-all duration-300 hover:translate-x-0.5 hover:text-primary"
                   >
                     <span className="h-1 w-1 bg-primary/40" />
-                    {route.label}
-                  </Link>
+                    {anchor.label}
+                  </a>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-black dark:text-white">Nos services</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-black dark:text-white">
+              Couverture
+            </h3>
             <ul className="mt-5 space-y-3 text-sm text-body dark:text-body-dark">
-              {footerServices.map((service) => (
-                <li key={service}>
-                  <Link
-                    to="/services"
-                    className="inline-flex items-center gap-2 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
-                  >
-                    <span className="h-1 w-1 bg-primary/40" />
-                    {service}
-                  </Link>
+              {coverage.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 bg-primary/40" />
+                  {item}
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-black dark:text-white">Contact</h3>
-            <ul className="mt-5 space-y-4 text-sm text-body dark:text-body-dark">
-              <li className="flex items-start gap-3">
-                <span className="h-9 w-9 bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FiMapPin className="w-4 h-4 text-primary" />
-                </span>
-                <span className="mt-1.5">{company.address.split('\n')[0]}</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="h-9 w-9 bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FiPhone className="w-4 h-4 text-primary" />
-                </span>
-                <span className="mt-0.5">{company.phone}</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="h-9 w-9 bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FiMail className="w-4 h-4 text-primary" />
-                </span>
-                <span className="mt-0.5">{company.email}</span>
-              </li>
-            </ul>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-black dark:text-white">
+              Accès
+            </h3>
+            <div className="mt-5 border border-stroke bg-gray2 p-5 dark:border-white/10 dark:bg-white/5">
+              <span className="flex h-10 w-10 items-center justify-center bg-primary/10 text-primary">
+                <FiLock className="h-4 w-4" />
+              </span>
+              <p className="mt-4 text-sm font-bold text-black dark:text-white">Espace sécurisé</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-body dark:text-body-dark">
+                Connectez-vous avec le compte fourni par l’administration pour accéder à votre
+                périmètre.
+              </p>
+              <Link
+                to="/login"
+                className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline"
+              >
+                Se connecter <FiArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="mt-14 pt-7 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-stroke/70 dark:border-[#2C303B]">
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-stroke/70 pt-7 dark:border-[#2C303B] md:flex-row">
           <p className="text-sm text-body dark:text-body-dark">
-            &copy; {new Date().getFullYear()} {company.legal}. Tous droits réservés.
+            &copy; {new Date().getFullYear()} {company.legal}. Gestion et suivi des stagiaires.
           </p>
           <div className="flex items-center gap-6 text-sm text-body dark:text-body-dark">
-            <a href="#" className="hover:text-primary transition-colors">
-              Politique de confidentialité
-            </a>
-            <a href="#" className="hover:text-primary transition-colors">
-              Mentions légales
-            </a>
-            <Link to="/forge" className="hover:text-primary transition-colors">
-              API Forge
+            <span>React · Vite · Forge Console</span>
+            <Link to="/forge" className="transition-colors hover:text-primary">
+              État de la connexion
             </Link>
           </div>
         </div>

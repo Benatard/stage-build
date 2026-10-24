@@ -762,7 +762,7 @@ set label = excluded.label,
     permissions = excluded.permissions;
 
 insert into settings (key, value, description) values
-  ('organization', '{"name":"FLASH EMPIRE","address":"Kolwezi, Province du Lualaba, RDC","phone":"+243 000 000 000","email":"contact@flashempire.cd","logo_url":"/images/logo-mark.svg"}'::jsonb, 'Informations de l’organisation'),
+  ('organization', '{"name":"StageBuild","address":"","phone":"","email":"","logo_url":"/images/logo-mark.svg"}'::jsonb, 'Informations de l’organisation'),
   ('attendance_thresholds', '{"normal":90,"attention":80}'::jsonb, 'Seuils d’alerte de présence'),
   ('grading_weights', '{"qcm":10,"tp":30,"examen":40,"project":20}'::jsonb, 'Pondération par défaut des catégories'),
   ('rounding', '2'::jsonb, 'Nombre de décimales des moyennes'),
@@ -792,7 +792,7 @@ insert into users (
   'admin@stagebuild.local',
   '$2b$10$OCmWQ3i6Vhg8NwwGX2ACNOzfA4RY.4no32RPKjoMkrMIT55W0vLu2',
   'Administrateur',
-  'Stage Build',
+  'StageBuild',
   'admin',
   'active'
 )

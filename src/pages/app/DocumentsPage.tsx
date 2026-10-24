@@ -70,7 +70,10 @@ export default function DocumentsPage() {
     const documentTitle = title.trim() || defaultTitle(type);
 
     const content = {
-      organization: { name: 'FLASH EMPIRE', address: 'Kolwezi, Province du Lualaba, RDC' },
+      organization: {
+        name: 'StageBuild',
+        address: 'Plateforme de gestion et de suivi des stagiaires',
+      },
       stagiaire: {
         matricule: stagiaire.matricule,
         nom: fullName(stagiaire),
@@ -215,10 +218,10 @@ export default function DocumentsPage() {
         <div id="print-area" className="mb-6 border border-stroke bg-white p-10 text-black dark:border-white/10">
           <div className="flex items-start justify-between border-b-2 border-black pb-4">
             <div>
-              <p className="text-lg font-extrabold tracking-tight">FLASH EMPIRE</p>
-              <p className="text-xs">Kolwezi, Province du Lualaba, RDC</p>
+              <p className="text-lg font-extrabold tracking-tight">StageBuild</p>
+              <p className="text-xs">Gestion et suivi des stagiaires</p>
             </div>
-            <p className="text-xs">Stage Build</p>
+            <p className="text-xs">Plateforme pédagogique</p>
           </div>
 
           {isCard ? (
@@ -236,7 +239,7 @@ export default function DocumentsPage() {
                 </div>
               </div>
               <p className="mt-5 text-center text-[10px]">
-                Valable pour l’année {new Date().getFullYear()} — Stage Build / FLASH EMPIRE
+                Valable pour l’année {new Date().getFullYear()} — StageBuild
               </p>
             </div>
           ) : (
@@ -246,11 +249,11 @@ export default function DocumentsPage() {
               </h1>
 
               <p className="mt-8 text-sm leading-relaxed">
-                Nous, FLASH EMPIRE, attestons que{' '}
+                Nous, StageBuild, attestons que{' '}
                 <strong>{fullName(stagiaire)}</strong>, matricule <strong>{stagiaire.matricule}</strong>,
                 {stagiaire.domaine ? ` du domaine de ${stagiaire.domaine}` : ''}
                 {stagiaire.specialite ? `, spécialité ${stagiaire.specialite}` : ''}, a effectué un stage
-                au sein de notre organisation dans le cadre du programme Stage Build.
+                au sein de notre organisation dans le cadre du programme StageBuild.
               </p>
 
               {isCertificate && final && (
@@ -310,7 +313,7 @@ export default function DocumentsPage() {
               )}
 
               <div className="mt-12 flex justify-between text-xs">
-                <p>Fait à Kolwezi, le {formatDate(new Date().toISOString())}</p>
+                <p>Fait le {formatDate(new Date().toISOString())}</p>
                 <div className="text-right">
                   <p>La Direction</p>
                   <p className="mt-10 border-t border-black pt-2">Signature et cachet</p>
