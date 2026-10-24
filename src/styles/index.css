@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased transition-colors duration-300;
+    background-color: #fcfcfc;
+    color: #121723;
+  }
+
+  .dark body {
+    background-color: #121723;
+    color: #ffffff;
+  }
+
+  ::selection {
+    background-color: rgba(74, 108, 247, 0.2);
+  }
+}
+
+@layer components {
+  .btn-primary-root {
+    @apply inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-sm font-semibold text-white bg-primary shadow-btn hover:bg-primary-dark hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300;
+  }
+
+  .btn-black-root {
+    @apply inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-sm font-semibold text-white bg-black shadow-sm hover:bg-[#232B3B] hover:-translate-y-0.5 transition-all duration-300;
+  }
+
+  .btn-outline-root {
+    @apply inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-sm font-semibold border border-primary text-primary hover:bg-primary hover:text-white transition-colors duration-300;
+  }
+
+  .btn-white-root {
+    @apply inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-sm font-semibold text-primary bg-white shadow-lg hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .label-root {
+    @apply block text-sm font-medium text-dark dark:text-body-dark;
+  }
+
+  .card-root {
+    @apply bg-white shadow-card transition-shadow duration-300 dark:bg-gray-dark;
+  }
+
+  .input-root {
+    @apply w-full border border-stroke bg-gray2 px-5 py-3.5 text-sm text-dark outline-none transition-all duration-300 focus:border-primary focus:ring-4 focus:ring-primary/15 dark:border-transparent dark:bg-[#2C303B] dark:text-body-dark;
+  }
+
+  .badge-root {
+    @apply inline-flex items-center bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-sm;
+  }
+
+  .eyebrow-root {
+    @apply inline-flex items-center gap-2 bg-primary/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-primary;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+
+  #print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0;
+    border: none !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #print-area .dark\:border-white\/10 {
+    border-color: #000000 !important;
+  }
+}
