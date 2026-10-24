@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "node scripts/seed-forge.mjs",
+    "seed:reset": "node scripts/seed-forge.mjs --reset"
   },
   "dependencies": {
     "axios": "^1.7.9",

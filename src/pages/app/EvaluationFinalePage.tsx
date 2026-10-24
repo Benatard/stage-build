@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiCheckCircle, FiSave } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -49,6 +49,12 @@ export default function EvaluationFinalePage() {
   const [decision, setDecision] = useState('en_attente');
   const [appreciation, setAppreciation] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const linkedStagiaireId = user?.stagiaire_id;
+    if (!linkedStagiaireId) return;
+    setStagiaireId((current) => current || linkedStagiaireId);
+  }, [user?.stagiaire_id]);
 
   const enabled = Boolean(stagiaireId);
 

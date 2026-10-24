@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiCheckCircle, FiFileText, FiPrinter, FiTrash2 } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,12 @@ export default function BulletinsPage() {
   const { user } = useAuth();
   const [stagiaireId, setStagiaireId] = useState(user?.stagiaire_id ?? '');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const linkedStagiaireId = user?.stagiaire_id;
+    if (!linkedStagiaireId) return;
+    setStagiaireId((current) => current || linkedStagiaireId);
+  }, [user?.stagiaire_id]);
 
   const enabled = Boolean(stagiaireId);
 

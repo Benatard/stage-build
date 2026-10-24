@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiSave } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +29,13 @@ export default function EvaluationsIntermediairesPage() {
   const { user } = useAuth();
   const [stagiaireId, setStagiaireId] = useState(user?.stagiaire_id ?? '');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const linkedStagiaireId = user?.stagiaire_id;
+    if (!linkedStagiaireId) return;
+    setStagiaireId((current) => current || linkedStagiaireId);
+  }, [user?.stagiaire_id]);
+
   const [form, setForm] = useState({
     strengths: '',
     improvements: '',

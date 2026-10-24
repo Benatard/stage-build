@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { FiArrowLeft, FiCheckCircle, FiClock } from 'react-icons/fi';
 import { Badge } from '@/components/ui/Badge';
@@ -42,6 +42,12 @@ export default function QcmPassationPage() {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [startedAt] = useState(() => new Date().toISOString());
+
+  useEffect(() => {
+    const linkedStagiaireId = user?.stagiaire_id;
+    if (!linkedStagiaireId) return;
+    setStagiaireId((current) => current || linkedStagiaireId);
+  }, [user?.stagiaire_id]);
 
   const evaluation = data.evaluations.find((item) => item.id === evaluationId);
 

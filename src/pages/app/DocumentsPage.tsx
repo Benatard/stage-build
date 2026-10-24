@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiFileText, FiPrinter, FiTrash2 } from 'react-icons/fi';
 import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
@@ -21,6 +21,12 @@ export default function DocumentsPage() {
   const [type, setType] = useState('attestation_stage');
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const linkedStagiaireId = user?.stagiaire_id;
+    if (!linkedStagiaireId) return;
+    setStagiaireId((current) => current || linkedStagiaireId);
+  }, [user?.stagiaire_id]);
 
   const enabled = Boolean(stagiaireId);
   const stagiaire = data.stagiaires.find((item) => item.id === stagiaireId);

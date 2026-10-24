@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiActivity, FiAward, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
@@ -31,6 +31,12 @@ export default function ProgressionPage() {
   const { data } = useReferenceData();
   const { user } = useAuth();
   const [stagiaireId, setStagiaireId] = useState(user?.stagiaire_id ?? '');
+
+  useEffect(() => {
+    const linkedStagiaireId = user?.stagiaire_id;
+    if (!linkedStagiaireId) return;
+    setStagiaireId((current) => current || linkedStagiaireId);
+  }, [user?.stagiaire_id]);
 
   const enabled = Boolean(stagiaireId);
 

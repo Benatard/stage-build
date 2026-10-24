@@ -8,10 +8,13 @@ import type {
   ForgeSqlResponse,
 } from './types';
 
+const LIST_PAGE_SIZE = 200;
+const LIST_MAX_PAGES = 50;
+
 function cleanListParams(params: ForgeListParams = {}): Record<string, string | number | boolean> {
   const output: Record<string, string | number | boolean> = {};
 
-  if (params.limit !== undefined) output.limit = Math.min(Math.max(params.limit, 1), 200);
+  if (params.limit !== undefined) output.limit = Math.min(Math.max(params.limit, 1), LIST_PAGE_SIZE);
   if (params.offset !== undefined) output.offset = params.offset;
   if (params.order !== undefined) output.order = params.order;
 
@@ -20,6 +23,45 @@ function cleanListParams(params: ForgeListParams = {}): Record<string, string | 
   }
 
   return output;
+}
+
+function activeFilters(params: ForgeListParams): [string, string | number | boolean][] {
+  return Object.entries(params.filters ?? {}).filter(
+    (entry): entry is [string, string | number | boolean] =>
+      entry[1] !== undefined && entry[1] !== null,
+  );
+}
+
+function matchesFilter(value: unknown, expected: string | number | boolean): boolean {
+  if (value === undefined || value === null) return false;
+  if (typeof expected === 'boolean') {
+    if (typeof value === 'boolean') return value === expected;
+    return String(value).toLowerCase() === String(expected);
+  }
+  return String(value) === String(expected);
+}
+
+async function listAllRows<T>(
+  table: string,
+  order: string | undefined,
+): Promise<T[]> {
+  const rows: T[] = [];
+
+  for (let page = 0; page < LIST_MAX_PAGES; page += 1) {
+    const response = await forgeHttp.get<unknown>(`/${table}`, {
+      params: {
+        limit: LIST_PAGE_SIZE,
+        offset: page * LIST_PAGE_SIZE,
+        ...(order !== undefined ? { order } : {}),
+      },
+    });
+    const batch = normalizeList<T>(response.data).rows;
+    rows.push(...batch);
+
+    if (batch.length < LIST_PAGE_SIZE) break;
+  }
+
+  return rows;
 }
 
 function normalizeList<T>(payload: unknown): ForgeListResult<T> {
@@ -60,10 +102,25 @@ async function list<T extends object>(
   table: string,
   params: ForgeListParams = {},
 ): Promise<ForgeListResult<T>> {
-  const response = await forgeHttp.get<unknown>(`/${table}`, {
-    params: cleanListParams(params),
-  });
-  return normalizeList<T>(response.data);
+  const filters = activeFilters(params);
+
+  if (filters.length === 0) {
+    const response = await forgeHttp.get<unknown>(`/${table}`, {
+      params: cleanListParams(params),
+    });
+    return normalizeList<T>(response.data);
+  }
+
+  const rows = (await listAllRows<T>(table, params.order)).filter((row) =>
+    filters.every(([key, value]) => matchesFilter((row as Record<string, unknown>)[key], value)),
+  );
+  const offset = Math.max(params.offset ?? 0, 0);
+  const limit = params.limit !== undefined ? Math.min(Math.max(params.limit, 1), LIST_PAGE_SIZE) : undefined;
+
+  return {
+    rows: limit === undefined ? rows.slice(offset) : rows.slice(offset, offset + limit),
+    total: rows.length,
+  };
 }
 
 async function find<T extends object>(table: string, id: ForgeId): Promise<T> {
