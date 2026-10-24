@@ -98,6 +98,15 @@ export default function StagiaireDetailPage() {
     enabled,
   });
 
+  const latestCompetencies = useMemo(() => {
+    const seen = new Set<string>();
+    return competencies.filter((level) => {
+      if (seen.has(level.competence_id)) return false;
+      seen.add(level.competence_id);
+      return true;
+    });
+  }, [competencies]);
+
   const inscriptions = data.inscriptions.filter((inscription) => inscription.stagiaire_id === id);
   const finalEvaluation = finals[0];
   const latestBulletin = bulletins[0];
@@ -125,14 +134,6 @@ export default function StagiaireDetailPage() {
     ['present', 'retard', 'sortie_autorisee'].includes(presence.status),
   ).length;
   const attendanceRate = percentage(presentCount, Math.max(presences.length, 1));
-  const latestCompetencies = useMemo(() => {
-    const seen = new Set<string>();
-    return competencies.filter((level) => {
-      if (seen.has(level.competence_id)) return false;
-      seen.add(level.competence_id);
-      return true;
-    });
-  }, [competencies]);
   const acquiredCount = latestCompetencies.filter((level) =>
     ['acquis', 'maitrise'].includes(level.level),
   ).length;

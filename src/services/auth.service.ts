@@ -134,10 +134,10 @@ async function createAccount(input: {
       password: input.password,
       first_name: input.first_name,
       last_name: input.last_name,
-      phone: input.phone ?? '',
+      phone: input.phone?.trim() || null,
       role: input.role ?? 'stagiaire',
       statut: input.statut ?? 'active',
-      stagiaire_id: input.stagiaire_id ?? '',
+      stagiaire_id: input.stagiaire_id || null,
     });
 
     return session.user;

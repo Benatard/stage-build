@@ -20,6 +20,29 @@ type RuleDraft = {
 
 const emptyRule: RuleDraft = { category: '', weight: '0', pass_mark: '10', rounding: '2' };
 
+function normalizeSettingValue(value: unknown): unknown {
+  let current = value;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (typeof current !== 'string') return current;
+
+    const text = current
+      .trim()
+      .replace(/^'/, '')
+      .replace(/'::jsonb$/i, '')
+      .replace(/::jsonb$/i, '')
+      .replace(/'$/, '');
+
+    try {
+      current = JSON.parse(text) as unknown;
+    } catch {
+      return value;
+    }
+  }
+
+  return current;
+}
+
 export default function SettingsPage() {
   const { rows: settings, loading, error, reload } = useForgeTable<Setting>('settings', {
     order: 'key.asc',
@@ -38,7 +61,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const next: Record<string, string> = {};
     settings.forEach((setting) => {
-      next[setting.key] = JSON.stringify(setting.value, null, 2);
+      next[setting.key] = JSON.stringify(normalizeSettingValue(setting.value), null, 2);
     });
     setDrafts(next);
   }, [settings]);

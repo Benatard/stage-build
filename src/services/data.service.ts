@@ -2,7 +2,7 @@ import { isForgeConfigured } from '@/config/env';
 import { forgeRepository } from '@/services/forge';
 import type { ForgeListParams, ForgeSqlResponse } from '@/services/forge/types';
 
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 200;
 const MAX_PAGES = 20;
 
 export function ensureForgeConfigured(): void {

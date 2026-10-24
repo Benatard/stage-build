@@ -15,8 +15,9 @@ export type ForgeListResult<T> = {
 };
 
 export type ForgeCredentials = {
+  email: string;
   password: string;
-  [key: string]: string;
+  [key: string]: unknown;
 };
 
 export type ForgeSession<TUser = ForgeRow> = {

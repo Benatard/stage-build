@@ -790,7 +790,7 @@ insert into users (
   email, password_hash, first_name, last_name, role, statut
 ) values (
   'admin@stagebuild.local',
-  crypt('Admin@123', gen_salt('bf')),
+  '$2b$10$OCmWQ3i6Vhg8NwwGX2ACNOzfA4RY.4no32RPKjoMkrMIT55W0vLu2',
   'Administrateur',
   'Stage Build',
   'admin',

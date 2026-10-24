@@ -1,4 +1,5 @@
 import { ForgeApiError, forgeHttp } from './client';
+import { asRecord, flattenForgeRow, flattenForgeRows } from './row';
 import type {
   ForgeGraphQLResponse,
   ForgeId,
@@ -10,7 +11,7 @@ import type {
 function cleanListParams(params: ForgeListParams = {}): Record<string, string | number | boolean> {
   const output: Record<string, string | number | boolean> = {};
 
-  if (params.limit !== undefined) output.limit = params.limit;
+  if (params.limit !== undefined) output.limit = Math.min(Math.max(params.limit, 1), 200);
   if (params.offset !== undefined) output.offset = params.offset;
   if (params.order !== undefined) output.order = params.order;
 
@@ -21,13 +22,9 @@ function cleanListParams(params: ForgeListParams = {}): Record<string, string | 
   return output;
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-}
-
 function normalizeList<T>(payload: unknown): ForgeListResult<T> {
   if (Array.isArray(payload)) {
-    return { rows: payload as T[] };
+    return { rows: flattenForgeRows(payload) as T[] };
   }
 
   const record = asRecord(payload);
@@ -35,13 +32,14 @@ function normalizeList<T>(payload: unknown): ForgeListResult<T> {
     return { rows: [] };
   }
 
-  const totalValue = record.total ?? record.count;
+  const pagination = asRecord(record.pagination);
+  const totalValue = pagination?.total ?? record.total ?? record.count;
   const total = typeof totalValue === 'number' ? totalValue : undefined;
 
   for (const key of ['data', 'rows', 'items', 'results']) {
     const candidate = record[key];
     if (Array.isArray(candidate)) {
-      return { rows: candidate as T[], total };
+      return { rows: flattenForgeRows(candidate) as T[], total };
     }
 
     const nested = asRecord(candidate);
@@ -49,7 +47,7 @@ function normalizeList<T>(payload: unknown): ForgeListResult<T> {
       for (const nestedKey of ['rows', 'items', 'results']) {
         const nestedCandidate = nested[nestedKey];
         if (Array.isArray(nestedCandidate)) {
-          return { rows: nestedCandidate as T[], total };
+          return { rows: flattenForgeRows(nestedCandidate) as T[], total };
         }
       }
     }
@@ -69,16 +67,16 @@ async function list<T extends object>(
 }
 
 async function find<T extends object>(table: string, id: ForgeId): Promise<T> {
-  const response = await forgeHttp.get<T>(`/${table}/${id}`);
-  return response.data;
+  const response = await forgeHttp.get<unknown>(`/${table}/${id}`);
+  return flattenForgeRow(response.data) as T;
 }
 
 async function create<T extends object>(
   table: string,
   data: Record<string, unknown>,
 ): Promise<T> {
-  const response = await forgeHttp.post<T>(`/${table}`, data);
-  return response.data;
+  const response = await forgeHttp.post<unknown>(`/${table}`, data);
+  return flattenForgeRow(response.data) as T;
 }
 
 async function update<T extends object>(
@@ -86,8 +84,8 @@ async function update<T extends object>(
   id: ForgeId,
   data: Record<string, unknown>,
 ): Promise<T> {
-  const response = await forgeHttp.patch<T>(`/${table}/${id}`, data);
-  return response.data;
+  const response = await forgeHttp.patch<unknown>(`/${table}/${id}`, data);
+  return flattenForgeRow(response.data) as T;
 }
 
 async function remove(table: string, id: ForgeId): Promise<void> {

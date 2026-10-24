@@ -1,10 +1,7 @@
 import { ForgeApiError, forgeHttp } from './client';
+import { asRecord, flattenForgeRow } from './row';
 import { forgeTokenStorage } from './token-storage';
 import type { ForgeCredentials, ForgeRow, ForgeSession } from './types';
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-}
 
 function extractSession<TUser>(payload: unknown): ForgeSession<TUser> | null {
   const record = asRecord(payload);
@@ -18,7 +15,11 @@ function extractSession<TUser>(payload: unknown): ForgeSession<TUser> | null {
     for (const key of ['token', 'accessToken', 'access_token', 'jwt']) {
       const token = source[key];
       if (typeof token === 'string' && token.trim()) {
-        return { token, user: (source.user ?? source.me) as TUser | undefined };
+        const user = source.user ?? source.me;
+        return {
+          token,
+          user: (user ? flattenForgeRow(user) : undefined) as TUser | undefined,
+        };
       }
     }
   }
@@ -26,8 +27,13 @@ function extractSession<TUser>(payload: unknown): ForgeSession<TUser> | null {
   return null;
 }
 
+function toAuthPayload(credentials: ForgeCredentials): Record<string, unknown> {
+  const { password, ...rest } = credentials;
+  return { ...rest, password_hash: password };
+}
+
 async function login<TUser = ForgeRow>(credentials: ForgeCredentials): Promise<ForgeSession<TUser>> {
-  const response = await forgeHttp.post<unknown>('/auth/login', credentials);
+  const response = await forgeHttp.post<unknown>('/auth/login', toAuthPayload(credentials));
   const session = extractSession<TUser>(response.data);
 
   if (!session) {
@@ -39,7 +45,7 @@ async function login<TUser = ForgeRow>(credentials: ForgeCredentials): Promise<F
 }
 
 async function signup<TUser = ForgeRow>(credentials: ForgeCredentials): Promise<ForgeSession<TUser>> {
-  const response = await forgeHttp.post<unknown>('/auth/signup', credentials);
+  const response = await forgeHttp.post<unknown>('/auth/signup', toAuthPayload(credentials));
   const session = extractSession<TUser>(response.data);
 
   if (!session) {
@@ -51,8 +57,8 @@ async function signup<TUser = ForgeRow>(credentials: ForgeCredentials): Promise<
 }
 
 async function me<TUser = ForgeRow>(): Promise<TUser> {
-  const response = await forgeHttp.get<TUser>('/auth/me');
-  return response.data;
+  const response = await forgeHttp.get<unknown>('/auth/me');
+  return flattenForgeRow(response.data) as TUser;
 }
 
 function logout(): void {
