@@ -65,9 +65,9 @@ export default function HomePage() {
             </span>
 
             <h1 className="mt-7 text-4xl font-extrabold leading-[1.08] tracking-tight text-black dark:text-white sm:text-5xl lg:text-[58px]">
-              Le dossier stagiaire,{' '}
+              Gestion et suivi des ,{' '}
               <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                de l’admission à l’archivage.
+               stagiaires
               </span>
             </h1>
 
