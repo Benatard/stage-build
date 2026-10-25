@@ -402,140 +402,165 @@ export async function confirmReservation(
   }
 
   let stagiaireId = currentReservation.stagiaire_id || null;
-
-  if (!stagiaireId) {
-    const existingStagiaire = await findStagiaireByEmail(currentReservation.email);
-
-    if (existingStagiaire) {
-      if (existingStagiaire.statut === 'archive') {
-        throw new Error('Le dossier stagiaire associé à cet email est archivé.');
-      }
-      stagiaireId = existingStagiaire.id;
-    } else {
-      const matricule = await nextMatricule();
-      const stagiaire = await dataService.createRow<Stagiaire>('stagiaires', {
-        matricule,
-        nom: currentReservation.nom,
-        postnom: currentReservation.postnom ?? null,
-        prenom: currentReservation.prenom,
-        sexe: currentReservation.sexe ?? null,
-        date_naissance: currentReservation.date_naissance ?? null,
-        telephone: currentReservation.telephone,
-        email: currentReservation.email,
-        statut: 'admis',
-      });
-
-      if (!stagiaire?.id) {
-        throw new Error('Le dossier stagiaire n’a pas pu être créé.');
-      }
-
-      stagiaireId = stagiaire.id;
-    }
-
-    await dataService.updateRow<Reservation>('reservations', currentReservation.id, {
-      stagiaire_id: stagiaireId,
-    });
-  }
-
   let inscriptionId = currentReservation.inscription_id || null;
-
-  if (!inscriptionId) {
-    const existingInscription = freshInscriptions.find(
-      (item) =>
-        item.stagiaire_id === stagiaireId &&
-        item.formation_id === currentReservation.formation_id &&
-        item.promotion_id === currentReservation.promotion_id &&
-        item.status !== 'annulee',
-    );
-
-    if (existingInscription) {
-      inscriptionId = existingInscription.id;
-    } else {
-      const inscription = await dataService.createRow<Inscription>('inscriptions', {
-        stagiaire_id: stagiaireId,
-        formation_id: currentReservation.formation_id,
-        promotion_id: currentReservation.promotion_id,
-        start_date: promotion.start_date ?? null,
-        end_date: promotion.end_date ?? null,
-        responsible_id: currentUserId,
-        status: 'validee',
-      });
-
-      if (!inscription?.id) {
-        throw new Error('L’inscription n’a pas pu être créée.');
-      }
-
-      inscriptionId = inscription.id;
-    }
-
-    await dataService.updateRow<Reservation>('reservations', currentReservation.id, {
-      inscription_id: inscriptionId,
-    });
-  }
-
   let userId = currentReservation.user_id || null;
   let temporaryPassword: string | undefined;
   let existingAccount = false;
+  let createdStagiaireId: string | null = null;
+  let createdInscriptionId: string | null = null;
+  let createdUserId: string | null = null;
 
-  if (!userId) {
-    const existingUser = await findUserByEmail(currentReservation.email);
+  try {
+    if (!stagiaireId) {
+      const existingStagiaire = await findStagiaireByEmail(currentReservation.email);
 
-    if (existingUser) {
-      if (existingUser.role !== 'stagiaire' || existingUser.stagiaire_id !== stagiaireId) {
-        throw new Error(
-          'Un autre compte utilise déjà cet email. Vérifiez le compte avant de confirmer.',
-        );
+      if (existingStagiaire) {
+        if (existingStagiaire.statut === 'archive') {
+          throw new Error('Le dossier stagiaire associé à cet email est archivé.');
+        }
+        stagiaireId = existingStagiaire.id;
+      } else {
+        const matricule = await nextMatricule();
+        const stagiaire = await dataService.createRow<Stagiaire>('stagiaires', {
+          matricule,
+          nom: currentReservation.nom,
+          postnom: currentReservation.postnom ?? null,
+          prenom: currentReservation.prenom,
+          sexe: currentReservation.sexe ?? null,
+          date_naissance: currentReservation.date_naissance ?? null,
+          telephone: currentReservation.telephone,
+          email: currentReservation.email,
+          statut: 'admis',
+        });
+
+        if (!stagiaire?.id) {
+          throw new Error('Le dossier stagiaire n’a pas pu être créé.');
+        }
+
+        stagiaireId = stagiaire.id;
+        createdStagiaireId = stagiaire.id;
       }
-
-      userId = existingUser.id;
-      existingAccount = true;
-    } else {
-      temporaryPassword = newTemporaryPassword();
-      const account = await authService.createAccount({
-        email: currentReservation.email,
-        password: temporaryPassword,
-        first_name: currentReservation.prenom,
-        last_name: currentReservation.nom,
-        phone: currentReservation.telephone,
-        role: 'stagiaire',
-        statut: 'active',
-        stagiaire_id: stagiaireId,
-      });
-      const createdId = account?.id ? String(account.id) : '';
-
-      if (!createdId) {
-        throw new Error('Le compte stagiaire a été créé mais son identifiant est introuvable.');
-      }
-
-      userId = createdId;
     }
 
-    await dataService.updateRow<Reservation>('reservations', currentReservation.id, {
+    if (!inscriptionId) {
+      const existingInscription = freshInscriptions.find(
+        (item) =>
+          item.stagiaire_id === stagiaireId &&
+          item.formation_id === currentReservation.formation_id &&
+          item.promotion_id === currentReservation.promotion_id &&
+          item.status !== 'annulee',
+      );
+
+      if (existingInscription) {
+        inscriptionId = existingInscription.id;
+      } else {
+        const inscription = await dataService.createRow<Inscription>('inscriptions', {
+          stagiaire_id: stagiaireId,
+          formation_id: currentReservation.formation_id,
+          promotion_id: currentReservation.promotion_id,
+          start_date: promotion.start_date ?? null,
+          end_date: promotion.end_date ?? null,
+          responsible_id: currentUserId,
+          status: 'validee',
+        });
+
+        if (!inscription?.id) {
+          throw new Error('L’inscription n’a pas pu être créée.');
+        }
+
+        inscriptionId = inscription.id;
+        createdInscriptionId = inscription.id;
+      }
+    }
+
+    if (!userId) {
+      const existingUser = await findUserByEmail(currentReservation.email);
+
+      if (existingUser) {
+        if (existingUser.role !== 'stagiaire' || existingUser.stagiaire_id !== stagiaireId) {
+          throw new Error(
+            'Un autre compte utilise déjà cet email. Vérifiez le compte avant de confirmer.',
+          );
+        }
+
+        userId = existingUser.id;
+        existingAccount = true;
+      } else {
+        temporaryPassword = newTemporaryPassword();
+        const account = await authService.createAccount({
+          email: currentReservation.email,
+          password: temporaryPassword,
+          first_name: currentReservation.prenom,
+          last_name: currentReservation.nom,
+          phone: currentReservation.telephone,
+          role: 'stagiaire',
+          statut: 'active',
+          stagiaire_id: stagiaireId,
+        });
+        const createdId = account?.id ? String(account.id) : '';
+
+        if (!createdId) {
+          throw new Error('Le compte stagiaire a été créé mais son identifiant est introuvable.');
+        }
+
+        userId = createdId;
+        createdUserId = createdId;
+      }
+    }
+
+    const updated = await dataService.updateRow<Reservation>('reservations', currentReservation.id, {
+      status: 'confirmee' satisfies ReservationStatus,
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: currentUserId,
+      stagiaire_id: stagiaireId,
+      inscription_id: inscriptionId,
       user_id: userId,
     });
+
+    if (!updated) {
+      throw new Error('La confirmation n’a pas pu être enregistrée.');
+    }
+
+    return {
+      reservation: updated,
+      stagiaireId,
+      inscriptionId,
+      userId,
+      temporaryPassword,
+      existingAccount,
+    };
+  } catch (error) {
+    let alreadyConfirmed = false;
+
+    try {
+      const latest = await dataService.findRow<Reservation>('reservations', currentReservation.id);
+      alreadyConfirmed = latest.status === 'confirmee';
+    } catch {
+      alreadyConfirmed = false;
+    }
+
+    if (!alreadyConfirmed) {
+      if (createdUserId) {
+        try {
+          await dataService.deleteRow('users', createdUserId);
+        } catch {}
+      }
+
+      if (createdInscriptionId) {
+        try {
+          await dataService.deleteRow('inscriptions', createdInscriptionId);
+        } catch {}
+      }
+
+      if (createdStagiaireId) {
+        try {
+          await dataService.deleteRow('stagiaires', createdStagiaireId);
+        } catch {}
+      }
+    }
+
+    throw error;
   }
-
-  const updated = await dataService.updateRow<Reservation>('reservations', currentReservation.id, {
-    status: 'confirmee' satisfies ReservationStatus,
-    confirmed_at: new Date().toISOString(),
-    confirmed_by: currentUserId,
-    stagiaire_id: stagiaireId,
-    inscription_id: inscriptionId,
-    user_id: userId,
-  });
-
-  if (!updated) {
-    throw new Error('La confirmation n’a pas pu être enregistrée.');
-  }
-
-  return {
-    reservation: updated,
-    stagiaireId,
-    inscriptionId,
-    userId,
-    temporaryPassword,
-    existingAccount,
-  };
 }
 
 export function isReservationsTableMissing(error: unknown): boolean {

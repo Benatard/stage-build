@@ -7,11 +7,21 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>() {
     const element = ref.current;
     if (!element) return;
 
+    const reveal = () => element.classList.add('revealed');
+
+    if (
+      typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      reveal();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            element.classList.add('revealed');
+            reveal();
             observer.unobserve(element);
           }
         });
@@ -20,7 +30,16 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>() {
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
+
+    const frame = requestAnimationFrame(() => {
+      const rect = element.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) reveal();
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, []);
 
   return ref;

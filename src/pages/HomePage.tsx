@@ -50,6 +50,18 @@ export default function HomePage() {
       />
 
       <section className="relative overflow-hidden bg-white dark:bg-gray-dark">
+        <div
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+          aria-hidden="true"
+        >
+          <img
+            src="https://racojnational.org/wp-content/uploads/2022/10/Accompagnement-des-stagiaires-academiques2.jpg"
+            alt=""
+            className="absolute right-0 top-0 h-full w-[72%] object-cover object-center opacity-[0.08] dark:opacity-[0.12]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/35 dark:from-gray-dark dark:via-gray-dark/9 dark:to-gray-dark/4" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/50 dark:from-gray-dark dark:via-transparent dark:to-gray-dark/5" />
+        </div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(74,108,247,0.12)_1px,transparent_0)] bg-[size:26px_26px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_72%)] pointer-events-none" />
         <div className="absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full bg-primary/15 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-48 -left-32 h-[480px] w-[480px] rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
@@ -65,9 +77,9 @@ export default function HomePage() {
             </span>
 
             <h1 className="mt-7 text-4xl font-extrabold leading-[1.08] tracking-tight text-black dark:text-white sm:text-5xl lg:text-[58px]">
-              Gestion et suivi des ,{' '}
+              Gestion et suivi des{' '}
               <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-               stagiaires
+                stagiaires
               </span>
             </h1>
 
@@ -104,7 +116,40 @@ export default function HomePage() {
           <Reveal delay={180}>
             <div className="relative mx-auto w-full max-w-[480px]">
               <div className="absolute -inset-4 bg-gradient-to-br from-primary/15 to-blue-600/10 blur-2xl" />
-              <div className="relative border border-stroke bg-white shadow-card-hover dark:border-white/10 dark:bg-[#151B28]">
+
+              {/* <div
+                className="pointer-events-none absolute -right-20 -top-14 hidden h-44 w-60 -rotate-3 overflow-hidden border border-white/70 bg-white shadow-card-hover sm:block dark:border-white/10 dark:bg-[#1E232E]"
+                aria-hidden="true"
+              >
+                <img
+                  src="/images/hero-internship-2.jpg"
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
+                <span className="absolute right-3 top-3 bg-white/90 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-dark dark:bg-black/60 dark:text-white">
+                  Immersion terrain
+                </span>
+              </div> */}
+
+              {/* <div
+                className="pointer-events-none absolute -bottom-16 -right-14 hidden h-48 w-64 rotate-2 overflow-hidden border border-white/70 bg-white shadow-card-hover sm:block dark:border-white/10 dark:bg-[#1E232E]"
+                aria-hidden="true"
+              >
+                <img
+                  src="/images/hero-internship-1.jpg"
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/45 via-transparent to-transparent" />
+                <span className="absolute bottom-3 left-3 bg-white/90 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-dark dark:bg-black/60 dark:text-white">
+                  Atelier pratique
+                </span>
+              </div> */}
+
+              <div className="relative z-10 border border-stroke bg-white shadow-card-hover dark:border-white/10 dark:bg-[#151B28]">
                 <div className="flex items-center justify-between border-b border-stroke px-5 py-4 dark:border-white/10">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-body dark:text-body-dark">
@@ -186,7 +231,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="absolute -bottom-6 -left-4 hidden border border-stroke bg-white px-4 py-3 shadow-card dark:border-white/10 dark:bg-[#1E232E] sm:block">
+              <div className="absolute -bottom-6 -left-4 z-20 hidden border border-stroke bg-white px-4 py-3 shadow-card dark:border-white/10 dark:bg-[#1E232E] sm:block">
                 <div className="flex items-center gap-2">
                   <FiShield className="h-4 w-4 text-primary" />
                   <div>
