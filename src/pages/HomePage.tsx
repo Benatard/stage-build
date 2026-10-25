@@ -55,7 +55,7 @@ export default function HomePage() {
           aria-hidden="true"
         >
           <img
-            src="https://racojnational.org/wp-content/uploads/2022/10/Accompagnement-des-stagiaires-academiques2.jpg"
+            src="https://rdc-monde.com/wp-content/uploads/2022/10/solution-internet.jpg"
             alt=""
             className="absolute right-0 top-0 h-full w-[72%] object-cover object-center opacity-[0.08] dark:opacity-[0.12]"
           />
