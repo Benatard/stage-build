@@ -108,12 +108,12 @@ export function Footer() {
           <p className="text-sm text-body dark:text-body-dark">
             &copy; {new Date().getFullYear()} {company.legal}. Gestion et suivi des stagiaires.
           </p>
-          <div className="flex items-center gap-6 text-sm text-body dark:text-body-dark">
+          {/* <div className="flex items-center gap-6 text-sm text-body dark:text-body-dark">
             <span>React · Vite · Forge Console</span>
             <Link to="/forge" className="transition-colors hover:text-primary">
               État de la connexion
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
