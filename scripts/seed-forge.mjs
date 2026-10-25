@@ -182,6 +182,7 @@ async function reset() {
     'presences',
     'seances',
     'affectations',
+    'reservations',
     'inscriptions',
     'stagiaires',
     'promotions',
@@ -190,7 +191,11 @@ async function reset() {
   ];
   let removed = 0;
   for (const table of tables) {
-    removed += await deleteTableRows(table);
+    try {
+      removed += await deleteTableRows(table);
+    } catch (error) {
+      if (table !== 'reservations') throw error;
+    }
   }
   const users = await listAll('users');
   for (const user of users) {

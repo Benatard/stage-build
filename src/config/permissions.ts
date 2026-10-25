@@ -22,7 +22,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
   admin: ['*'],
   direction: [
     'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
-    'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
+    'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
     'travaux', 'competences', 'implication', 'comportement', 'observations',
     'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
     'final', 'bulletins', 'documents', 'reports', 'archive', 'notifications',
@@ -30,7 +30,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
   ],
   responsable_formation: [
     'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
-    'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
+    'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
     'travaux', 'competences', 'implication', 'comportement', 'observations',
     'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
     'final', 'bulletins', 'documents', 'reports', 'notifications', 'search',
@@ -38,7 +38,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
   ],
   responsable_pedagogique: [
     'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
-    'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
+    'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
     'travaux', 'competences', 'implication', 'comportement', 'observations',
     'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
     'final', 'bulletins', 'documents', 'reports', 'notifications', 'search',
@@ -56,7 +56,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'search',
   ],
   administration: [
-    'dashboard', 'stagiaires', 'inscriptions', 'affectations', 'documents',
+    'dashboard', 'stagiaires', 'inscriptions', 'reservations', 'affectations', 'documents',
     'notifications', 'search', 'archive',
   ],
   stagiaire: [

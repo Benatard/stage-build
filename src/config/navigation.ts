@@ -8,7 +8,10 @@ export type AnchorItem = {
   label: string;
 };
 
-export const publicRoutes: NavItem[] = [{ path: '/', label: 'Accueil' }];
+export const publicRoutes: NavItem[] = [
+  { path: '/', label: 'Accueil' },
+  { path: '/reservation', label: 'Réservation' },
+];
 
 export const publicAnchors: AnchorItem[] = [
   { href: '/#modules', label: 'Modules' },

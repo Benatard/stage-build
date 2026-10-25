@@ -17,6 +17,7 @@ import {
   FiFlag,
   FiFolder,
   FiGrid,
+  FiInbox,
   FiLayers,
   FiList,
   FiLock,
@@ -57,6 +58,7 @@ export const appNavigation: AppNavGroup[] = [
     items: [
       { label: 'Stagiaires', path: '/app/stagiaires', icon: FiUsers, permission: 'stagiaires' },
       { label: 'Inscriptions', path: '/app/inscriptions', icon: FiUserPlus, permission: 'inscriptions' },
+      { label: 'Réservations', path: '/app/reservations', icon: FiInbox, permission: 'reservations' },
       { label: 'Affectations', path: '/app/affectations', icon: FiUserCheck, permission: 'affectations' },
     ],
   },

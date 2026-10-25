@@ -46,6 +46,7 @@ const successValues = new Set([
   'actif', 'active', 'present', 'acquis', 'maitrise', 'validee', 'valide',
   'publiee', 'publie', 'termine', 'atteint', 'depasse', 'corrigee', 'corrige',
   'soumis', 'soumise', 'fait', 'reussi', 'admis', 'progression_normale',
+  'confirmee',
 ]);
 
 const warningValues = new Set([

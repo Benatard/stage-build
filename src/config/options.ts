@@ -23,6 +23,12 @@ export const USER_STATUS_OPTIONS: SelectOption[] = [
   { value: 'blocked', label: 'Bloqué' },
 ];
 
+export const RESERVATION_STATUS_OPTIONS: SelectOption[] = [
+  { value: 'en_attente', label: 'En attente' },
+  { value: 'confirmee', label: 'Confirmée' },
+  { value: 'annulee', label: 'Annulée' },
+];
+
 export const PRESENCE_OPTIONS: SelectOption[] = [
   { value: 'present', label: 'Présent' },
   { value: 'absent', label: 'Absent' },

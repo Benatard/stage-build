@@ -19,6 +19,7 @@ import FormationsPage from '@/pages/app/FormationsPage';
 import ImplicationPage from '@/pages/app/ImplicationPage';
 import InscriptionsPage from '@/pages/app/InscriptionsPage';
 import JournalPage from '@/pages/app/JournalPage';
+import ReservationsPage from '@/pages/app/ReservationsPage';
 import ModulesPage from '@/pages/app/ModulesPage';
 import NotesPage from '@/pages/app/NotesPage';
 import NotificationsPage from '@/pages/app/NotificationsPage';
@@ -43,9 +44,11 @@ import LoginPage from '@/pages/auth/LoginPage';
 import ForgeStatusPage from '@/pages/ForgeStatusPage';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import ReservationPage from '@/pages/ReservationPage';
 
 const publicRoutes: RouteObject[] = [
   { index: true, element: <HomePage /> },
+  { path: 'reservation', element: <ReservationPage /> },
   { path: 'forge', element: <ForgeStatusPage /> },
   { path: '*', element: <NotFoundPage /> },
 ];
@@ -73,6 +76,14 @@ const appRoutes: RouteObject[] = [
     element: (
       <PermissionRoute permission="inscriptions">
         <InscriptionsPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'reservations',
+    element: (
+      <PermissionRoute permission="reservations">
+        <ReservationsPage />
       </PermissionRoute>
     ),
   },

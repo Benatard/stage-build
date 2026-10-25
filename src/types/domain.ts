@@ -122,6 +122,28 @@ export type Inscription = BaseRow & {
   status: InscriptionStatus;
 };
 
+export type ReservationStatus = 'en_attente' | 'confirmee' | 'annulee';
+
+export type Reservation = BaseRow & {
+  reference: string;
+  nom: string;
+  postnom?: string | null;
+  prenom: string;
+  sexe?: 'M' | 'F' | 'Autre' | null;
+  date_naissance?: string | null;
+  telephone: string;
+  email: string;
+  formation_id: string;
+  promotion_id: string;
+  status: ReservationStatus;
+  notes?: string | null;
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
+  stagiaire_id?: string | null;
+  inscription_id?: string | null;
+  user_id?: string | null;
+};
+
 export type Affectation = BaseRow & {
   stagiaire_id: string;
   inscription_id?: string | null;

@@ -84,6 +84,9 @@ export default function HomePage() {
               <a href="#modules" className="btn-outline-root">
                 Découvrir les modules <FiArrowRight className="h-4 w-4" />
               </a>
+              <Link to="/reservation" className="btn-outline-root">
+                Réserver une place <FiArrowRight className="h-4 w-4" />
+              </Link>
             </div>
 
             <ul className="mt-9 grid gap-3 text-sm text-body dark:text-body-dark sm:grid-cols-3">
