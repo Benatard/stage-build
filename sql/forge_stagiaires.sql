@@ -762,7 +762,7 @@ set label = excluded.label,
     permissions = excluded.permissions;
 
 insert into settings (key, value, description) values
-  ('organization', '{"name":"StageBuild","address":"","phone":"","email":"","logo_url":"/images/logo-mark.svg"}'::jsonb, 'Informations de l’organisation'),
+  ('organization', '{"name":"StageBuild","address":"","phone":"","email":"","logo_url":"/images/logo-stagebuild.svg"}'::jsonb, 'Informations de l’organisation'),
   ('attendance_thresholds', '{"normal":90,"attention":80}'::jsonb, 'Seuils d’alerte de présence'),
   ('grading_weights', '{"qcm":10,"tp":30,"examen":40,"project":20}'::jsonb, 'Pondération par défaut des catégories'),
   ('rounding', '2'::jsonb, 'Nombre de décimales des moyennes'),

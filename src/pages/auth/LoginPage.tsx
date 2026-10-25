@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiArrowRight, FiLock, FiMail, FiShield } from 'react-icons/fi';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Form';
 import { company } from '@/config/site';
@@ -50,11 +51,8 @@ export default function LoginPage() {
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary/30 blur-3xl" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
 
-        <Link to="/" className="relative flex items-center gap-3">
-          <img src="/images/logo-mark.svg" alt={company.name} className="h-11 w-11" />
-          <span className="text-xl font-extrabold tracking-tight">
-            STAGE<span className="text-primary">BUILD</span>
-          </span>
+        <Link to="/" className="relative inline-flex">
+          <BrandLogo forceDark className="h-12 w-auto" />
         </Link>
 
         <div className="relative max-w-md">
@@ -100,11 +98,8 @@ export default function LoginPage() {
             Retour au site
           </Link>
 
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <img src="/images/logo-mark.svg" alt={company.name} className="h-9 w-9" />
-            <span className="text-lg font-extrabold tracking-tight text-black dark:text-white">
-              STAGE<span className="text-primary">BUILD</span>
-            </span>
+          <div className="mb-8 flex lg:hidden">
+            <BrandLogo className="h-9 w-auto" />
           </div>
 
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">

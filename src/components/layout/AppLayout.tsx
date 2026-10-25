@@ -10,10 +10,10 @@ import {
   FiSun,
   FiX,
 } from 'react-icons/fi';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { appNavigation } from '@/config/appNavigation';
 import { isForgeConfigured } from '@/config/env';
 import { ROLE_LABELS } from '@/config/permissions';
-import { company } from '@/config/site';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
@@ -83,16 +83,11 @@ export default function AppLayout() {
         )}
       >
         <div className="flex h-[72px] items-center justify-between border-b border-stroke px-5 dark:border-white/10">
-          <Link to="/app" className="flex items-center gap-2.5">
-            <img src="/images/logo-mark.svg" alt={company.name} className="h-9 w-9" />
-            <div>
-              <p className="text-sm font-extrabold leading-none tracking-tight text-black dark:text-white">
-                STAGE<span className="text-primary">BUILD</span>
-              </p>
-              <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-body dark:text-body-dark">
-                Suivi stagiaires
-              </p>
-            </div>
+          <Link to="/app" className="flex flex-col gap-1">
+            <BrandLogo className="h-9 w-auto" />
+            <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-body dark:text-body-dark">
+              Suivi stagiaires
+            </p>
           </Link>
           <button
             type="button"

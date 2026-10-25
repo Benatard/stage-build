@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle, FiLock } from 'react-icons/fi';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { publicAnchors } from '@/config/navigation';
 import { company } from '@/config/site';
 
@@ -19,11 +20,8 @@ export function Footer() {
       <div className="page-container pb-8 pt-16">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link to="/" className="flex items-center gap-3">
-              <img src="/images/logo-mark.svg" alt={company.name} className="h-10 w-10" />
-              <span className="text-xl font-extrabold tracking-tight text-black dark:text-white">
-                STAGE<span className="text-primary">BUILD</span>
-              </span>
+            <Link to="/" className="inline-flex">
+              <BrandLogo className="h-11 w-auto" />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-body dark:text-body-dark">
               {company.description}

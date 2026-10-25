@@ -220,7 +220,7 @@ async function main() {
         email: 'contact@stagebuild.cd',
         phone: '+243 970 000 000',
         address: 'Lubumbashi, Haut-Katanga, RDC',
-        logo_url: '/images/logo-mark.svg',
+        logo_url: '/images/logo-stagebuild.svg',
       },
       description: 'Identité de l’organisation affichée dans les documents et l’interface.',
     });

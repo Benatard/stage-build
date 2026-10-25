@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiArrowRight, FiLogIn, FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { publicAnchors, publicRoutes } from '@/config/navigation';
-import { company } from '@/config/site';
 import { useTheme } from '@/context/ThemeContext';
 
 export function Navbar() {
@@ -32,11 +32,8 @@ export function Navbar() {
     >
       <div className="page-container">
         <div className="flex h-20 items-center justify-between">
-          <Link to="/" className="flex flex-shrink-0 items-center gap-3">
-            <img src="/images/logo-mark.svg" alt={company.name} className="h-10 w-10" />
-            <span className="text-xl font-extrabold tracking-tight text-black dark:text-white">
-              STAGE<span className="text-primary">BUILD</span>
-            </span>
+          <Link to="/" className="flex flex-shrink-0 items-center">
+            <BrandLogo className="h-10 w-auto" />
           </Link>
 
           <nav className="hidden items-center gap-9 lg:flex">
