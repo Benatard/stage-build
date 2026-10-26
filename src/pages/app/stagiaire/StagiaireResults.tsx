@@ -170,20 +170,20 @@ export function StagiaireBulletin() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-left text-sm">
+                <table className="w-full break-words text-left text-sm">
                   <thead>
                     <tr className="border-b border-stroke dark:border-white/10">
-                      <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">Module</th>
-                      <th className="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">Coefficient</th>
-                      <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">Moyenne</th>
+                      <th className="px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark sm:px-5">Module</th>
+                      <th className="px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark sm:px-5">Coefficient</th>
+                      <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark sm:px-5">Moyenne</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(content.modules ?? []).map((module, index) => (
                       <tr key={`${module.name}-${index}`} className="border-b border-stroke/70 last:border-0 dark:border-white/5">
-                        <td className="px-5 py-3 font-medium text-black dark:text-white">{module.name ?? 'Module'}</td>
-                        <td className="px-5 py-3 text-center">{module.coefficient ?? '—'}</td>
-                        <td className="px-5 py-3 text-right font-semibold text-primary">{numberLabel(module.average, '/20')}</td>
+                        <td className="px-3 py-3 font-medium text-black dark:text-white sm:px-5">{module.name ?? 'Module'}</td>
+                        <td className="px-2 py-3 text-center sm:px-5">{module.coefficient ?? '—'}</td>
+                        <td className="px-3 py-3 text-right font-semibold text-primary sm:px-5">{numberLabel(module.average, '/20')}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -16,7 +16,7 @@ import {
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
-import { PageHeader, StatCard } from '@/components/ui/Feedback';
+import { LoadingState, PageHeader, StatCard } from '@/components/ui/Feedback';
 import AccessDeniedPage from './AccessDeniedPage';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
@@ -55,7 +55,7 @@ type Tab = 'apercu' | 'notes' | 'presences' | 'competences' | 'suivi';
 
 export default function StagiaireDetailPage() {
   const { id = '' } = useParams();
-  const { data } = useReferenceData();
+  const { data, loading: referenceLoading } = useReferenceData();
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('apercu');
 
@@ -117,6 +117,10 @@ export default function StagiaireDetailPage() {
   }
 
   if (!stagiaire) {
+    if (referenceLoading) {
+      return <LoadingState label="Chargement du dossier stagiaire…" />;
+    }
+
     return (
       <div>
         <PageHeader title="Dossier introuvable" description="Ce stagiaire n’existe pas ou a été supprimé." />

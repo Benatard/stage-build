@@ -270,30 +270,30 @@ export default function BulletinsPage() {
       </div>
 
       {stagiaire && final && (
-        <div id="print-area" className="mb-6 border border-stroke bg-white p-8 text-black dark:border-white/10">
-          <div className="flex items-start justify-between border-b-2 border-black pb-5">
+        <div id="print-area" className="mb-6 border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-8">
+          <div className="flex flex-col gap-3 border-b-2 border-black pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xl font-extrabold tracking-tight">StageBuild</p>
               <p className="text-xs">Gestion et suivi des stagiaires</p>
               <p className="mt-1 text-xs">Plateforme pédagogique centralisée</p>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold uppercase tracking-wide">Bulletin de fin de formation</p>
+            <div className="sm:text-right">
+              <p className="text-base font-bold uppercase tracking-wide sm:text-lg">Bulletin de fin de formation</p>
               <p className="text-xs">Année académique {new Date().getFullYear()}</p>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+          <div className="mt-6 grid grid-cols-1 gap-3 break-words text-sm sm:grid-cols-2">
             <p><strong>Stagiaire :</strong> {fullName(stagiaire)}</p>
             <p><strong>Matricule :</strong> {stagiaire.matricule}</p>
             <p><strong>Domaine :</strong> {stagiaire.domaine ?? '—'}</p>
             <p><strong>Spécialité :</strong> {stagiaire.specialite ?? '—'}</p>
           </div>
 
-          <table className="mt-6 w-full border-collapse text-sm">
+          <table className="mt-6 w-full break-words border-collapse text-xs sm:text-sm">
             <thead>
               <tr className="border-b-2 border-black text-left">
-                <th className="py-2">Module</th>
+                <th className="py-2 pr-2">Module</th>
                 <th className="py-2 text-center">Coefficient</th>
                 <th className="py-2 text-right">Moyenne /20</th>
               </tr>
@@ -301,7 +301,7 @@ export default function BulletinsPage() {
             <tbody>
               {moduleStats.map((module) => (
                 <tr key={module.name} className="border-b border-slate-300">
-                  <td className="py-2">{module.name}</td>
+                  <td className="py-2 pr-2">{module.name}</td>
                   <td className="py-2 text-center">{module.coefficient}</td>
                   <td className="py-2 text-right font-semibold">{module.average.toFixed(2)}</td>
                 </tr>
@@ -309,7 +309,7 @@ export default function BulletinsPage() {
             </tbody>
           </table>
 
-          <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
+          <div className="mt-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div className="space-y-1">
               <p>QCM : <strong>{final.qcm_average ?? 0}/20</strong></p>
               <p>Travaux pratiques : <strong>{final.tp_average ?? 0}/20</strong></p>
@@ -323,12 +323,12 @@ export default function BulletinsPage() {
           </div>
 
           <div className="mt-6 border-2 border-black p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wide">Moyenne finale</p>
                 <p className="text-3xl font-extrabold">{final.final_average ?? 0}/20</p>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <p className="text-xs uppercase tracking-wide">Décision</p>
                 <p className="text-lg font-bold uppercase">
                   {final.decision === 'valide' ? 'Validé' : final.decision === 'non_valide' ? 'Non validé' : 'En attente'}
@@ -338,11 +338,11 @@ export default function BulletinsPage() {
             {final.appreciation && <p className="mt-3 text-sm"><strong>Appréciation :</strong> {final.appreciation}</p>}
           </div>
 
-          <div className="mt-8 flex justify-between text-xs">
+          <div className="mt-8 flex flex-col gap-6 text-xs sm:flex-row sm:justify-between">
             <div>
               <p>Fait le {formatDate(new Date().toISOString())}</p>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <p>La Direction</p>
               <p className="mt-8 border-t border-black pt-2">Signature et cachet</p>
             </div>

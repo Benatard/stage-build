@@ -17,24 +17,28 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="mb-7 flex flex-col gap-4 border-b border-stroke pb-6 dark:border-white/10 lg:flex-row lg:items-end lg:justify-between">
-      <div>
+    <div className="mb-6 flex flex-col gap-4 border-b border-stroke pb-5 dark:border-white/10 sm:mb-7 sm:pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-w-0">
         {eyebrow && (
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             {eyebrow}
           </p>
         )}
-        <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white sm:text-3xl">
+        <h1 className="break-words text-2xl font-bold tracking-tight text-black dark:text-white sm:text-3xl">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-body dark:text-body-dark">
+          <p className="mt-2 max-w-3xl break-words text-sm leading-relaxed text-body dark:text-body-dark">
             {description}
           </p>
         )}
         {children}
       </div>
-      {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
+      {actions && (
+        <div className="flex w-full shrink-0 flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto [&>*]:w-full sm:[&>*]:w-auto">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }
@@ -61,17 +65,24 @@ export function StatCard({
   };
 
   return (
-    <div className="card-root border border-stroke p-5 dark:border-white/10">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-body dark:text-body-dark">
+    <div className="card-root min-w-0 border border-stroke p-4 dark:border-white/10 sm:p-5">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <p className="break-words text-[11px] font-semibold uppercase tracking-wide text-body dark:text-body-dark sm:text-xs">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-bold text-black dark:text-white">{value}</p>
-          {hint && <p className="mt-1 text-xs text-body dark:text-body-dark">{hint}</p>}
+          <p className="mt-2 break-words text-xl font-bold text-black dark:text-white sm:text-2xl">
+            {value}
+          </p>
+          {hint && <p className="mt-1 break-words text-xs text-body dark:text-body-dark">{hint}</p>}
         </div>
         {icon && (
-          <span className={cn('flex h-10 w-10 items-center justify-center', toneClasses[tone])}>
+          <span
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center sm:h-10 sm:w-10',
+              toneClasses[tone],
+            )}
+          >
             {icon}
           </span>
         )}

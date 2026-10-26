@@ -31,7 +31,7 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <section className={`card-root border border-stroke dark:border-white/10 ${className ?? ''}`}>
+    <section className={`card-root min-w-0 border border-stroke dark:border-white/10 ${className ?? ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stroke px-5 py-4 dark:border-white/10">
         <div>
           <h2 className="text-sm font-bold text-black dark:text-white">{title}</h2>

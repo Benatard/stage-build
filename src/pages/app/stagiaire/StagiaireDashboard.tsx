@@ -180,7 +180,7 @@ export default function StagiaireDashboard() {
         />
       </div>
 
-      <div className="mb-5 grid gap-5 lg:grid-cols-2">
+      <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SectionCard title="Prochaines séances">
           {upcomingSeances.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-body dark:text-body-dark">
@@ -241,7 +241,7 @@ export default function StagiaireDashboard() {
         </SectionCard>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard title="Dernières notes publiées">
           {publishedNotes.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-body dark:text-body-dark">

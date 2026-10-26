@@ -221,8 +221,8 @@ export default function DocumentsPage() {
       </div>
 
       {stagiaire && (
-        <div id="print-area" className="mb-6 border border-stroke bg-white p-10 text-black dark:border-white/10">
-          <div className="flex items-start justify-between border-b-2 border-black pb-4">
+        <div id="print-area" className="mb-6 border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-10">
+          <div className="flex flex-col gap-2 border-b-2 border-black pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-lg font-extrabold tracking-tight">StageBuild</p>
               <p className="text-xs">Gestion et suivi des stagiaires</p>
@@ -231,7 +231,7 @@ export default function DocumentsPage() {
           </div>
 
           {isCard ? (
-            <div className="mx-auto mt-10 w-[420px] border-2 border-black p-6">
+            <div className="mx-auto mt-8 w-full max-w-[420px] border-2 border-black p-4 sm:mt-10 sm:p-6">
               <p className="text-center text-sm font-bold uppercase tracking-widest">Carte stagiaire</p>
               <div className="mt-5 flex items-center gap-4">
                 <div className="flex h-24 w-20 items-center justify-center border border-black text-xs text-center">
@@ -250,7 +250,7 @@ export default function DocumentsPage() {
             </div>
           ) : (
             <>
-              <h1 className="mt-8 text-center text-2xl font-bold uppercase tracking-wide">
+              <h1 className="mt-8 break-words text-center text-xl font-bold uppercase tracking-wide sm:text-2xl">
                 {title.trim() || defaultTitle(type)}
               </h1>
 
@@ -277,7 +277,7 @@ export default function DocumentsPage() {
               )}
 
               {type === 'releve_notes' && (
-                <table className="mt-6 w-full border-collapse text-sm">
+                <table className="mt-6 w-full break-words border-collapse text-xs sm:text-sm">
                   <thead>
                     <tr className="border-b-2 border-black">
                       <th className="py-2 text-left">Module</th>
@@ -296,7 +296,7 @@ export default function DocumentsPage() {
               )}
 
               {type === 'fiche_stagiaire' && (
-                <div className="mt-6 grid grid-cols-2 gap-2 text-sm">
+                <div className="mt-6 grid grid-cols-1 gap-2 break-words text-sm sm:grid-cols-2">
                   <p>Date de naissance : {formatDate(stagiaire.date_naissance)}</p>
                   <p>Lieu de naissance : {stagiaire.lieu_naissance ?? '—'}</p>
                   <p>Établissement : {stagiaire.etablissement_origine ?? '—'}</p>
@@ -318,9 +318,9 @@ export default function DocumentsPage() {
                 </div>
               )}
 
-              <div className="mt-12 flex justify-between text-xs">
+              <div className="mt-12 flex flex-col gap-6 text-xs sm:flex-row sm:justify-between">
                 <p>Fait le {formatDate(new Date().toISOString())}</p>
-                <div className="text-right">
+                <div className="sm:text-right">
                   <p>La Direction</p>
                   <p className="mt-10 border-t border-black pt-2">Signature et cachet</p>
                 </div>

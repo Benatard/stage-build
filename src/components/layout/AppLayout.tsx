@@ -27,6 +27,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const isStagiaire = user?.role === 'stagiaire';
   const navigation = isStagiaire ? stagiaireNavigation : appNavigation;
@@ -68,15 +69,26 @@ export default function AppLayout() {
   const currentItem = useMemo(() => {
     const items = navigation.flatMap((group) => group.items);
     return items.find((item) =>
-      item.end ? location.pathname === item.path : location.pathname.startsWith(item.path),
+      item.end
+        ? location.pathname === item.path
+        : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`),
     );
   }, [location.pathname, navigation]);
+
+  const activeGroup = useMemo(
+    () => groups.find((group) => group.items.some((item) => item.path === currentItem?.path))?.label,
+    [currentItem?.path, groups],
+  );
 
   useEffect(() => {
     setSidebarOpen(false);
     setUserMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (activeGroup) setOpenGroup(activeGroup);
+  }, [activeGroup]);
 
   function handleLogout() {
     logout();
@@ -119,37 +131,63 @@ export default function AppLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
-          {groups.map((group) => (
-            <div key={group.label}>
-              <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-body/70 dark:text-body-dark/60">
-                {group.label}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      end={item.end}
-                      className={({ isActive }) =>
-                        cn(
-                          'flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium transition-colors',
-                          isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-body hover:bg-gray2 hover:text-dark dark:text-body-dark dark:hover:bg-white/5 dark:hover:text-white',
-                        )
-                      }
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </NavLink>
-                  );
-                })}
+        <nav aria-label="Navigation principale" className="flex-1 overflow-y-auto px-3 py-3">
+          {groups.map((group, index) => {
+            const isOpen = openGroup === group.label;
+            const isActiveGroup = group.items.some((item) => item.path === currentItem?.path);
+            const panelId = `nav-group-${index}`;
+
+            return (
+              <div key={group.label}>
+                <button
+                  type="button"
+                  onClick={() => setOpenGroup((current) => (current === group.label ? null : group.label))}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  className={cn(
+                    'flex w-full items-center gap-2 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.14em] transition-colors',
+                    isActiveGroup
+                      ? 'text-primary'
+                      : 'text-body/70 hover:text-dark dark:text-body-dark/60 dark:hover:text-white',
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate">{group.label}</span>
+                  <span className="shrink-0 text-[9px] font-semibold tabular-nums opacity-60">
+                    {group.items.length}
+                  </span>
+                  <FiChevronDown
+                    className={cn('h-3.5 w-3.5 shrink-0 transition-transform', isOpen && 'rotate-180')}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div id={panelId} className="space-y-0.5 pb-1">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          end={item.end}
+                          className={({ isActive }) =>
+                            cn(
+                              'flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-colors',
+                              isActive
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-body hover:bg-gray2 hover:text-dark dark:text-body-dark dark:hover:bg-white/5 dark:hover:text-white',
+                            )
+                          }
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="border-t border-stroke p-4 dark:border-white/10">
