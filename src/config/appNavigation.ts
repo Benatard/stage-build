@@ -26,6 +26,7 @@ import {
   FiShield,
   FiTarget,
   FiTrendingUp,
+  FiUser,
   FiUserCheck,
   FiUserPlus,
   FiUsers,
@@ -43,6 +44,56 @@ export type AppNavGroup = {
   label: string;
   items: AppNavItem[];
 };
+
+export const stagiaireNavigation: AppNavGroup[] = [
+  {
+    label: 'Mon espace',
+    items: [
+      { label: 'Tableau de bord', path: '/app/mon-espace', icon: FiGrid, permission: 'self_dashboard', end: true },
+      { label: 'Mon profil', path: '/app/mon-espace/profil', icon: FiUser, permission: 'self_profile' },
+      { label: 'Ma formation', path: '/app/mon-espace/formation', icon: FiBookOpen, permission: 'self_formation' },
+      { label: 'Notifications', path: '/app/mon-espace/notifications', icon: FiBell, permission: 'self_notifications' },
+    ],
+  },
+  {
+    label: 'Ma scolarité',
+    items: [
+      { label: 'Présences', path: '/app/mon-espace/presences', icon: FiCheckSquare, permission: 'self_presences' },
+      { label: 'Évaluations', path: '/app/mon-espace/evaluations', icon: FiClipboard, permission: 'self_evaluations' },
+      { label: 'Notes', path: '/app/mon-espace/notes', icon: FiEdit3, permission: 'self_notes' },
+      { label: 'QCM', path: '/app/mon-espace/qcm', icon: FiList, permission: 'self_qcm' },
+      { label: 'Travaux pratiques', path: '/app/mon-espace/travaux', icon: FiFolder, permission: 'self_travaux' },
+      { label: 'Compétences', path: '/app/mon-espace/competences', icon: FiAward, permission: 'self_competences' },
+    ],
+  },
+  {
+    label: 'Mon suivi',
+    items: [
+      { label: 'Implication', path: '/app/mon-espace/implication', icon: FiActivity, permission: 'self_implication' },
+      { label: 'Comportement', path: '/app/mon-espace/comportement', icon: FiShield, permission: 'self_comportement' },
+      { label: 'Observations', path: '/app/mon-espace/observations', icon: FiEdit3, permission: 'self_observations' },
+      { label: 'Progression', path: '/app/mon-espace/progression', icon: FiTrendingUp, permission: 'self_progression' },
+      { label: 'Plans d’amélioration', path: '/app/mon-espace/plans', icon: FiTarget, permission: 'self_plans' },
+      { label: 'Journal de stage', path: '/app/mon-espace/journal', icon: FiFileText, permission: 'self_journal' },
+      { label: 'Objectifs de stage', path: '/app/mon-espace/objectifs', icon: FiFlag, permission: 'self_objectives' },
+      { label: 'Projet final', path: '/app/mon-espace/projet-final', icon: FiBriefcase, permission: 'self_project' },
+    ],
+  },
+  {
+    label: 'Mes résultats',
+    items: [
+      { label: 'Bulletin', path: '/app/mon-espace/bulletin', icon: FiFileText, permission: 'self_bulletin' },
+      { label: 'Documents', path: '/app/mon-espace/documents', icon: FiFolder, permission: 'self_documents' },
+      { label: 'Historique', path: '/app/mon-espace/historique', icon: FiClock, permission: 'self_history' },
+    ],
+  },
+  {
+    label: 'Mon compte',
+    items: [
+      { label: 'Paramètres', path: '/app/mon-espace/parametres', icon: FiSettings, permission: 'self_settings' },
+    ],
+  },
+];
 
 export const appNavigation: AppNavGroup[] = [
   {

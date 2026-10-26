@@ -11,12 +11,12 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { BrandLogo } from '@/components/ui/BrandLogo';
-import { appNavigation } from '@/config/appNavigation';
+import { appNavigation, stagiaireNavigation } from '@/config/appNavigation';
 import { isForgeConfigured } from '@/config/env';
 import { ROLE_LABELS } from '@/config/permissions';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { useForgeTable } from '@/hooks/useForgeTable';
+import { useScopedRows } from '@/hooks/useScopedRows';
 import { cn, fullName, initials } from '@/utils/format';
 import type { AppNotification } from '@/types/domain';
 
@@ -28,29 +28,49 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const { rows: notifications } = useForgeTable<AppNotification>('notifications', {
-    filters: { user_id: user?.id, status: 'unread' },
+  const isStagiaire = user?.role === 'stagiaire';
+  const navigation = isStagiaire ? stagiaireNavigation : appNavigation;
+  const homePath = isStagiaire ? '/app/mon-espace' : '/app';
+  const notificationsPath = isStagiaire ? '/app/mon-espace/notifications' : '/app/notifications';
+
+  const { rows: accountNotifications } = useScopedRows<AppNotification>('notifications', {
+    scope: { user_id: user?.id ?? '' },
+    order: 'created_at.desc',
     limit: 50,
     enabled: Boolean(user?.id && isForgeConfigured),
   });
+  const { rows: stagiaireNotifications } = useScopedRows<AppNotification>('notifications', {
+    scope: { stagiaire_id: user?.stagiaire_id ?? '' },
+    order: 'created_at.desc',
+    limit: 50,
+    enabled: Boolean(user?.stagiaire_id && isForgeConfigured),
+  });
+
+  const notifications = useMemo(() => {
+    const map = new Map<string, AppNotification>();
+    [...accountNotifications, ...stagiaireNotifications].forEach((notification) => {
+      if (notification.status === 'unread') map.set(notification.id, notification);
+    });
+    return Array.from(map.values());
+  }, [accountNotifications, stagiaireNotifications]);
 
   const groups = useMemo(
     () =>
-      appNavigation
+      navigation
         .map((group) => ({
           ...group,
           items: group.items.filter((item) => can(item.permission)),
         }))
         .filter((group) => group.items.length > 0),
-    [can],
+    [can, navigation],
   );
 
   const currentItem = useMemo(() => {
-    const items = appNavigation.flatMap((group) => group.items);
+    const items = navigation.flatMap((group) => group.items);
     return items.find((item) =>
       item.end ? location.pathname === item.path : location.pathname.startsWith(item.path),
     );
-  }, [location.pathname]);
+  }, [location.pathname, navigation]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -83,7 +103,7 @@ export default function AppLayout() {
         )}
       >
         <div className="flex h-[72px] items-center justify-between border-b border-stroke px-5 dark:border-white/10">
-          <Link to="/app" className="flex flex-col gap-1">
+          <Link to={homePath} className="flex flex-col gap-1">
             <BrandLogo className="h-9 w-auto" />
             <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-body dark:text-body-dark">
               Suivi stagiaires
@@ -179,7 +199,7 @@ export default function AppLayout() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
-              to="/app/notifications"
+              to={notificationsPath}
               className="relative flex h-9 w-9 items-center justify-center bg-gray2 text-body transition-colors hover:text-primary dark:bg-white/10 dark:text-body-dark"
               aria-label="Notifications"
             >
@@ -237,7 +257,7 @@ export default function AppLayout() {
                     </p>
                   </div>
                   <Link
-                    to="/app/notifications"
+                    to={notificationsPath}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-body hover:bg-gray2 hover:text-dark dark:text-body-dark dark:hover:bg-white/5 dark:hover:text-white"
                   >
                     <FiBell className="h-4 w-4" /> Notifications

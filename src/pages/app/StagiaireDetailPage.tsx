@@ -60,8 +60,9 @@ export default function StagiaireDetailPage() {
   const [tab, setTab] = useState<Tab>('apercu');
 
   const stagiaire = data.stagiaires.find((item) => item.id === id);
+  const allowed = user?.role !== 'stagiaire' || user.stagiaire_id === id;
 
-  const enabled = Boolean(id);
+  const enabled = Boolean(id) && allowed;
   const { rows: notes } = useForgeTable<Note>('notes', { filters: { stagiaire_id: id }, enabled });
   const { rows: presences } = useForgeTable<Presence>('presences', { filters: { stagiaire_id: id }, enabled });
   const { rows: competencies } = useForgeTable<CompetenceEvaluation>('competence_levels', {
@@ -111,6 +112,10 @@ export default function StagiaireDetailPage() {
   const finalEvaluation = finals[0];
   const latestBulletin = bulletins[0];
 
+  if (!allowed) {
+    return <AccessDeniedPage />;
+  }
+
   if (!stagiaire) {
     return (
       <div>
@@ -120,10 +125,6 @@ export default function StagiaireDetailPage() {
         </Link>
       </div>
     );
-  }
-
-  if (user?.role === 'stagiaire' && user.stagiaire_id && user.stagiaire_id !== stagiaire.id) {
-    return <AccessDeniedPage />;
   }
 
   const normalizedNotes = notes

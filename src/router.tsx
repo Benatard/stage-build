@@ -5,12 +5,12 @@ import AppLayout from '@/components/layout/AppLayout';
 import MainLayout from '@/components/layout/MainLayout';
 import AccessDeniedPage from '@/pages/app/AccessDeniedPage';
 import AffectationsPage from '@/pages/app/AffectationsPage';
+import AppHomePage from '@/pages/app/AppHomePage';
 import ArchivagePage from '@/pages/app/ArchivagePage';
 import AuditPage from '@/pages/app/AuditPage';
 import BulletinsPage from '@/pages/app/BulletinsPage';
 import CompetencesPage from '@/pages/app/CompetencesPage';
 import ComportementPage from '@/pages/app/ComportementPage';
-import DashboardPage from '@/pages/app/DashboardPage';
 import DocumentsPage from '@/pages/app/DocumentsPage';
 import EvaluationFinalePage from '@/pages/app/EvaluationFinalePage';
 import EvaluationsIntermediairesPage from '@/pages/app/EvaluationsIntermediairesPage';
@@ -45,6 +45,34 @@ import ForgeStatusPage from '@/pages/ForgeStatusPage';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import ReservationPage from '@/pages/ReservationPage';
+import {
+  StagiaireJournal,
+  StagiaireNotifications,
+  StagiaireQcm,
+  StagiaireTravaux,
+} from '@/pages/app/stagiaire/StagiaireActivities';
+import StagiaireCompetences from '@/pages/app/stagiaire/StagiaireCompetences';
+import StagiaireDashboard from '@/pages/app/stagiaire/StagiaireDashboard';
+import StagiaireEvaluations from '@/pages/app/stagiaire/StagiaireEvaluations';
+import StagiaireFormation from '@/pages/app/stagiaire/StagiaireFormation';
+import StagiaireNotes from '@/pages/app/stagiaire/StagiaireNotes';
+import StagiairePresences from '@/pages/app/stagiaire/StagiairePresences';
+import StagiaireProfile from '@/pages/app/stagiaire/StagiaireProfile';
+import StagiaireProgression from '@/pages/app/stagiaire/StagiaireProgression';
+import {
+  StagiaireBulletin,
+  StagiaireDocuments,
+  StagiaireHistory,
+} from '@/pages/app/stagiaire/StagiaireResults';
+import StagiaireSettings from '@/pages/app/stagiaire/StagiaireSettings';
+import {
+  StagiaireComportement,
+  StagiaireImplication,
+  StagiaireObjectives,
+  StagiaireObservations,
+  StagiairePlans,
+  StagiaireProject,
+} from '@/pages/app/stagiaire/StagiaireSupport';
 
 const publicRoutes: RouteObject[] = [
   { index: true, element: <HomePage /> },
@@ -54,7 +82,188 @@ const publicRoutes: RouteObject[] = [
 ];
 
 const appRoutes: RouteObject[] = [
-  { index: true, element: <DashboardPage /> },
+  { index: true, element: <AppHomePage /> },
+  {
+    path: 'mon-espace',
+    children: [
+      {
+        index: true,
+        element: (
+          <PermissionRoute permission="self_dashboard">
+            <StagiaireDashboard />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'profil',
+        element: (
+          <PermissionRoute permission="self_profile">
+            <StagiaireProfile />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'formation',
+        element: (
+          <PermissionRoute permission="self_formation">
+            <StagiaireFormation />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'notifications',
+        element: (
+          <PermissionRoute permission="self_notifications">
+            <StagiaireNotifications />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'presences',
+        element: (
+          <PermissionRoute permission="self_presences">
+            <StagiairePresences />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'evaluations',
+        element: (
+          <PermissionRoute permission="self_evaluations">
+            <StagiaireEvaluations />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'notes',
+        element: (
+          <PermissionRoute permission="self_notes">
+            <StagiaireNotes />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'qcm',
+        element: (
+          <PermissionRoute permission="self_qcm">
+            <StagiaireQcm />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'travaux',
+        element: (
+          <PermissionRoute permission="self_travaux">
+            <StagiaireTravaux />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'competences',
+        element: (
+          <PermissionRoute permission="self_competences">
+            <StagiaireCompetences />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'implication',
+        element: (
+          <PermissionRoute permission="self_implication">
+            <StagiaireImplication />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'comportement',
+        element: (
+          <PermissionRoute permission="self_comportement">
+            <StagiaireComportement />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'observations',
+        element: (
+          <PermissionRoute permission="self_observations">
+            <StagiaireObservations />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'progression',
+        element: (
+          <PermissionRoute permission="self_progression">
+            <StagiaireProgression />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'plans',
+        element: (
+          <PermissionRoute permission="self_plans">
+            <StagiairePlans />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'journal',
+        element: (
+          <PermissionRoute permission="self_journal">
+            <StagiaireJournal />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'objectifs',
+        element: (
+          <PermissionRoute permission="self_objectives">
+            <StagiaireObjectives />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'projet-final',
+        element: (
+          <PermissionRoute permission="self_project">
+            <StagiaireProject />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'bulletin',
+        element: (
+          <PermissionRoute permission="self_bulletin">
+            <StagiaireBulletin />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'documents',
+        element: (
+          <PermissionRoute permission="self_documents">
+            <StagiaireDocuments />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'historique',
+        element: (
+          <PermissionRoute permission="self_history">
+            <StagiaireHistory />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: 'parametres',
+        element: (
+          <PermissionRoute permission="self_settings">
+            <StagiaireSettings />
+          </PermissionRoute>
+        ),
+      },
+    ],
+  },
   {
     path: 'stagiaires',
     element: (
