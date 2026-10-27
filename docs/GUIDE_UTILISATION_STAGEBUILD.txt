@@ -210,6 +210,7 @@ Le menu de gauche est organisé en groupes :
 
 Vue d'ensemble
 - Tableau de bord
+- Assistant IA
 - Recherche globale
 - Notifications
 
@@ -290,21 +291,47 @@ Mes résultats
 - Historique
 
 Mon compte
+- Assistant IA
 - Paramètres
 
 3.3 Barre supérieure
 
 En haut à droite :
 - icône de cloche : notifications ;
+- icône de bulle : assistant IA ;
 - icône lune/soleil : thème clair ou sombre ;
 - nom et avatar : profil et déconnexion.
 
-3.4 Version mobile
+3.4 Assistant IA
+
+Page : /app/assistant
+Menu : Vue d'ensemble > Assistant IA, ou Mon compte > Assistant IA pour le
+stagiaire.
+
+L'assistant répond aux questions d'utilisation à partir de ce guide. Il peut :
+- expliquer une procédure ;
+- indiquer la page ou le menu à ouvrir ;
+- proposer des questions complémentaires ;
+- citer la section du guide utilisée comme source.
+
+Utilisation :
+1. Ouvrir /app/assistant.
+2. Saisir une question, par exemple « Comment inscrire un stagiaire ? ».
+3. Cliquer sur « Envoyer » ou appuyer sur Entrée.
+4. Lire la réponse et ouvrir la page indiquée si elle est proposée.
+5. Utiliser « Effacer la conversation » pour repartir de zéro.
+
+L'assistant est en lecture seule : il ne crée, ne modifie et ne supprime aucune
+donnée. Il ne remplace pas les procédures d'administration ni les consignes de
+sécurité. Si la réponse ne correspond pas, reformuler avec l'action et la page
+concernées.
+
+3.5 Version mobile
 
 Sur téléphone ou tablette, le menu est accessible par l'icône de menu en haut à
 gauche. Les tableaux larges se transforment en cartes.
 
-3.5 Page « Accès refusé »
+3.6 Page « Accès refusé »
 
 Si vous ouvrez une adresse non autorisée, la page « Accès refusé » s'affiche.
 Revenez au menu ou demandez un changement de rôle à l'administrateur.
@@ -335,6 +362,10 @@ ORGANISER LA FORMATION
 
 SUIVI QUOTIDIEN
 - Faire l'appel : /app/presences - section 15
+- Imprimer la fiche de présence : /app/presences, bouton « Imprimer la fiche » -
+  section 15
+- Exporter les présences en CSV : /app/presences, bouton « Exporter CSV » -
+  section 15
 - Voir les présences d'un stagiaire : dossier stagiaire, onglet Présences -
   section 7
 - Voir les taux de présence : /app/progression ou /app/rapports - sections 24 et 33
@@ -398,6 +429,10 @@ ESPACE STAGIAIRE
 - Voir son bulletin : /app/mon-espace/bulletin - section 54
 - Télécharger ou imprimer un document : /app/mon-espace/documents - section 54
 - Changer le thème : icône lune/soleil ou /app/mon-espace/parametres - section 55
+
+ASSISTANCE
+- Poser une question sur l'utilisation : /app/assistant - section 3.4
+- Retrouver la page d'une procédure : /app/assistant - section 3.4
 
 --------------------------------------------------------------------------------
 5. LES ACTIONS COMMUNES À PRESQUE TOUTES LES PAGES
@@ -1136,7 +1171,29 @@ Ou :
 2. Choisir le stagiaire.
 3. Lire le taux et le détail.
 
-15.6 Corriger une erreur
+15.6 Imprimer ou exporter la fiche
+
+Une fois la séance sélectionnée :
+
+1. Vérifier la séance et les statuts affichés.
+2. Cliquer sur « Exporter CSV » pour télécharger un fichier nommé
+   presences-<date>-<module>.csv.
+3. Ou cliquer sur « Imprimer la fiche » pour ouvrir l'aperçu d'impression.
+
+L'export CSV contient :
+- la séance, la date, l'horaire, le module et la promotion ;
+- le matricule et le nom du stagiaire ;
+- le statut affiché ;
+- la note ou justification ;
+- l'état « Enregistré » ou « À enregistrer ».
+
+L'aperçu d'impression reprend les statuts actuellement affichés, y compris les
+modifications non encore enregistrées. Il contient aussi les compteurs, les
+observations et les zones de signature. Utiliser « Enregistrer la feuille »
+avant l'impression si la version définitive doit être conservée dans
+l'application.
+
+15.7 Corriger une erreur
 
 1. Revenir sur /app/presences.
 2. Choisir la même séance.
@@ -1146,7 +1203,7 @@ Ou :
 Un stagiaire peut aussi signaler une erreur depuis son espace. Cela crée une
 notification, mais ne modifie pas la feuille officielle.
 
-15.7 À savoir
+15.8 À savoir
 
 - L'enregistrement se fait stagiaire par stagiaire. En cas d'erreur réseau, une
   partie de la feuille peut être enregistrée et l'autre non.
@@ -3381,10 +3438,13 @@ Solution : vérifier le lien, les droits de partage et le réseau.
 66.15 L'impression est vide
 
 Vérifier :
-- qu'un stagiaire est sélectionné ;
-- qu'un bulletin ou document est affiché ;
+- qu'une séance, un bulletin ou un document est sélectionné ;
 - que la zone d'impression est visible ;
 - que le navigateur n'empêche pas l'impression.
+
+Pour une fiche de présence, ouvrir /app/presences, choisir la séance, puis
+cliquer sur « Imprimer la fiche ». La fiche reprend les statuts affichés, même
+s'ils ne sont pas encore enregistrés.
 
 66.16 Les données ne se mettent pas à jour
 
@@ -3482,6 +3542,14 @@ Cliquer sur l'icône lune/soleil en haut à droite, ou utiliser
 - Certains types utilisent un contenu générique.
 - Vérifier l'aperçu avant impression.
 - Aucune unicité : plusieurs copies possibles.
+
+67.12 Assistant IA
+- Réponses limitées au contenu du guide utilisateur.
+- L'assistant ne consulte pas les données de l'application.
+- Il ne crée, ne modifie et ne supprime rien.
+- Si aucune section ne correspond, il le signale et propose de reformuler.
+- Les réponses ne remplacent pas une procédure administrative ou une consigne
+  de sécurité.
 
 --------------------------------------------------------------------------------
 68. BONNES PRATIQUES

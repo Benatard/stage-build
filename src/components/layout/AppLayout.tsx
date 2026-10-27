@@ -6,6 +6,7 @@ import {
   FiExternalLink,
   FiLogOut,
   FiMenu,
+  FiMessageCircle,
   FiMoon,
   FiSun,
   FiX,
@@ -249,6 +250,15 @@ export default function AppLayout() {
               )}
             </Link>
 
+            <Link
+              to="/app/assistant"
+              className="flex h-9 w-9 items-center justify-center bg-gray2 text-body transition-colors hover:text-primary dark:bg-white/10 dark:text-body-dark"
+              aria-label="Assistant IA"
+              title="Assistant IA"
+            >
+              <FiMessageCircle className="h-4 w-4" />
+            </Link>
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -299,6 +309,12 @@ export default function AppLayout() {
                     className="flex items-center gap-2 px-3 py-2 text-sm text-body hover:bg-gray2 hover:text-dark dark:text-body-dark dark:hover:bg-white/5 dark:hover:text-white"
                   >
                     <FiBell className="h-4 w-4" /> Notifications
+                  </Link>
+                  <Link
+                    to="/app/assistant"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-body hover:bg-gray2 hover:text-dark dark:text-body-dark dark:hover:bg-white/5 dark:hover:text-white"
+                  >
+                    <FiMessageCircle className="h-4 w-4" /> Assistant IA
                   </Link>
                   <button
                     type="button"

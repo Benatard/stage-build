@@ -6,6 +6,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import AccessDeniedPage from '@/pages/app/AccessDeniedPage';
 import AffectationsPage from '@/pages/app/AffectationsPage';
 import AppHomePage from '@/pages/app/AppHomePage';
+import AssistantPage from '@/pages/app/AssistantPage';
 import ArchivagePage from '@/pages/app/ArchivagePage';
 import AuditPage from '@/pages/app/AuditPage';
 import BulletinsPage from '@/pages/app/BulletinsPage';
@@ -525,6 +526,14 @@ const appRoutes: RouteObject[] = [
     element: (
       <PermissionRoute permission="archive">
         <ArchivagePage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'assistant',
+    element: (
+      <PermissionRoute permission="dashboard">
+        <AssistantPage />
       </PermissionRoute>
     ),
   },

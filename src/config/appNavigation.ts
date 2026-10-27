@@ -21,6 +21,7 @@ import {
   FiLayers,
   FiList,
   FiLock,
+  FiMessageCircle,
   FiSearch,
   FiSettings,
   FiShield,
@@ -90,6 +91,7 @@ export const stagiaireNavigation: AppNavGroup[] = [
   {
     label: 'Mon compte',
     items: [
+      { label: 'Assistant IA', path: '/app/assistant', icon: FiMessageCircle, permission: 'dashboard' },
       { label: 'Paramètres', path: '/app/mon-espace/parametres', icon: FiSettings, permission: 'self_settings' },
     ],
   },
@@ -100,6 +102,7 @@ export const appNavigation: AppNavGroup[] = [
     label: 'Vue d’ensemble',
     items: [
       { label: 'Tableau de bord', path: '/app', icon: FiGrid, permission: 'dashboard', end: true },
+      { label: 'Assistant IA', path: '/app/assistant', icon: FiMessageCircle, permission: 'dashboard' },
       { label: 'Recherche globale', path: '/app/recherche', icon: FiSearch, permission: 'search' },
       { label: 'Notifications', path: '/app/notifications', icon: FiBell, permission: 'notifications' },
     ],
