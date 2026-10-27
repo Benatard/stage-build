@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { authService } from '@/services/auth.service';
 import { dataService } from '@/services/data.service';
 import type { Inscription, InscriptionStatus, Stagiaire, User } from '@/types/domain';
@@ -5,6 +6,7 @@ import type { Inscription, InscriptionStatus, Stagiaire, User } from '@/types/do
 export type StagiaireAccount = {
   userId: string;
   email: string;
+  phone?: string | null;
   temporaryPassword?: string;
   existingAccount: boolean;
 };
@@ -46,6 +48,21 @@ function newTemporaryPassword(): string {
   return `SB-${randomCode(4)}${randomDigits(4)}`;
 }
 
+export function generateTemporaryPassword(): string {
+  return newTemporaryPassword();
+}
+
+export async function updateStagiairePassword(userId: string, password: string): Promise<void> {
+  const value = password.trim();
+
+  if (value.length < 6) {
+    throw new Error('Le mot de passe doit contenir au moins 6 caractères.');
+  }
+
+  const passwordHash = await bcrypt.hash(value, 10);
+  await dataService.updateRow<User>('users', userId, { password_hash: passwordHash });
+}
+
 async function findUserByEmail(email: string): Promise<User | null> {
   const users = await dataService.listAll<User>('users', { order: 'created_at.desc' });
   return users.find((user) => user.email.trim().toLowerCase() === email) ?? null;
@@ -82,6 +99,7 @@ export async function ensureStagiaireAccount(stagiaire: Stagiaire): Promise<Stag
     return {
       userId: existingUser.id,
       email,
+      phone: existingUser.phone ?? stagiaire.telephone ?? null,
       existingAccount: true,
     };
   }
@@ -106,6 +124,7 @@ export async function ensureStagiaireAccount(stagiaire: Stagiaire): Promise<Stag
   return {
     userId,
     email,
+    phone: stagiaire.telephone ?? null,
     temporaryPassword,
     existingAccount: false,
   };
