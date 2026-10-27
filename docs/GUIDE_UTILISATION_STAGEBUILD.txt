@@ -1,0 +1,3644 @@
+================================================================================
+GUIDE D'UTILISATION DE STAGEBUILD
+Manuel complet pour les utilisateurs
+Version du 26 octobre 2026
+================================================================================
+
+CE GUIDE RÉPOND À DES QUESTIONS COMME :
+- Comment créer un stagiaire ?
+- Comment inscrire un stagiaire dans une formation ?
+- Quelle page ouvrir pour faire l'appel ?
+- Comment consulter les présences d'un stagiaire ?
+- Comment organiser un QCM et faire passer le test ?
+- Comment saisir les notes et les rendre visibles ?
+- Comment faire une réservation et la confirmer ?
+- Comment générer un bulletin ou une attestation ?
+- Comment un stagiaire utilise son espace personnel ?
+
+CONVENTIONS DE LECTURE
+- Les noms entre guillemets sont des boutons ou des libellés affichés à l'écran.
+- Les adresses commençant par / sont des pages de l'application.
+- « Menu > Page » indique le chemin dans le menu de gauche.
+- « ATTENTION » signale une action importante ou irréversible.
+- « À SAVOIR » signale une limite ou un comportement particulier.
+- Les sections numérotées peuvent être lues séparément.
+
+SOMMAIRE
+
+PARTIE 1 - BIEN DÉMARRER
+1. À qui s'adresse ce guide
+2. Se connecter et se déconnecter
+3. Comprendre l'écran et les menus
+4. Index des tâches courantes
+5. Les actions communes à presque toutes les pages
+
+PARTIE 2 - GÉRER LES DOSSIERS
+6. Tableau de bord
+7. Stagiaires
+8. Inscriptions
+9. Affectations
+10. Réservations
+
+PARTIE 3 - ORGANISER LA FORMATION
+11. Formations
+12. Modules
+13. Promotions
+14. Séances
+
+PARTIE 4 - FAIRE LE SUIVI PÉDAGOGIQUE
+15. Présences
+16. Évaluations
+17. Notes
+18. QCM
+19. Travaux pratiques
+20. Compétences
+21. Implication
+22. Comportement
+23. Observations
+24. Progression
+25. Plans d'amélioration
+26. Évaluations intermédiaires
+27. Journal de stage
+28. Objectifs de stage
+29. Projet final
+
+PARTIE 5 - PRODUIRE LES RÉSULTATS
+30. Évaluation finale
+31. Bulletins
+32. Documents
+33. Rapports et export
+
+PARTIE 6 - ADMINISTRATION
+34. Utilisateurs et rôles
+35. Journal d'audit
+36. Paramètres
+37. Archivage
+38. Notifications
+39. Recherche globale
+
+PARTIE 7 - ESPACE STAGIAIRE
+40. Vue d'ensemble
+41. Tableau de bord
+42. Mon profil
+43. Ma formation
+44. Notifications
+45. Présences
+46. Évaluations
+47. Notes
+48. QCM
+49. Travaux pratiques
+50. Compétences, implication, comportement et observations
+51. Progression et plans d'amélioration
+52. Journal et objectifs de stage
+53. Projet final
+54. Bulletin et documents
+55. Historique et paramètres
+
+PARTIE 8 - MODES OPÉRATOIRES COMPLETS
+56. Ouvrir une nouvelle formation
+57. Inscrire un candidat manuellement
+58. Traiter une réservation de bout en bout
+59. Faire l'appel de bout en bout
+60. Organiser un QCM de bout en bout
+61. Organiser un travail pratique de bout en bout
+62. Évaluer et publier les résultats
+63. Clôturer une formation
+64. Archiver et restaurer
+
+PARTIE 9 - AIDE
+65. Rôles et accès
+66. Problèmes fréquents
+67. Limites à connaître
+68. Bonnes pratiques
+69. Glossaire
+70. Comptes de démonstration
+
+
+================================================================================
+PARTIE 1 - BIEN DÉMARRER
+================================================================================
+
+--------------------------------------------------------------------------------
+1. À QUI S'ADRESSE CE GUIDE
+--------------------------------------------------------------------------------
+
+Ce guide est destiné :
+- au personnel administratif ;
+- aux responsables de formation et responsables pédagogiques ;
+- aux formateurs ;
+- aux maîtres de stage ;
+- aux RH et auditeurs ;
+- aux administrateurs ;
+- aux stagiaires.
+
+Chaque utilisateur ne voit que les pages autorisées par son rôle. Si une page
+citée dans ce guide n'apparaît pas dans votre menu, elle n'est probablement pas
+autorisée pour votre compte. Contactez l'administrateur si vous pensez qu'il
+s'agit d'une erreur.
+
+L'application sert à :
+- gérer les dossiers des stagiaires ;
+- gérer les formations, modules, promotions et séances ;
+- inscrire les candidats et confirmer les réservations ;
+- faire le suivi des présences ;
+- organiser les évaluations, QCM et travaux pratiques ;
+- suivre les compétences et le comportement ;
+- produire les évaluations finales, bulletins et documents ;
+- permettre au stagiaire de consulter son espace personnel.
+
+--------------------------------------------------------------------------------
+2. SE CONNECTER ET SE DÉCONNECTER
+--------------------------------------------------------------------------------
+
+2.1 Adresses utiles
+
+Accueil public : /
+Connexion : /login
+Réservation publique : /reservation
+Diagnostic technique Forge : /forge
+Espace du personnel : /app
+Espace du stagiaire : /app/mon-espace
+
+2.2 Se connecter
+
+1. Ouvrir l'application.
+2. Cliquer sur « Se connecter » ou aller sur /login.
+3. Saisir l'adresse email du compte.
+4. Saisir le mot de passe.
+5. Cliquer sur « Se connecter ».
+6. L'application ouvre la page correspondant à votre rôle.
+
+Pour un stagiaire, l'application ouvre automatiquement /app/mon-espace.
+Pour le personnel, elle ouvre /app.
+
+2.3 Se déconnecter
+
+1. Cliquer sur votre nom ou votre avatar en haut à droite.
+2. Cliquer sur « Se déconnecter ».
+
+Déconnectez-vous toujours sur un poste partagé.
+
+2.4 Si la connexion échoue
+
+Vérifier :
+- l'orthographe de l'email ;
+- le mot de passe ;
+- que le compte a bien été créé ;
+- que le clavier n'est pas en majuscules ;
+- que le compte n'a pas été supprimé.
+
+L'application ne propose pas de lien « Mot de passe oublié ». Un administrateur
+doit intervenir. Voir la section 66.
+
+2.5 Première connexion d'un stagiaire
+
+Un stagiaire reçoit généralement son compte après confirmation d'une réservation.
+L'administration lui communique :
+- son adresse email ;
+- un mot de passe temporaire de la forme SB-XXXX####.
+
+Le mot de passe temporaire est affiché au moment de la confirmation. Il faut le
+copier ou le noter avant de fermer la fenêtre.
+
+--------------------------------------------------------------------------------
+3. COMPRENDRE L'ÉCRAN ET LES MENUS
+--------------------------------------------------------------------------------
+
+3.1 Écran du personnel
+
+Le menu de gauche est organisé en groupes :
+
+Vue d'ensemble
+- Tableau de bord
+- Recherche globale
+- Notifications
+
+Dossiers
+- Stagiaires
+- Inscriptions
+- Réservations
+- Affectations
+
+Pédagogie
+- Formations
+- Modules
+- Promotions
+- Séances
+- Présences
+
+Évaluations
+- Évaluations
+- Notes
+- QCM
+- Travaux pratiques
+- Compétences
+- Implication
+- Comportement
+
+Suivi
+- Observations
+- Progression
+- Plans d'amélioration
+- Évaluations intermédiaires
+- Journal de stage
+- Objectifs de stage
+- Projet final
+
+Résultats
+- Évaluation finale
+- Bulletins
+- Documents
+- Rapports & statistiques
+
+Administration
+- Utilisateurs & rôles
+- Journal d'audit
+- Paramètres
+- Archivage
+
+3.2 Écran du stagiaire
+
+Le menu du stagiaire est organisé ainsi :
+
+Mon espace
+- Tableau de bord
+- Mon profil
+- Ma formation
+- Notifications
+
+Ma scolarité
+- Présences
+- Évaluations
+- Notes
+- QCM
+- Travaux pratiques
+- Compétences
+
+Mon suivi
+- Implication
+- Comportement
+- Observations
+- Progression
+- Plans d'amélioration
+- Journal de stage
+- Objectifs de stage
+- Projet final
+
+Mes résultats
+- Bulletin
+- Documents
+- Historique
+
+Mon compte
+- Paramètres
+
+3.3 Barre supérieure
+
+En haut à droite :
+- icône de cloche : notifications ;
+- icône lune/soleil : thème clair ou sombre ;
+- nom et avatar : profil et déconnexion.
+
+3.4 Version mobile
+
+Sur téléphone ou tablette, le menu est accessible par l'icône de menu en haut à
+gauche. Les tableaux larges se transforment en cartes.
+
+3.5 Page « Accès refusé »
+
+Si vous ouvrez une adresse non autorisée, la page « Accès refusé » s'affiche.
+Revenez au menu ou demandez un changement de rôle à l'administrateur.
+
+--------------------------------------------------------------------------------
+4. INDEX DES TÂCHES COURANTES
+--------------------------------------------------------------------------------
+
+Cette section est le raccourci principal du guide. Cherchez votre besoin, puis
+ouvrez la page indiquée.
+
+CRÉER ET GÉRER LES DOSSIERS
+- Créer un stagiaire : /app/stagiaires - section 7
+- Modifier un stagiaire : /app/stagiaires - section 7
+- Voir le dossier complet d'un stagiaire : /app/stagiaires puis icône dossier -
+  section 7
+- Inscrire un stagiaire : /app/inscriptions - section 8
+- Affecter un formateur ou un maître de stage : /app/affectations - section 9
+- Voir les places disponibles : /app/reservations - section 10
+- Confirmer une réservation : /app/reservations - section 10
+- Annuler une réservation en attente : /app/reservations - section 10
+
+ORGANISER LA FORMATION
+- Créer une formation : /app/formations - section 11
+- Créer un module : /app/modules - section 12
+- Créer une promotion : /app/promotions - section 13
+- Planifier une séance : /app/seances - section 14
+
+SUIVI QUOTIDIEN
+- Faire l'appel : /app/presences - section 15
+- Voir les présences d'un stagiaire : dossier stagiaire, onglet Présences -
+  section 7
+- Voir les taux de présence : /app/progression ou /app/rapports - sections 24 et 33
+- Créer une évaluation : /app/evaluations - section 16
+- Saisir les notes : /app/notes - section 17
+- Valider les notes : /app/notes - section 17
+- Rendre les notes visibles au stagiaire : voir la limite de publication,
+  section 17
+- Créer et organiser un QCM : /app/qcm - section 18
+- Faire passer un QCM : /app/qcm puis « Lancer une passation » - section 18
+- Voir les résultats d'un QCM : /app/qcm, onglet Passations - section 18
+- Créer un travail pratique : /app/travaux - section 19
+- Corriger un travail pratique : /app/travaux, onglet Soumissions - section 19
+- Évaluer une compétence : /app/competences - section 20
+- Évaluer l'implication : /app/implication - section 21
+- Évaluer le comportement : /app/comportement - section 22
+- Ajouter une observation : /app/observations - section 23
+- Consulter la progression : /app/progression - section 24
+- Créer un plan d'amélioration : /app/plans - section 25
+- Enregistrer une évaluation intermédiaire : /app/evaluations-intermediaires -
+  section 26
+- Valider le journal de stage : /app/journal - section 27
+- Définir les objectifs de stage : /app/objectifs - section 28
+- Suivre le projet final : /app/projet-final - section 29
+
+RÉSULTATS
+- Calculer et enregistrer l'évaluation finale : /app/evaluation-finale -
+  section 30
+- Générer un bulletin : /app/bulletins - section 31
+- Publier un bulletin : /app/bulletins - section 31
+- Imprimer un bulletin : /app/bulletins - section 31
+- Générer une attestation ou un certificat : /app/documents - section 32
+- Imprimer un document : /app/documents - section 32
+- Voir les statistiques : /app/rapports - section 33
+- Exporter les stagiaires en CSV : /app/rapports - section 33
+
+ADMINISTRATION
+- Créer un compte utilisateur : /app/utilisateurs - section 34
+- Modifier un rôle : /app/utilisateurs - section 34
+- Consulter les traces d'audit : /app/audit - section 35
+- Modifier un paramètre : /app/parametres - section 36
+- Restaurer un élément archivé : /app/archivage - section 37
+- Envoyer une notification interne : /app/notifications - section 38
+- Chercher un stagiaire, une formation ou un module : /app/recherche -
+  section 39
+
+ESPACE STAGIAIRE
+- Voir son tableau de bord : /app/mon-espace - section 41
+- Modifier son téléphone ou son adresse : /app/mon-espace/profil - section 42
+- Voir sa formation et ses modules : /app/mon-espace/formation - section 43
+- Lire ses notifications : /app/mon-espace/notifications - section 44
+- Voir ses présences et signaler une erreur : /app/mon-espace/presences -
+  section 45
+- Voir ses évaluations : /app/mon-espace/evaluations - section 46
+- Voir ses notes publiées : /app/mon-espace/notes - section 47
+- Passer un QCM : /app/mon-espace/qcm - section 48
+- Déposer un travail pratique : /app/mon-espace/travaux - section 49
+- Voir ses compétences : /app/mon-espace/competences - section 50
+- Voir sa progression : /app/mon-espace/progression - section 51
+- Remplir son journal de stage : /app/mon-espace/journal - section 52
+- Voir son bulletin : /app/mon-espace/bulletin - section 54
+- Télécharger ou imprimer un document : /app/mon-espace/documents - section 54
+- Changer le thème : icône lune/soleil ou /app/mon-espace/parametres - section 55
+
+--------------------------------------------------------------------------------
+5. LES ACTIONS COMMUNES À PRESQUE TOUTES LES PAGES
+--------------------------------------------------------------------------------
+
+5.1 Ouvrir une page
+
+Utiliser le menu de gauche, ou saisir directement l'adresse dans le navigateur
+si vous connaissez le chemin.
+
+5.2 Rechercher dans une liste
+
+La plupart des pages proposent un champ « Rechercher... ».
+- La recherche porte sur les lignes déjà chargées.
+- Elle ne fait pas une recherche dans toute la base.
+- Pour une recherche transversale, utiliser « Recherche globale ».
+
+5.3 Créer un enregistrement
+
+Le fonctionnement standard est :
+1. Ouvrir la page.
+2. Cliquer sur le bouton de création, par exemple « Nouveau stagiaire »,
+   « Nouvelle inscription » ou « Nouvelle évaluation ».
+3. Remplir le formulaire.
+4. Les champs marqués d'un astérisque ou signalés « requis » sont obligatoires.
+5. Cliquer sur « Créer ».
+6. La liste se met à jour.
+
+Sur certaines pages, le bouton porte un nom différent :
+- « Créer la question »
+- « Créer le compte »
+- « Créer le plan »
+- « Enregistrer l'évaluation »
+- « Déposer »
+
+5.4 Modifier un enregistrement
+
+1. Repérer la ligne.
+2. Cliquer sur l'icône crayon ou sur « Modifier ».
+3. Modifier les champs.
+4. Cliquer sur « Enregistrer ».
+
+5.5 Supprimer un enregistrement
+
+1. Repérer la ligne.
+2. Cliquer sur l'icône corbeille ou sur « Supprimer ».
+3. Confirmer dans la fenêtre de sécurité.
+
+ATTENTION : la suppression est directe. Il n'y a pas de corbeille et pas de
+bouton « Annuler ». Pour conserver une donnée, préférez un statut « Archivé »
+ou « Inactif » quand il existe.
+
+5.6 Annuler une saisie
+
+Dans une fenêtre de création ou de modification, cliquer sur « Annuler ».
+Les données saisies dans la fenêtre sont perdues.
+
+5.7 Rafraîchir les données
+
+- Recharger la page avec le navigateur.
+- Ou utiliser le bouton « Actualiser » quand il existe.
+
+Certaines données de référence sont mises en cache pendant environ une minute.
+Un élément nouvellement créé peut donc mettre un peu de temps à apparaître dans
+un menu déroulant.
+
+5.8 Fermer une fenêtre
+
+Cliquer sur « Annuler », sur la croix, ou en dehors de la fenêtre.
+
+5.9 Exporter et imprimer
+
+- Export CSV : page Rapports & statistiques.
+- Impression : boutons « Imprimer » dans Bulletins et Documents.
+- Pour obtenir un PDF : cliquer sur « Imprimer », puis choisir
+  « Enregistrer au format PDF » dans la fenêtre d'impression du navigateur.
+
+5.10 Limite des listes
+
+Les listes affichent au maximum 200 lignes par table. Il n'y a pas de pagination.
+Si une donnée récente n'apparaît pas :
+- recharger la page ;
+- utiliser la recherche de la page ;
+- vérifier que la donnée a bien été enregistrée ;
+- contacter l'administrateur si le volume est important.
+
+
+================================================================================
+PARTIE 2 - GÉRER LES DOSSIERS
+================================================================================
+
+--------------------------------------------------------------------------------
+6. TABLEAU DE BORD
+--------------------------------------------------------------------------------
+
+Page : /app
+Menu : Vue d'ensemble > Tableau de bord
+
+6.1 À quoi sert la page
+
+Le tableau de bord donne une vue rapide :
+- nombre de stagiaires actifs ;
+- moyenne globale ;
+- taux de présence ;
+- taux de réussite ;
+- alertes ;
+- stagiaires à risque ;
+- derniers stagiaires ;
+- prochaines séances ;
+- prochaines évaluations ;
+- accès rapides.
+
+6.2 Comment l'utiliser
+
+1. Ouvrir /app.
+2. Lire les cartes du haut.
+3. Consulter le bloc « Stagiaires à risque ».
+4. Utiliser les accès rapides pour ouvrir une page fréquente.
+5. Cliquer sur un stagiaire pour ouvrir son dossier.
+
+6.3 À savoir
+
+- Les statistiques sont calculées sur les données chargées, avec un plafond de
+  200 lignes par table. Elles peuvent donc être partielles sur de gros volumes.
+- Le tableau de bord ne permet pas de modifier directement les données.
+- Un stagiaire est considéré « à risque » si sa moyenne est inférieure à 10/20
+  ou si son taux de présence est inférieur à 80 %.
+
+--------------------------------------------------------------------------------
+7. STAGIAIRES
+--------------------------------------------------------------------------------
+
+Page : /app/stagiaires
+Menu : Dossiers > Stagiaires
+
+7.1 À quoi sert la page
+
+Elle sert à :
+- créer un dossier stagiaire ;
+- modifier ses informations ;
+- changer son statut ;
+- supprimer un dossier ;
+- ouvrir le dossier complet.
+
+7.2 Créer un stagiaire
+
+1. Ouvrir /app/stagiaires.
+2. Cliquer sur « Nouveau stagiaire ».
+3. Remplir les champs.
+
+Champs obligatoires :
+- Matricule ;
+- Prénom ;
+- Nom ;
+- Statut.
+
+Champs utiles :
+- Postnom ;
+- Sexe ;
+- Date de naissance ;
+- Lieu de naissance ;
+- Email ;
+- Téléphone ;
+- Adresse ;
+- Établissement d'origine ;
+- Niveau d'études ;
+- Diplôme ;
+- Domaine ;
+- Spécialité ;
+- Contact d'urgence ;
+- Téléphone d'urgence.
+
+4. Choisir le statut :
+   - Candidat ;
+   - Admis ;
+   - Actif ;
+   - Terminé ;
+   - Archivé.
+5. Cliquer sur « Créer ».
+
+Exemple de matricule : SB-2026-001.
+
+À SAVOIR : le matricule et l'email doivent être uniques. L'application ne fait
+pas de vérification préalable, mais un doublon est refusé à l'enregistrement.
+Utilisez un matricule et un email différents pour chaque stagiaire.
+
+7.3 Modifier un stagiaire
+
+1. Repérer la ligne.
+2. Cliquer sur le crayon.
+3. Modifier les informations.
+4. Cliquer sur « Enregistrer ».
+
+7.4 Ouvrir le dossier complet
+
+1. Repérer la ligne.
+2. Cliquer sur l'icône dossier, ou sur « Voir le dossier complet ».
+3. La page /app/stagiaires/:id s'ouvre.
+
+Le dossier contient :
+- identité et coordonnées ;
+- moyenne des notes ;
+- taux de présence ;
+- compétences acquises ;
+- moyenne finale ;
+- inscriptions ;
+- onglets Aperçu, Notes, Présences, Compétences et Suivi pédagogique ;
+- objectifs, journal, bulletins, observations et plans.
+
+7.5 Consulter les présences d'un stagiaire
+
+1. Ouvrir /app/stagiaires.
+2. Ouvrir le dossier du stagiaire.
+3. Cliquer sur l'onglet « Présences ».
+4. Lire les séances, les statuts et les justifications.
+
+Autres endroits pour voir les présences :
+- /app/progression après avoir choisi le stagiaire ;
+- /app/rapports pour les statistiques globales ;
+- /app/mon-espace/presences pour le stagiaire lui-même.
+
+7.6 Changer le statut d'un stagiaire
+
+1. Modifier le stagiaire.
+2. Changer le champ « Statut ».
+3. Enregistrer.
+
+Signification des statuts :
+- Candidat : dossier créé, pas encore admis.
+- Admis : candidature acceptée, formation pas encore commencée.
+- Actif : stagiaire en formation.
+- Terminé : formation achevée.
+- Archivé : dossier conservé mais sorti des listes actives.
+
+7.7 Supprimer un stagiaire
+
+1. Cliquer sur la corbeille.
+2. Confirmer.
+
+ATTENTION : la suppression ne supprime pas automatiquement les notes, présences,
+inscriptions et autres données liées. Elle peut rendre des données orphelines.
+Préférez le statut « Archivé ».
+
+7.8 À savoir
+
+- Un dossier archivé ne peut pas être utilisé pour confirmer une réservation.
+- Le dossier détail est en lecture seule.
+- Les notes, présences et observations y sont visibles pour tout rôle ayant
+  accès à la page Stagiaires, même si ce rôle n'a pas les pages Notes ou
+  Observations.
+
+--------------------------------------------------------------------------------
+8. INSCRIPTIONS
+--------------------------------------------------------------------------------
+
+Page : /app/inscriptions
+Menu : Dossiers > Inscriptions
+
+8.1 À quoi sert la page
+
+Elle relie un stagiaire à une formation et, si besoin, à une promotion.
+
+8.2 Inscrire un stagiaire
+
+1. Ouvrir /app/inscriptions.
+2. Cliquer sur « Nouvelle inscription ».
+3. Choisir le stagiaire.
+4. Choisir la formation.
+5. Choisir la promotion si nécessaire.
+6. Renseigner la date de début et la date de fin.
+7. Choisir le statut :
+   - En attente ;
+   - Validée ;
+   - Annulée ;
+   - Terminée.
+8. Cliquer sur « Créer ».
+
+Pour une inscription directe, choisir directement « Validée » si le dossier est
+complet.
+
+8.3 Modifier une inscription
+
+1. Cliquer sur le crayon.
+2. Modifier les dates, la promotion ou le statut.
+3. Enregistrer.
+
+8.4 Changer le statut
+
+- En attente : demande non finalisée.
+- Validée : inscription acceptée.
+- Annulée : inscription abandonnée.
+- Terminée : parcours achevé.
+
+Les inscriptions En attente, Validée et Terminée comptent dans les places
+occupées pour les réservations.
+
+8.5 À savoir
+
+- L'application ne bloque pas les doublons. Vérifiez qu'il n'existe pas déjà une
+  inscription pour le même stagiaire, la même formation et la même promotion.
+- La capacité de la promotion n'est pas contrôlée lors d'une inscription
+  manuelle.
+- Une inscription ne crée pas de compte utilisateur.
+- Une inscription ne crée pas d'affectation.
+
+--------------------------------------------------------------------------------
+9. AFFECTATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/affectations
+Menu : Dossiers > Affectations
+
+9.1 À quoi sert la page
+
+Elle indique :
+- le service ou département du stagiaire ;
+- son formateur référent ;
+- son maître de stage ;
+- son groupe.
+
+9.2 Créer une affectation
+
+1. Ouvrir /app/affectations.
+2. Cliquer sur « Nouvelle affectation ».
+3. Choisir le stagiaire.
+4. Choisir éventuellement la formation et la promotion.
+5. Saisir le service ou département.
+6. Choisir le formateur référent.
+7. Choisir le maître de stage.
+8. Saisir le groupe.
+9. Cliquer sur « Créer ».
+
+9.3 Modifier ou supprimer
+
+Utiliser le crayon ou la corbeille comme sur les autres pages.
+
+9.4 À savoir
+
+- Seul le stagiaire est obligatoire.
+- Une affectation ne crée pas d'inscription.
+- L'application ne bloque pas les doublons.
+- Ne confondez pas :
+  - le formateur du module, choisi dans /app/modules ;
+  - le formateur de la séance, choisi dans /app/seances ;
+  - le formateur référent, choisi dans /app/affectations.
+  Ces trois champs sont indépendants.
+
+--------------------------------------------------------------------------------
+10. RÉSERVATIONS
+--------------------------------------------------------------------------------
+
+Pages :
+- Formulaire public : /reservation
+- Gestion du personnel : /app/reservations
+
+Menu : Dossiers > Réservations
+
+10.1 Principe
+
+Un candidat réserve une place en ligne. La réservation est d'abord « En attente ».
+L'administration vérifie la demande, puis confirme. La confirmation crée ou
+réutilise le dossier stagiaire, l'inscription et le compte du stagiaire.
+
+10.2 Le candidat réserve une place
+
+1. Ouvrir /reservation.
+2. Choisir la formation.
+3. Choisir la promotion ouverte.
+4. Saisir :
+   - Prénom (obligatoire) ;
+   - Nom (obligatoire) ;
+   - Postnom (facultatif) ;
+   - Sexe (facultatif) ;
+   - Date de naissance (facultative) ;
+   - Téléphone (obligatoire) ;
+   - Email (obligatoire).
+5. Cliquer sur « Réserver ma place ».
+6. Noter la référence affichée, par exemple RES-2026-ABC123.
+7. Se présenter à l'administration avec la référence et une pièce d'identité.
+
+À SAVOIR :
+- Aucun paiement n'est effectué en ligne.
+- La réservation ne crée pas encore de compte.
+- La réservation reste en attente jusqu'à la confirmation.
+- Les places libres tiennent compte des inscriptions et des autres réservations
+  en attente.
+- Le système refuse une réservation si l'email possède déjà un dossier ou un
+  compte.
+- Le système refuse une deuxième réservation pour la même formation et la même
+  promotion avec le même email.
+
+10.3 L'administration consulte les réservations
+
+1. Ouvrir /app/reservations.
+2. Lire les cartes de disponibilité :
+   - « Illimité » ;
+   - « Complet » ;
+   - « N places libres ».
+3. Utiliser le champ de recherche pour retrouver une référence, un nom ou un
+   email.
+4. Filtrer par statut :
+   - Tous les statuts ;
+   - En attente ;
+   - Confirmée ;
+   - Annulée.
+5. Cliquer sur « Voir le détail » pour lire la demande.
+
+10.4 Confirmer une réservation
+
+1. Vérifier que la réservation est « En attente ».
+2. Cliquer sur « Confirmer ».
+3. Lire le récapitulatif.
+4. Vérifier la disponibilité.
+5. Confirmer l'opération.
+6. Lire la fenêtre « Réservation confirmée ».
+7. Copier ou noter :
+   - le matricule créé ou réutilisé ;
+   - le type de compte ;
+   - le mot de passe temporaire éventuel ;
+   - les liens vers le dossier, l'inscription et le compte.
+8. Communiquer les identifiants au candidat.
+
+Ce que le système fait :
+- contrôle la capacité ;
+- réutilise un dossier existant par email s'il n'est pas archivé ;
+- crée un dossier avec le statut « Admis » si nécessaire ;
+- réutilise une inscription existante non annulée ;
+- crée une inscription « Validée » si nécessaire ;
+- réutilise un compte existant si le rôle et le dossier correspondent ;
+- crée un compte stagiaire avec un mot de passe temporaire si nécessaire ;
+- passe la réservation à « Confirmée ».
+
+Si une étape échoue, le système tente de supprimer les éléments créés.
+
+10.5 Annuler une réservation
+
+1. Repérer une réservation « En attente ».
+2. Cliquer sur « Annuler ».
+3. Confirmer.
+
+Une réservation confirmée ne peut plus être annulée depuis cette page. Une
+réservation annulée libère la place en attente.
+
+10.6 Erreurs fréquentes
+
+« Cette promotion est complète »
+- La capacité est atteinte en tenant compte des inscriptions actives et des
+  réservations en attente.
+- Annuler une réservation en attente ou libérer une inscription.
+
+« Une réservation existe déjà pour cette formation et cette promotion »
+- Même email, même formation, même promotion, avec une réservation en attente ou
+  confirmée.
+
+« Un dossier ou un compte existe déjà avec cet email »
+- Utiliser la fiche stagiaire existante.
+- Ne pas refaire une réservation publique.
+
+« Le dossier stagiaire associé à cet email est archivé »
+- Restaurer le dossier dans /app/archivage ou traiter le cas manuellement.
+
+« La table reservations n'existe pas encore »
+- L'administrateur doit installer la table des réservations. Contacter le
+  support technique.
+
+10.7 À savoir
+
+- La page /app/reservations ne permet pas de créer une réservation manuellement.
+- Pour inscrire un candidat sans réservation, utiliser /app/stagiaires puis
+  /app/inscriptions.
+- La capacité est contrôlée pour les réservations, pas pour les inscriptions
+  manuelles.
+- La confirmation peut réutiliser un dossier ou un compte existant.
+- Le mot de passe temporaire n'est pas toujours réaffiché après fermeture.
+
+
+================================================================================
+PARTIE 3 - ORGANISER LA FORMATION
+================================================================================
+
+--------------------------------------------------------------------------------
+11. FORMATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/formations
+Menu : Pédagogie > Formations
+
+11.1 À quoi sert la page
+
+Définir les programmes de formation.
+
+11.2 Créer une formation
+
+1. Ouvrir /app/formations.
+2. Cliquer sur « Nouvelle formation ».
+3. Renseigner :
+   - Nom de la formation (obligatoire) ;
+   - Domaine ;
+   - Niveau ;
+   - Durée en mois ;
+   - Statut ;
+   - Description ;
+   - Objectifs pédagogiques ;
+   - Programme détaillé.
+4. Choisir le statut :
+   - Active ;
+   - Inactive ;
+   - Archivée.
+5. Cliquer sur « Créer ».
+
+11.3 Utilisation des statuts
+
+- Active : formation visible et utilisable, notamment pour les réservations.
+- Inactive : formation conservée mais fermée aux réservations.
+- Archivée : formation retirée de l'exploitation courante.
+
+11.4 À savoir
+
+- L'application ne bloque pas deux formations portant le même nom.
+- La suppression est directe.
+- Ne supprimez pas une formation déjà utilisée par des modules, promotions,
+  inscriptions ou évaluations.
+
+--------------------------------------------------------------------------------
+12. MODULES
+--------------------------------------------------------------------------------
+
+Page : /app/modules
+Menu : Pédagogie > Modules
+
+12.1 À quoi sert la page
+
+Découper une formation en modules.
+
+12.2 Créer un module
+
+1. Ouvrir /app/modules.
+2. Cliquer sur « Nouveau module ».
+3. Choisir la formation.
+4. Choisir le formateur du module.
+5. Saisir :
+   - Nom du module (obligatoire) ;
+   - Coefficient ;
+   - Volume horaire ;
+   - Seuil de réussite sur 20 ;
+   - Ordre ;
+   - Statut ;
+   - Description ;
+   - Objectifs ;
+   - Compétences visées ;
+   - Types d'évaluation.
+6. Cliquer sur « Créer ».
+
+12.3 Compétences et types d'évaluation
+
+Les compétences visées et les types d'évaluation se saisissent en texte, séparés
+par des virgules.
+
+Exemple :
+Communication, Travail en équipe, Analyse
+
+Exemple :
+interrogation, devoir, examen
+
+12.4 À savoir
+
+- Le coefficient du module est affiché, mais il n'est pas appliqué dans les
+  moyennes actuelles.
+- Le seuil de réussite sert à afficher si un module est validé.
+- Le formateur du module ne remplace pas le formateur de séance ni le formateur
+  référent.
+- La suppression est directe. Ne supprimez pas un module déjà utilisé.
+
+--------------------------------------------------------------------------------
+13. PROMOTIONS
+--------------------------------------------------------------------------------
+
+Page : /app/promotions
+Menu : Pédagogie > Promotions
+
+13.1 À quoi sert la page
+
+Gérer les groupes datés d'une formation et leur capacité.
+
+13.2 Créer une promotion
+
+1. Ouvrir /app/promotions.
+2. Cliquer sur « Nouvelle promotion ».
+3. Choisir la formation.
+4. Saisir le code de promotion (obligatoire), par exemple PROM-2026-A.
+5. Renseigner le libellé.
+6. Choisir la date de début et la date de fin.
+7. Saisir la capacité.
+8. Choisir le statut :
+   - Planifiée ;
+   - Active ;
+   - Clôturée ;
+   - Archivée.
+9. Cliquer sur « Créer ».
+
+13.3 Statuts et réservations
+
+Seules les promotions « Planifiée » et « Active » sont ouvertes aux réservations.
+La formation doit également être « Active ».
+
+13.4 À savoir
+
+- Le code de promotion doit être unique.
+- Les dates servent de valeurs par défaut à l'inscription issue d'une
+  réservation.
+- La capacité est contrôlée pour les réservations, pas pour les inscriptions
+  manuelles.
+- L'application ne vérifie pas que la date de fin est après la date de début.
+- Une promotion archivée peut être restaurée en « Planifiée ».
+
+--------------------------------------------------------------------------------
+14. SÉANCES
+--------------------------------------------------------------------------------
+
+Page : /app/seances
+Menu : Pédagogie > Séances
+
+14.1 À quoi sert la page
+
+Planifier les cours, ateliers ou rencontres.
+
+14.2 Créer une séance
+
+1. Ouvrir /app/seances.
+2. Cliquer sur « Nouvelle séance ».
+3. Choisir le module (obligatoire).
+4. Choisir la promotion.
+5. Renseigner l'intitulé de la séance.
+6. Choisir la date (obligatoire).
+7. Renseigner l'heure de début et l'heure de fin.
+8. Saisir la salle.
+9. Choisir le formateur.
+10. Choisir le statut :
+    - Planifiée ;
+    - En cours ;
+    - Terminée ;
+    - Annulée.
+11. Cliquer sur « Créer ».
+
+14.3 Lien avec les présences
+
+La promotion choisie détermine la liste des stagiaires éligibles à la feuille de
+présence.
+
+ATTENTION : si aucune promotion n'est choisie, tous les stagiaires seront
+proposés lors de l'appel. Choisissez toujours la promotion quand la séance
+concerne un groupe précis.
+
+14.4 À savoir
+
+- L'application ne détecte pas les conflits de salle ou de formateur.
+- L'application ne vérifie pas que l'heure de fin est après l'heure de début.
+- Une séance annulée reste accessible dans la page Présences. Évitez d'y saisir
+  des présences.
+- Une séance sans promotion reste utilisable, mais la liste d'appel est globale.
+
+
+================================================================================
+PARTIE 4 - FAIRE LE SUIVI PÉDAGOGIQUE
+================================================================================
+
+--------------------------------------------------------------------------------
+15. PRÉSENCES
+--------------------------------------------------------------------------------
+
+Page : /app/presences
+Menu : Pédagogie > Présences
+
+15.1 À quoi sert la page
+
+Saisir la feuille de présence d'une séance.
+
+15.2 Faire l'appel
+
+1. Ouvrir /app/presences.
+2. Dans « Séance à renseigner », choisir la séance.
+3. Vérifier le module, la salle et le statut de la séance.
+4. Pour gagner du temps, cliquer sur :
+   - « Tous présents » ;
+   - ou « Tous absents ».
+5. Corriger individuellement chaque stagiaire.
+6. Ajouter une justification si nécessaire.
+7. Cliquer sur « Enregistrer la feuille ».
+8. Confirmer.
+
+15.3 Statuts disponibles
+
+- Présent ;
+- Absent ;
+- En retard ;
+- Absence justifiée ;
+- Absence non justifiée ;
+- Sortie autorisée.
+
+15.4 Comment les présences sont comptées
+
+Sont considérés présents :
+- Présent ;
+- En retard ;
+- Sortie autorisée.
+
+Sont considérés absents :
+- Absent ;
+- Absence justifiée ;
+- Absence non justifiée.
+
+Le taux de présence = présents / effectif total.
+
+15.5 Voir les présences d'un stagiaire
+
+1. Ouvrir /app/stagiaires.
+2. Ouvrir le dossier du stagiaire.
+3. Cliquer sur l'onglet « Présences ».
+
+Ou :
+1. Ouvrir /app/progression.
+2. Choisir le stagiaire.
+3. Lire le taux et le détail.
+
+15.6 Corriger une erreur
+
+1. Revenir sur /app/presences.
+2. Choisir la même séance.
+3. Modifier le statut ou la justification.
+4. Enregistrer à nouveau la feuille.
+
+Un stagiaire peut aussi signaler une erreur depuis son espace. Cela crée une
+notification, mais ne modifie pas la feuille officielle.
+
+15.7 À savoir
+
+- L'enregistrement se fait stagiaire par stagiaire. En cas d'erreur réseau, une
+  partie de la feuille peut être enregistrée et l'autre non.
+- L'application ne supprime pas les présences d'un stagiaire qui ne serait plus
+  éligible.
+- Il n'y a pas de contrôle de doublon intégral.
+- La liste est limitée à 200 lignes.
+
+--------------------------------------------------------------------------------
+16. ÉVALUATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/evaluations
+Menu : Évaluations > Évaluations
+
+16.1 À quoi sert la page
+
+Créer et planifier les activités évaluées :
+- interrogation ;
+- devoir ;
+- QCM ;
+- examen ;
+- travail pratique ;
+- projet ;
+- présentation ;
+- évaluation orale ;
+- évaluation de compétence ;
+- évaluation comportementale ;
+- évaluation finale.
+
+16.2 Créer une évaluation
+
+1. Ouvrir /app/evaluations.
+2. Cliquer sur « Nouvelle évaluation ».
+3. Renseigner :
+   - Titre (obligatoire) ;
+   - Formation ;
+   - Module ;
+   - Formateur ;
+   - Type (obligatoire) ;
+   - Date (obligatoire) ;
+   - Durée en minutes ;
+   - Note maximale (20 par défaut) ;
+   - Coefficient ;
+   - Poids en pourcentage ;
+   - Période ;
+   - Statut ;
+   - « Cette évaluation est un QCM » ;
+   - « Compte dans la moyenne » ;
+   - Consignes.
+4. Cliquer sur « Créer ».
+
+16.3 Choisir le statut
+
+- Brouillon ;
+- Programmée ;
+- En cours ;
+- Terminée ;
+- Corrigée ;
+- Soumise ;
+- Validée ;
+- Publiée ;
+- Archivée.
+
+Les évaluations en brouillon ou archivées ne sont pas visibles comme activités
+ouvertes pour le stagiaire.
+
+16.4 Pour un QCM
+
+Cocher obligatoirement « Cette évaluation est un QCM ». Sans cette case, le QCM
+n'apparaîtra pas dans la page /app/qcm.
+
+Choisir également le type « QCM ».
+
+16.5 Ce que la page ne fait pas
+
+- Elle ne crée pas de note.
+- Elle ne crée pas de QCM.
+- Elle ne crée pas de travail pratique.
+- Elle n'envoie pas de notification.
+- Elle ne calcule pas de moyenne.
+- Elle n'applique pas le coefficient ni le poids dans les moyennes.
+
+--------------------------------------------------------------------------------
+17. NOTES
+--------------------------------------------------------------------------------
+
+Page : /app/notes
+Menu : Évaluations > Notes
+
+17.1 À quoi sert la page
+
+Saisir les notes d'une évaluation pour les stagiaires concernés.
+
+17.2 Saisir les notes
+
+1. Ouvrir /app/notes.
+2. Choisir l'évaluation dans la liste.
+3. Le tableau affiche les stagiaires éligibles.
+4. Saisir une note pour chaque stagiaire.
+5. Ajouter un commentaire si nécessaire.
+6. Cliquer sur :
+   - « Enregistrer » pour garder les notes en statut Saisie ;
+   - ou « Enregistrer et valider » pour passer les notes en Validée.
+7. Confirmer l'enregistrement.
+
+17.3 Règles de saisie
+
+- La note se saisit sur la note maximale de l'évaluation.
+- Une note vide n'est pas enregistrée.
+- Si un stagiaire doit avoir 0, saisir explicitement 0.
+- La note maximale est reprise de l'évaluation.
+- Le coefficient est copié sur la note, mais il n'est pas utilisé dans les
+  moyennes.
+- Les lignes vides sont ignorées.
+
+17.4 Statuts des notes
+
+- Saisie ;
+- Soumise ;
+- Validée ;
+- Publiée.
+
+17.5 IMPORTANT : publication des notes
+
+La page Notes propose « Enregistrer » et « Enregistrer et valider ».
+Elle ne propose pas de bouton « Publier ».
+
+Dans l'état actuel de l'application, le statut « Publiée » doit être appliqué par
+l'administrateur dans l'outil d'administration Forge. Tant qu'une note n'est pas
+au statut « Publiée », elle n'apparaît pas dans l'espace du stagiaire.
+
+Le personnel, lui, voit toutes les notes, quel que soit leur statut.
+
+17.6 Voir les notes d'un stagiaire
+
+- /app/stagiaires > dossier > onglet Notes ;
+- /app/progression ;
+- /app/rapports ;
+- /app/evaluation-finale ;
+- /app/bulletins.
+
+17.7 À savoir
+
+- Les coefficients des notes ne sont pas appliqués.
+- Les moyennes sont des moyennes simples.
+- La page ne génère ni bulletin, ni document, ni notification.
+- Une note validée n'est pas automatiquement visible par le stagiaire.
+- Les listes sont limitées à 200 lignes.
+
+--------------------------------------------------------------------------------
+18. QCM
+--------------------------------------------------------------------------------
+
+Page : /app/qcm
+Menu : Évaluations > QCM
+
+18.1 À quoi sert la page
+
+- construire un QCM ;
+- ajouter des questions ;
+- lancer une passation ;
+- consulter les résultats.
+
+18.2 Avant de commencer
+
+Il faut d'abord créer une évaluation dans /app/evaluations :
+- type « QCM » ;
+- cocher « Cette évaluation est un QCM » ;
+- choisir une formation et un module ;
+- choisir une date ;
+- choisir un statut autre que brouillon pour une utilisation par les stagiaires.
+
+18.3 Ajouter des questions
+
+1. Ouvrir /app/qcm.
+2. Choisir le questionnaire.
+3. Rester sur l'onglet « Questions ».
+4. Cliquer sur « Ajouter une question ».
+5. Renseigner :
+   - Question (obligatoire) ;
+   - Type (obligatoire) ;
+   - Points (minimum 0,5) ;
+   - Ordre ;
+   - Options ;
+   - Réponse correcte (obligatoire).
+6. Cliquer sur « Créer la question ».
+
+18.4 Types de questions
+
+- Choix unique ;
+- Choix multiple ;
+- Vrai / Faux ;
+- Réponse courte ;
+- Association.
+
+18.5 Saisie des options et des réponses
+
+Options :
+- une option par ligne ;
+- pour Vrai/Faux, laisser vide ou utiliser Vrai et Faux.
+
+Réponse correcte :
+- saisir exactement le texte de la bonne option ;
+- pour un choix multiple, séparer les réponses par des virgules ;
+- la comparaison ignore les majuscules et les espaces autour.
+
+Exemple choix multiple :
+Paris, Lyon
+
+18.6 Points et correction
+
+- La note maximale du QCM est la somme des points des questions.
+- Une bonne réponse rapporte tous les points de la question.
+- Une question sans réponse rapporte 0.
+- Un choix multiple doit correspondre exactement : pas de demi-point.
+- Le QCM est réussi à partir de 50 %.
+- Le type « Association » n'a pas de correction spécifique et se comporte comme
+  une réponse simple. Évitez ce type pour un vrai exercice d'association.
+
+18.7 Lancer une passation
+
+1. Choisir le questionnaire.
+2. Cliquer sur « Lancer une passation ».
+3. Choisir le stagiaire.
+4. Répondre aux questions.
+5. Cliquer sur « Soumettre le QCM ».
+6. Confirmer.
+
+La correction est automatique et une tentative est enregistrée.
+
+18.8 Consulter les résultats
+
+1. Ouvrir /app/qcm.
+2. Choisir le questionnaire.
+3. Cliquer sur l'onglet « Passations ».
+4. Lire :
+   - le stagiaire ;
+   - la date ;
+   - le score ;
+   - le pourcentage ;
+   - le statut ;
+   - le résultat réussi ou échoué.
+5. La moyenne affichée est une moyenne de points, pas une moyenne sur 20.
+
+18.9 Ce que le QCM ne fait pas
+
+- Il ne crée pas de note dans /app/notes.
+- Il ne crée pas de bulletin.
+- Il n'envoie pas de notification.
+- Il ne limite pas le nombre de tentatives.
+- Il ne contrôle pas de fenêtre de disponibilité.
+- Il n'empêche pas un stagiaire de repasser le QCM.
+
+18.10 Pour intégrer le QCM dans les résultats
+
+Deux possibilités :
+1. Saisir manuellement une note dans /app/notes.
+2. Laisser le QCM alimenter le critère QCM de l'évaluation finale.
+
+L'évaluation finale reprend automatiquement les tentatives corrigées.
+
+18.11 À savoir
+
+- Les réponses correctes sont présentes dans le navigateur.
+- Pour un examen sensible, faites passer le QCM sous surveillance.
+- La page charge au maximum 200 questions et 200 tentatives.
+- Le numéro de tentative dépend des tentatives déjà chargées.
+
+--------------------------------------------------------------------------------
+19. TRAVAUX PRATIQUES
+--------------------------------------------------------------------------------
+
+Page : /app/travaux
+Menu : Évaluations > Travaux pratiques
+
+19.1 À quoi sert la page
+
+- créer un travail pratique ;
+- publier les consignes ;
+- consulter les dépôts ;
+- corriger les soumissions.
+
+19.2 Créer un travail pratique
+
+1. Ouvrir /app/travaux.
+2. Rester sur l'onglet « Travaux pratiques ».
+3. Cliquer sur « Nouveau travail pratique ».
+4. Renseigner :
+   - Titre (obligatoire) ;
+   - Module ;
+   - Formateur ;
+   - Échéance ;
+   - Note maximale ;
+   - Coefficient ;
+   - Statut ;
+   - Consignes ;
+   - Livrables attendus.
+5. Séparer les livrables par des virgules.
+6. Cliquer sur « Créer ».
+
+19.3 Publier le TP
+
+Le TP doit être au statut « Publié » pour apparaître dans l'espace du stagiaire.
+Un TP en brouillon reste invisible.
+
+Statuts :
+- Brouillon ;
+- Publié ;
+- Clôturé ;
+- Archivé.
+
+19.4 Consulter les dépôts
+
+1. Ouvrir /app/travaux.
+2. Cliquer sur l'onglet « Soumissions & corrections ».
+3. Lire le stagiaire, le TP, la date, le lien, la note, le statut et le feedback.
+4. Cliquer sur le lien de consultation du dépôt.
+
+19.5 Corriger une soumission
+
+1. Ouvrir l'onglet « Soumissions & corrections ».
+2. Modifier la soumission.
+3. Saisir la note sur 20.
+4. Choisir le statut :
+   - Soumis ;
+   - En correction ;
+   - Corrigé ;
+   - Validé ;
+   - À refaire.
+5. Rédiger le feedback.
+6. Enregistrer.
+
+19.6 Ce que le TP ne fait pas
+
+- Il n'accepte pas l'upload d'un fichier dans l'application.
+- Il faut utiliser une URL de fichier ou un lien externe.
+- Il ne crée pas de note dans /app/notes.
+- Il ne crée pas de bulletin.
+- Il n'envoie pas de notification.
+- La note est saisie sur 20, même si la note maximale du TP est différente.
+
+19.7 Où le TP intervient dans les résultats
+
+La note de TP alimente :
+- le critère TP de l'évaluation finale ;
+- l'affichage TP de la progression.
+
+Elle n'alimente pas automatiquement :
+- le carnet de notes ;
+- la moyenne des modules ;
+- le bulletin.
+
+19.8 À savoir
+
+- Un stagiaire peut déposer si aucun dépôt n'existe, si le dépôt est « Soumis »
+  ou « À refaire ».
+- Un nouveau dépôt remet la note et le feedback à zéro.
+- L'échéance n'est pas contrôlée : un dépôt tardif reste possible.
+- Un seul dépôt est utilisé par stagiaire et par TP.
+
+--------------------------------------------------------------------------------
+20. COMPÉTENCES
+--------------------------------------------------------------------------------
+
+Page : /app/competences
+Menu : Évaluations > Compétences
+
+20.1 À quoi sert la page
+
+- définir le référentiel de compétences ;
+- évaluer le niveau d'un stagiaire.
+
+20.2 Créer une compétence
+
+1. Rester sur l'onglet « Référentiel de compétences ».
+2. Cliquer sur « Nouvelle compétence ».
+3. Renseigner :
+   - Nom de la compétence (obligatoire) ;
+   - Formation ;
+   - Module ;
+   - Ordre ;
+   - Description.
+4. Cliquer sur « Créer ».
+
+20.3 Évaluer une compétence
+
+1. Cliquer sur l'onglet « Niveaux de compétences ».
+2. Cliquer sur « Nouvelle évaluation ».
+3. Choisir le stagiaire.
+4. Choisir la compétence.
+5. Choisir le niveau :
+   - Non acquis ;
+   - À renforcer ;
+   - En cours ;
+   - Acquis ;
+   - Maîtrisé.
+6. Choisir la date d'évaluation.
+7. Ajouter un commentaire.
+8. Cliquer sur « Créer ».
+
+20.4 Comment lire les compétences
+
+Sont considérées acquises :
+- Acquis ;
+- Maîtrisé.
+
+L'espace stagiaire affiche le dernier niveau connu par compétence.
+
+20.5 À savoir
+
+- L'application ne bloque pas plusieurs évaluations pour la même compétence et
+  le même stagiaire.
+- Le niveau le plus récent est celui qui est retenu à l'affichage.
+- Les compétences ne sont pas un critère direct de la moyenne finale.
+- La liste est limitée à 200 lignes.
+
+--------------------------------------------------------------------------------
+21. IMPLICATION
+--------------------------------------------------------------------------------
+
+Page : /app/implication
+Menu : Évaluations > Implication
+
+21.1 À quoi sert la page
+
+Évaluer l'engagement du stagiaire selon huit dimensions notées de 0 à 5.
+
+21.2 Créer une évaluation d'implication
+
+1. Ouvrir /app/implication.
+2. Cliquer sur « Nouvelle évaluation d'implication ».
+3. Choisir le stagiaire.
+4. Choisir éventuellement le module.
+5. Saisir la période.
+6. Noter de 0 à 5 :
+   - Participation ;
+   - Assiduité ;
+   - Curiosité ;
+   - Qualité des questions ;
+   - Travail personnel ;
+   - Collaboration ;
+   - Respect des consignes ;
+   - Autonomie.
+7. Ajouter un commentaire.
+8. Cliquer sur « Créer ».
+
+21.3 Calcul
+
+La moyenne est la moyenne arithmétique des 8 dimensions, sur 5.
+Une moyenne supérieure ou égale à 3 est affichée comme acquise.
+
+ATTENTION : remplissez toutes les dimensions. Un champ laissé vide peut être
+compté comme 0 et faire baisser la moyenne.
+
+21.4 Utilisation dans l'évaluation finale
+
+L'implication est convertie sur 20 et pondérée avec le coefficient
+« Implication » de l'évaluation finale.
+
+--------------------------------------------------------------------------------
+22. COMPORTEMENT
+--------------------------------------------------------------------------------
+
+Page : /app/comportement
+Menu : Évaluations > Comportement
+
+22.1 À quoi sert la page
+
+Évaluer les attitudes professionnelles.
+
+22.2 Créer une évaluation de comportement
+
+1. Ouvrir /app/comportement.
+2. Cliquer sur « Nouvelle évaluation comportementale ».
+3. Choisir le stagiaire.
+4. Saisir la période.
+5. Noter de 0 à 5 :
+   - Ponctualité ;
+   - Discipline ;
+   - Respect ;
+   - Communication ;
+   - Esprit d'équipe ;
+   - Autonomie ;
+   - Responsabilité ;
+   - Attitude professionnelle ;
+   - Respect du matériel ;
+   - Capacité d'adaptation.
+6. Ajouter une appréciation générale.
+7. Cliquer sur « Créer ».
+
+22.3 Calcul
+
+Moyenne arithmétique des 10 dimensions, sur 5.
+Une moyenne supérieure ou égale à 3 est affichée comme acquise.
+
+ATTENTION : remplissez toutes les dimensions. Un champ vide peut être compté
+comme 0.
+
+22.4 Utilisation dans l'évaluation finale
+
+Le comportement est converti sur 20 et pondéré avec le coefficient
+« Comportement » de l'évaluation finale.
+
+--------------------------------------------------------------------------------
+23. OBSERVATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/observations
+Menu : Suivi > Observations
+
+23.1 À quoi sert la page
+
+Consigner des remarques qualitatives sur un stagiaire.
+
+23.2 Ajouter une observation
+
+1. Ouvrir /app/observations.
+2. Cliquer sur « Nouvelle observation ».
+3. Choisir le stagiaire (obligatoire).
+4. Lier éventuellement un module, une évaluation ou une séance.
+5. Saisir l'observation (obligatoire).
+6. Choisir la visibilité :
+   - Interne pédagogique ;
+   - Publiée ;
+   - Visible par le stagiaire.
+7. Cliquer sur « Créer ».
+
+23.3 Visibilité
+
+- Interne pédagogique : non affichée au stagiaire.
+- Publiée : affichée au stagiaire.
+- Visible par le stagiaire : affichée au stagiaire.
+
+Dans l'espace stagiaire, seules les observations non internes sont affichées.
+
+23.4 À savoir
+
+- La page personnel affiche toutes les observations, y compris internes.
+- L'auteur est l'utilisateur connecté au moment de l'enregistrement.
+- Une observation interne est tout de même chargée dans le navigateur du
+  stagiaire avant d'être masquée. Pour une confidentialité stricte, ne comptez
+  pas uniquement sur ce champ.
+- La liste est limitée à 200 lignes.
+
+--------------------------------------------------------------------------------
+24. PROGRESSION
+--------------------------------------------------------------------------------
+
+Page : /app/progression
+Menu : Suivi > Progression
+
+24.1 À quoi sert la page
+
+Afficher une synthèse individuelle :
+- notes par module ;
+- moyenne générale ;
+- taux de présence ;
+- compétences acquises ;
+- résultats QCM ;
+- résultats TP ;
+- implication ;
+- comportement ;
+- moyenne finale et décision.
+
+24.2 Consulter la progression
+
+1. Ouvrir /app/progression.
+2. Choisir le stagiaire.
+3. Lire les cartes et les tableaux.
+4. Utiliser cette page pour un entretien ou un point pédagogique.
+
+24.3 Comment les calculs sont faits
+
+- Notes normalisées sur 20.
+- Moyenne de module = moyenne simple des notes du module.
+- Moyenne générale = moyenne simple des moyennes de modules non nulles.
+- Présence = présents / total, avec Présent, En retard et Sortie autorisée.
+- Compétence acquise = Acquis ou Maîtrisé.
+- QCM = tentatives corrigées, converties sur 20.
+- TP = notes de soumissions, supposées sur 20.
+- Implication et comportement = moyennes stockées.
+
+24.4 À savoir
+
+- Les coefficients ne sont pas appliqués.
+- Les notes non publiées sont prises en compte côté personnel.
+- Les listes sont limitées à 200 lignes.
+- Une note ou un TP à 0 peut apparaître avec un tiret sur certaines cartes.
+- La page est en lecture seule.
+
+--------------------------------------------------------------------------------
+25. PLANS D'AMÉLIORATION
+--------------------------------------------------------------------------------
+
+Page : /app/plans
+Menu : Suivi > Plans d'amélioration
+
+25.1 À quoi sert la page
+
+Définir un plan de remédiation et ses actions.
+
+25.2 Créer un plan
+
+1. Ouvrir /app/plans.
+2. Cliquer sur « Créer un plan ».
+3. Choisir le stagiaire.
+4. Saisir :
+   - Difficulté ;
+   - Objectif ;
+   - Date de début ;
+   - Date de fin ;
+   - Responsable ;
+   - Statut ;
+   - Commentaire d'évaluation.
+5. Cliquer sur « Créer le plan ».
+
+Statuts :
+- Créé ;
+- En cours ;
+- Évalué ;
+- Atteint ;
+- Non atteint.
+
+25.3 Ajouter des actions
+
+1. Repérer le plan.
+2. Ouvrir « Actions du plan ».
+3. Ajouter une action :
+   - Titre ;
+   - Type ;
+   - Échéance ;
+   - Statut ;
+   - Résultat.
+4. Enregistrer.
+
+Statuts d'action :
+- À faire ;
+- En cours ;
+- Terminé ;
+- Annulé.
+
+25.4 À savoir
+
+- Le responsable est limité aux formateurs, responsables et maîtres de stage.
+- Le résultat de l'action se renseigne à la création. Ensuite, le statut peut
+  être modifié.
+- Supprimer un plan ne supprime pas automatiquement ses actions.
+- La liste est limitée à 200 plans.
+
+--------------------------------------------------------------------------------
+26. ÉVALUATIONS INTERMÉDIAIRES
+--------------------------------------------------------------------------------
+
+Page : /app/evaluations-intermediaires
+Menu : Suivi > Évaluations intermédiaires
+
+26.1 À quoi sert la page
+
+Produire une photographie datée des résultats à mi-parcours.
+
+26.2 Enregistrer une évaluation intermédiaire
+
+1. Ouvrir la page.
+2. Choisir le stagiaire.
+3. Lire les calculs automatiques :
+   - moyenne des notes ;
+   - taux de présence ;
+   - moyenne QCM ;
+   - moyenne TP ;
+   - compétences acquises ;
+   - implication ;
+   - comportement.
+4. Renseigner les points forts, les axes d'amélioration et les recommandations.
+5. Choisir la décision :
+   - Progression normale ;
+   - Surveillance ;
+   - Plan d'amélioration ;
+   - Entretien obligatoire.
+6. Cliquer sur « Enregistrer l'évaluation ».
+7. Confirmer.
+
+26.3 À savoir
+
+- Chaque enregistrement crée une nouvelle ligne.
+- L'historique n'est pas modifiable ni supprimable dans cette page.
+- Les données sont figées au moment de l'enregistrement.
+- Les listes sont limitées à 200 lignes.
+
+--------------------------------------------------------------------------------
+27. JOURNAL DE STAGE
+--------------------------------------------------------------------------------
+
+Page : /app/journal
+Menu : Suivi > Journal de stage
+
+27.1 À quoi sert la page
+
+Consulter et valider les activités quotidiennes du stagiaire.
+
+27.2 Créer une entrée pour un stagiaire
+
+1. Ouvrir /app/journal.
+2. Cliquer sur « Nouvelle entrée ».
+3. Choisir le stagiaire.
+4. Renseigner :
+   - Date (obligatoire) ;
+   - Activité réalisée (obligatoire) ;
+   - Compétence mobilisée ;
+   - Durée en heures ;
+   - Observation ;
+   - Statut ;
+   - Commentaire du validateur.
+5. Cliquer sur « Créer ».
+
+Statuts :
+- Soumis ;
+- Validé ;
+- Commenté.
+
+27.3 Valider une entrée
+
+1. Modifier l'entrée.
+2. Passer le statut à « Validé ».
+3. Ajouter un commentaire.
+4. Enregistrer.
+
+27.4 À savoir
+
+- Le stagiaire peut créer et modifier ses entrées tant qu'elles ne sont pas
+  validées.
+- Une entrée validée est verrouillée côté stagiaire.
+- Modifier une entrée validée côté personnel réattribue le validateur.
+- La liste est limitée à 200 lignes.
+
+--------------------------------------------------------------------------------
+28. OBJECTIFS DE STAGE
+--------------------------------------------------------------------------------
+
+Page : /app/objectifs
+Menu : Suivi > Objectifs de stage
+
+28.1 À quoi sert la page
+
+Définir et suivre les objectifs individuels du stagiaire.
+
+28.2 Créer un objectif
+
+1. Ouvrir /app/objectifs.
+2. Cliquer sur « Nouvel objectif ».
+3. Choisir le stagiaire.
+4. Saisir l'intitulé (obligatoire).
+5. Choisir le statut :
+   - Non commencé ;
+   - En cours ;
+   - Atteint ;
+   - Dépassé ;
+   - Non atteint.
+6. Ajouter une description.
+7. Ajouter un commentaire de validation.
+8. Cliquer sur « Créer ».
+
+28.3 À savoir
+
+- Les objectifs sont en lecture seule côté stagiaire.
+- L'application n'enregistre pas automatiquement qui a validé ni quand.
+- La liste est limitée à 200 lignes.
+
+--------------------------------------------------------------------------------
+29. PROJET FINAL
+--------------------------------------------------------------------------------
+
+Page : /app/projet-final
+Menu : Suivi > Projet final
+
+29.1 À quoi sert la page
+
+Piloter le projet de fin de stage.
+
+29.2 Créer un projet final
+
+1. Ouvrir /app/projet-final.
+2. Cliquer sur « Nouveau projet ».
+3. Choisir le stagiaire (obligatoire).
+4. Choisir le superviseur.
+5. Saisir le titre (obligatoire).
+6. Renseigner les dates de début, de fin et de soutenance.
+7. Saisir la note sur 20.
+8. Renseigner la description, les objectifs, les livrables, l'appréciation et les
+   commentaires.
+9. Choisir le statut :
+   - En cours ;
+   - Soutenu ;
+   - Validé ;
+   - Non validé ;
+   - Archivé.
+10. Cliquer sur « Créer ».
+
+29.3 Livrables
+
+Séparer les livrables par des virgules.
+
+29.4 À savoir
+
+- Le superviseur est limité aux formateurs, maîtres de stage et responsables
+  pédagogiques.
+- L'application ne gère pas encore les membres du jury : les champs
+  correspondants sont vidés à l'enregistrement.
+- Les dates ne sont pas contrôlées.
+- Le stagiaire voit le projet le plus récent.
+- La note du projet alimente le critère « Projet » de l'évaluation finale.
+- La liste est limitée à 200 lignes.
+
+
+================================================================================
+PARTIE 5 - PRODUIRE LES RÉSULTATS
+================================================================================
+
+--------------------------------------------------------------------------------
+30. ÉVALUATION FINALE
+--------------------------------------------------------------------------------
+
+Page : /app/evaluation-finale
+Menu : Résultats > Évaluation finale
+
+30.1 À quoi sert la page
+
+Consolider les résultats et formaliser la décision finale.
+
+30.2 Avant de commencer
+
+Vérifier que les données existent :
+- notes ;
+- présences ;
+- tentatives QCM corrigées ;
+- notes de TP ;
+- projet final ;
+- implication ;
+- comportement.
+
+30.3 Calculer une évaluation finale
+
+1. Ouvrir /app/evaluation-finale.
+2. Choisir le stagiaire.
+3. Lire les cartes :
+   - Modules /20 ;
+   - QCM /20 ;
+   - TP /20 ;
+   - Projet final /20.
+4. Vérifier le taux de présence, l'implication et le comportement.
+5. Ajuster les coefficients si nécessaire.
+6. Lire la moyenne finale pondérée.
+7. Choisir la décision finale :
+   - En attente ;
+   - Validé ;
+   - Non validé.
+8. Saisir une appréciation générale.
+9. Cliquer sur :
+   - « Enregistrer » pour créer une évaluation finale ;
+   - ou « Valider et publier » pour créer une évaluation finale publiée.
+10. Confirmer.
+
+30.4 Coefficients par défaut
+
+Critère             Base              Coefficient
+Modules             /20               40
+QCM                 /20               10
+TP                  /20               15
+Projet final        /20               20
+Implication         /5 converti /20   5
+Comportement        /5 converti /20   5
+Présence            % converti /20    5
+
+La moyenne finale est la somme des critères pondérés divisée par la somme des
+coefficients. Les coefficients n'ont pas besoin de totaliser 100.
+
+30.5 Rôle de la décision
+
+La décision est choisie manuellement. Le seuil de 10/20 ne décide pas
+automatiquement si le stagiaire est validé ou non.
+
+30.6 IMPORTANT : chaque enregistrement crée une ligne
+
+« Enregistrer » et « Valider et publier » créent tous les deux une nouvelle
+évaluation finale. L'ancienne reste dans l'historique. La plus récente est celle
+qui est utilisée par les bulletins et l'espace stagiaire.
+
+Conseil : vérifiez toutes les données avant d'enregistrer. Si vous devez
+corriger, enregistrez une nouvelle version et vérifiez que c'est bien la
+dernière.
+
+30.7 Visibilité côté stagiaire
+
+L'espace stagiaire affiche la dernière évaluation finale disponible, même si vous
+avez utilisé « Enregistrer » sans publier. Ne créez pas une évaluation finale
+provisoire si vous ne voulez pas qu'elle soit visible.
+
+Le bulletin, lui, doit être généré et publié séparément.
+
+30.8 Ce que l'évaluation finale ne fait pas
+
+- Elle ne crée pas de bulletin.
+- Elle ne crée pas de document.
+- Elle n'envoie pas de notification.
+- Elle n'applique pas les coefficients des notes ni des modules.
+- Elle n'empêche pas les doublons.
+
+--------------------------------------------------------------------------------
+31. BULLETINS
+--------------------------------------------------------------------------------
+
+Page : /app/bulletins
+Menu : Résultats > Bulletins
+
+31.1 À quoi sert la page
+
+Générer, publier et imprimer le bulletin de fin de formation.
+
+31.2 Avant de commencer
+
+Il faut une évaluation finale pour le stagiaire. Sans évaluation finale, les
+boutons de génération sont désactivés.
+
+31.3 Générer un bulletin
+
+1. Ouvrir /app/bulletins.
+2. Choisir le stagiaire.
+3. Vérifier l'aperçu.
+4. Cliquer sur :
+   - « Générer » pour un brouillon ;
+   - ou « Générer et publier » pour un bulletin visible par le stagiaire.
+5. Confirmer.
+
+31.4 Publier un bulletin existant
+
+1. Choisir le stagiaire.
+2. Dans l'historique des bulletins, repérer le bulletin en brouillon.
+3. Cliquer sur « Publier ».
+4. Confirmer.
+
+31.5 Imprimer un bulletin
+
+1. Choisir le stagiaire.
+2. Cliquer sur « Imprimer ».
+3. Dans la fenêtre du navigateur, choisir l'imprimante ou
+   « Enregistrer au format PDF ».
+
+31.6 Supprimer un bulletin
+
+1. Dans l'historique, cliquer sur la corbeille.
+2. Confirmer.
+
+31.7 Contenu du bulletin
+
+- identité du stagiaire ;
+- modules et coefficients ;
+- moyennes par module ;
+- QCM ;
+- travaux pratiques ;
+- projet final ;
+- implication ;
+- comportement ;
+- taux de présence ;
+- moyenne finale ;
+- décision ;
+- appréciation ;
+- signature.
+
+31.8 À savoir
+
+- Le bulletin reprend la moyenne finale de l'évaluation finale ; il ne la
+  recalcule pas.
+- Le contenu est figé au moment de la génération.
+- Si les notes changent après la génération, il faut générer un nouveau bulletin.
+- Republier un ancien bulletin ne recalcule pas son contenu.
+- Le bulletin reprend le carnet de notes complet. Vérifiez les notes avant de le
+  publier.
+- Les coefficients des modules sont affichés mais pas appliqués.
+- Plusieurs bulletins peuvent exister pour un stagiaire.
+- Le stagiaire ne voit que les bulletins publiés.
+- Aucun PDF n'est généré par le serveur : l'impression passe par le navigateur.
+
+--------------------------------------------------------------------------------
+32. DOCUMENTS
+--------------------------------------------------------------------------------
+
+Page : /app/documents
+Menu : Résultats > Documents
+
+32.1 À quoi sert la page
+
+Générer des documents officiels imprimables :
+- fiche d'inscription ;
+- fiche stagiaire ;
+- carte stagiaire ;
+- attestation de stage ;
+- certificat de formation ;
+- certificat de réussite ;
+- relevé de notes ;
+- bulletin ;
+- rapport d'évaluation ;
+- rapport de stage ;
+- fiche d'évaluation finale.
+
+32.2 Générer un document
+
+1. Ouvrir /app/documents.
+2. Choisir le stagiaire (obligatoire).
+3. Choisir le type de document (obligatoire).
+4. Saisir un titre personnalisé si souhaité.
+5. Cliquer sur « Générer le document ».
+6. Lire l'aperçu.
+7. Cliquer sur « Imprimer » si nécessaire.
+
+32.3 Imprimer ou enregistrer en PDF
+
+1. Cliquer sur « Imprimer ».
+2. Choisir l'imprimante.
+3. Ou choisir « Enregistrer au format PDF ».
+4. Valider.
+
+32.4 À savoir
+
+- Aucun fichier PDF n'est stocké par l'application.
+- Aucun upload de fichier n'est proposé.
+- Un document peut être généré même sans évaluation finale.
+- Certains types utilisent un texte standard si aucun bloc spécifique n'existe.
+- Les moyennes de modules sont des moyennes simples.
+- Plusieurs documents identiques peuvent être générés.
+- Un document généré est visible dans l'espace du stagiaire. Ne générez pas de
+  document provisoire si vous ne voulez pas qu'il soit visible.
+- La liste est limitée à 200 documents.
+
+--------------------------------------------------------------------------------
+33. RAPPORTS ET EXPORT
+--------------------------------------------------------------------------------
+
+Page : /app/rapports
+Menu : Résultats > Rapports & statistiques
+
+33.1 À quoi sert la page
+
+Afficher :
+- effectifs ;
+- moyenne globale ;
+- taux de réussite ;
+- taux de présence ;
+- répartition des notes ;
+- résultats par formation ;
+- dernières évaluations finales.
+
+33.2 Consulter les statistiques
+
+1. Ouvrir /app/rapports.
+2. Lire les cartes du haut.
+3. Lire la répartition des notes.
+4. Lire le tableau par formation.
+5. Lire les dernières évaluations finales.
+
+33.3 Exporter les stagiaires
+
+1. Cliquer sur « Exporter les stagiaires (CSV) ».
+2. Le fichier est téléchargé.
+3. L'ouvrir avec Excel, LibreOffice ou un tableur.
+
+Le fichier contient :
+- Matricule ;
+- Nom ;
+- Prénom ;
+- Email ;
+- Téléphone ;
+- Domaine ;
+- Spécialité ;
+- Statut.
+
+33.4 À savoir
+
+- Les statistiques peuvent être partielles sur de gros volumes.
+- Une note peut compter dans plusieurs formations.
+- Plusieurs évaluations finales d'un même stagiaire comptent plusieurs fois.
+- La carte « Bulletins générés » compte en réalité les évaluations finales.
+- Les seuils d'affichage sont 10/20 et 80 % de présence.
+
+
+================================================================================
+PARTIE 6 - ADMINISTRATION
+================================================================================
+
+--------------------------------------------------------------------------------
+34. UTILISATEURS ET RÔLES
+--------------------------------------------------------------------------------
+
+Page : /app/utilisateurs
+Menu : Administration > Utilisateurs & rôles
+Accès : administrateur uniquement
+
+34.1 À quoi sert la page
+
+Créer et gérer les comptes :
+- personnel ;
+- formateurs ;
+- stagiaires.
+
+34.2 Créer un compte
+
+1. Ouvrir /app/utilisateurs.
+2. Cliquer sur « Nouvel utilisateur ».
+3. Renseigner :
+   - Prénom (obligatoire) ;
+   - Nom (obligatoire) ;
+   - Email (obligatoire) ;
+   - Téléphone ;
+   - Mot de passe (6 caractères minimum) ;
+   - Rôle ;
+   - Statut ;
+   - Dossier stagiaire lié.
+4. Cliquer sur « Créer le compte ».
+
+34.3 Créer un compte stagiaire
+
+1. Créer d'abord le dossier dans /app/stagiaires.
+2. Créer ensuite le compte avec le rôle « Stagiaire ».
+3. Choisir le dossier dans « Dossier stagiaire lié ».
+4. Communiquer l'email et le mot de passe.
+
+Le lien au dossier est indispensable pour que le stagiaire voie ses propres
+données. Si le lien est absent, l'application tente de retrouver le dossier par
+l'email.
+
+34.4 Rôles disponibles
+
+- Administrateur système ;
+- Direction ;
+- Responsable de formation ;
+- Responsable pédagogique ;
+- Formateur ;
+- Maître de stage ;
+- Service administratif ;
+- Stagiaire ;
+- Ressources humaines ;
+- Auditeur / Superviseur.
+
+34.5 Modifier un compte
+
+1. Cliquer sur le crayon.
+2. Modifier le prénom, le nom, l'email, le téléphone, le rôle, le statut ou le
+   dossier lié.
+3. Enregistrer.
+
+Le mot de passe ne peut pas être modifié depuis ce formulaire.
+
+Après un changement de rôle, l'utilisateur doit se déconnecter puis se
+reconnecter pour que le nouveau menu apparaisse.
+
+34.6 Supprimer un compte
+
+1. Cliquer sur la corbeille.
+2. Confirmer.
+
+ATTENTION :
+- La suppression de la ligne utilisateur ne supprime pas forcément le compte
+  d'authentification Forge.
+- Un administrateur peut supprimer son propre compte.
+- Ne supprimez pas le dernier compte administrateur.
+
+34.7 Mot de passe perdu
+
+L'application ne propose pas de réinitialisation. L'administrateur doit :
+- recréer un compte avec un nouveau mot de passe ;
+- ou intervenir dans l'outil d'administration Forge selon la procédure interne.
+
+--------------------------------------------------------------------------------
+35. JOURNAL D'AUDIT
+--------------------------------------------------------------------------------
+
+Page : /app/audit
+Menu : Administration > Journal d'audit
+Accès : administrateur et auditeur
+
+35.1 À quoi sert la page
+
+Consulter les traces disponibles :
+- date ;
+- action ;
+- entité ;
+- auteur ;
+- identifiant ;
+- motif.
+
+35.2 Consulter
+
+1. Ouvrir /app/audit.
+2. Utiliser le champ de recherche.
+3. Lire les lignes.
+
+35.3 À savoir
+
+- La page est en lecture seule.
+- Les valeurs avant/après ne sont pas affichées.
+- Les actions métier ne sont pas toutes enregistrées automatiquement.
+- La liste est limitée à 200 lignes.
+
+--------------------------------------------------------------------------------
+36. PARAMÈTRES
+--------------------------------------------------------------------------------
+
+Page : /app/parametres
+Menu : Administration > Paramètres
+Accès : administrateur uniquement
+
+36.1 À quoi sert la page
+
+Gérer :
+- les paramètres généraux ;
+- les règles de notation.
+
+36.2 Modifier un paramètre
+
+1. Ouvrir /app/parametres.
+2. Repérer le paramètre.
+3. Modifier la valeur JSON.
+4. Cliquer sur « Enregistrer ».
+
+36.3 Créer un paramètre
+
+1. Cliquer sur « Nouveau paramètre ».
+2. Saisir la clé.
+3. Saisir la description.
+4. Saisir la valeur JSON.
+5. Cliquer sur « Créer ».
+
+36.4 Règles de notation
+
+1. Renseigner la catégorie, le poids, le seuil et l'arrondi.
+2. Cliquer sur « Enregistrer ».
+
+36.5 À savoir
+
+- Une erreur de syntaxe JSON affiche « JSON invalide ».
+- Les règles de notation ne sont pas utilisées par les calculs actuels.
+- Les paramètres ne peuvent pas être supprimés depuis la page.
+- Ne modifiez pas ces valeurs sans consigne technique.
+
+--------------------------------------------------------------------------------
+37. ARCHIVAGE
+--------------------------------------------------------------------------------
+
+Page : /app/archivage
+Menu : Administration > Archivage
+
+37.1 À quoi sert la page
+
+Restaurer des éléments archivés.
+
+37.2 Archiver un élément
+
+La page Archivage ne permet pas d'archiver. Pour archiver :
+- Stagiaire : /app/stagiaires > modifier > statut « Archivé » ;
+- Formation : /app/formations > modifier > statut « Archivée » ;
+- Promotion : /app/promotions > modifier > statut « Archivée ».
+
+37.3 Restaurer un élément
+
+1. Ouvrir /app/archivage.
+2. Choisir l'onglet :
+   - Stagiaires ;
+   - Formations ;
+   - Promotions.
+3. Cliquer sur « Restaurer ».
+4. Confirmer.
+
+Résultat :
+- un stagiaire restauré passe à « Actif » ;
+- une formation restaurée passe à « Active » ;
+- une promotion restaurée passe à « Planifiée ».
+
+37.4 À savoir
+
+- Le statut antérieur n'est pas conservé.
+- L'archivage ne supprime aucune donnée.
+- La suppression est différente et irréversible.
+- La liste est limitée à 200 lignes par onglet.
+
+--------------------------------------------------------------------------------
+38. NOTIFICATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/notifications
+Menu : Vue d'ensemble > Notifications
+
+38.1 À quoi sert la page
+
+Lire et envoyer des notifications internes.
+
+38.2 Créer une notification
+
+1. Ouvrir /app/notifications.
+2. Cliquer sur « Nouvelle notification ».
+3. Renseigner :
+   - Titre (obligatoire) ;
+   - Message (obligatoire) ;
+   - Type ;
+   - Canal ;
+   - Utilisateur destinataire ;
+   - Stagiaire concerné.
+4. Cliquer sur « Envoyer ».
+
+38.3 Choisir le destinataire
+
+- Choisir un utilisateur : la notification lui est destinée.
+- Choisir un stagiaire : elle apparaît dans l'espace du stagiaire concerné.
+- Laisser vide : diffusion aux utilisateurs non gestionnaires.
+
+38.4 Lire et traiter
+
+- Filtrer « Toutes » ou « Non lues » ;
+- cliquer sur une notification pour la marquer lue ;
+- utiliser « Tout marquer comme lu » ;
+- supprimer une notification avec la corbeille.
+
+38.5 À savoir
+
+- Seule la notification interne est enregistrée.
+- Les canaux Email, SMS et Push ne sont pas réellement envoyés.
+- Tout utilisateur ayant la permission peut créer ou supprimer.
+- Un utilisateur non gestionnaire peut supprimer une diffusion qu'il voit.
+- La liste est limitée à 200 notifications.
+
+--------------------------------------------------------------------------------
+39. RECHERCHE GLOBALE
+--------------------------------------------------------------------------------
+
+Page : /app/recherche
+Menu : Vue d'ensemble > Recherche globale
+
+39.1 À quoi sert la page
+
+Chercher rapidement :
+- un stagiaire ;
+- une formation ;
+- un module ;
+- une promotion ;
+- une évaluation ;
+- un utilisateur.
+
+39.2 Utiliser la recherche
+
+1. Ouvrir /app/recherche.
+2. Saisir au moins 2 caractères.
+3. Lire les résultats.
+4. Cliquer sur un résultat pour ouvrir la page correspondante.
+
+39.3 Sur quels champs la recherche porte
+
+- Stagiaires : nom, matricule, email, téléphone, domaine, spécialité.
+- Formations : nom, domaine, niveau.
+- Modules : nom, description.
+- Promotions : code, nom.
+- Évaluations : titre, période, type.
+- Utilisateurs : nom, email, rôle, si vous avez le droit de gérer les comptes.
+
+39.4 À savoir
+
+- La recherche utilise les données en cache.
+- Un élément créé récemment peut mettre environ une minute à apparaître.
+- Les notes et documents ne sont pas cherchés par cette page.
+
+
+================================================================================
+PARTIE 7 - ESPACE STAGIAIRE
+================================================================================
+
+--------------------------------------------------------------------------------
+40. VUE D'ENSEMBLE
+--------------------------------------------------------------------------------
+
+Adresse : /app/mon-espace
+Connexion : /login avec un compte de rôle Stagiaire
+
+Le stagiaire ne voit que son propre dossier. Son espace comporte 22 pages.
+
+Si l'espace affiche « dossier introuvable » :
+- vérifier que le compte est lié à un dossier stagiaire ;
+- vérifier que l'email du compte correspond à celui du dossier ;
+- contacter l'administrateur.
+
+--------------------------------------------------------------------------------
+41. TABLEAU DE BORD
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace
+
+Affiche :
+- prénom, formation, promotion, matricule ;
+- moyenne publiée ;
+- assiduité ;
+- compétences acquises ;
+- moyenne finale ;
+- prochaines séances ;
+- prochaines évaluations ;
+- dernières notes publiées ;
+- dernières entrées du journal ;
+- points d'attention.
+
+Le stagiaire peut cliquer sur les liens pour ouvrir les pages détaillées.
+
+À SAVOIR : seules les notes publiées entrent dans la moyenne affichée.
+
+--------------------------------------------------------------------------------
+42. MON PROFIL
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/profil
+
+Le stagiaire peut modifier :
+- sa photo, via une URL ;
+- son téléphone ;
+- son adresse.
+
+Il ne peut pas modifier :
+- son nom ;
+- son prénom ;
+- son email ;
+- son matricule ;
+- sa formation ;
+- son statut.
+
+Pour modifier ces données, contacter l'administration.
+
+--------------------------------------------------------------------------------
+43. MA FORMATION
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/formation
+
+Affiche :
+- formation, niveau, domaine ;
+- promotion et dates ;
+- durée ;
+- statut de l'inscription ;
+- matricule ;
+- description ;
+- modules, heures, coefficient, seuil ;
+- moyenne par module et validation.
+
+Les moyennes sont calculées à partir des notes publiées. Les coefficients ne sont
+pas appliqués.
+
+--------------------------------------------------------------------------------
+44. NOTIFICATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/notifications
+
+Le stagiaire peut :
+- lire ses notifications ;
+- marquer une notification comme lue ;
+- tout marquer comme lu.
+
+Il ne peut pas supprimer une notification depuis cet espace.
+
+--------------------------------------------------------------------------------
+45. PRÉSENCES
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/presences
+
+Affiche :
+- séance ;
+- module ;
+- statut ;
+- observation ;
+- taux de présence.
+
+45.1 Signaler une erreur
+
+1. Repérer la présence concernée.
+2. Cliquer sur « Signaler ».
+3. Saisir le message.
+4. Valider.
+
+Cela crée une notification pour l'administration. Cela ne modifie pas la feuille
+officielle. L'administration doit corriger dans /app/presences.
+
+--------------------------------------------------------------------------------
+46. ÉVALUATIONS
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/evaluations
+
+Affiche les évaluations de la formation :
+- module ;
+- type ;
+- date ;
+- durée ;
+- statut ;
+- résultat.
+
+Le résultat n'apparaît que si la note est publiée.
+Un QCM ouvert affiche un lien « Passer le QCM ».
+
+--------------------------------------------------------------------------------
+47. NOTES
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/notes
+
+Affiche uniquement les notes publiées :
+- évaluation ;
+- module ;
+- note ;
+- moyenne ;
+- nombre de réussites.
+
+Les notes sont en lecture seule. Les coefficients ne sont pas appliqués.
+
+Si une note attendue n'apparaît pas, elle n'est probablement pas publiée.
+Contacter l'administration.
+
+--------------------------------------------------------------------------------
+48. QCM
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/qcm
+
+Le stagiaire voit les QCM de sa formation qui ne sont pas en brouillon ou
+archivés.
+
+48.1 Passer un QCM
+
+1. Ouvrir la page QCM.
+2. Repérer le QCM.
+3. Cliquer sur « Passer le QCM ».
+4. Répondre aux questions.
+5. Cliquer sur « Soumettre ».
+6. Confirmer.
+7. Lire le score et le pourcentage.
+
+48.2 Repasser un QCM
+
+Le bouton devient « Repasser » après une tentative. L'application ne limite pas
+le nombre de tentatives.
+
+48.3 À savoir
+
+- La correction est automatique.
+- Le QCM ne crée pas de note dans le carnet.
+- Le QCM n'apparaît pas dans les notes publiées.
+- Le résultat peut être repris par l'évaluation finale.
+
+--------------------------------------------------------------------------------
+49. TRAVAUX PRATIQUES
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/travaux
+
+Affiche les TP publiés de la formation :
+- titre ;
+- module ;
+- échéance ;
+- barème ;
+- coefficient ;
+- statut du dépôt ;
+- note et feedback.
+
+49.1 Déposer un travail
+
+1. Ouvrir la page.
+2. Repérer le TP.
+3. Cliquer sur « Déposer ».
+4. Renseigner :
+   - URL du fichier ;
+   - nom du fichier ;
+   - lien externe.
+5. Fournir au moins un lien ou un fichier.
+6. Cliquer sur « Déposer ».
+
+49.2 Mettre à jour un dépôt
+
+Le bouton devient « Mettre à jour » si le dépôt est encore modifiable.
+
+Un nouveau dépôt remet la note et le feedback à zéro.
+
+49.3 À savoir
+
+- Il n'y a pas d'upload direct dans l'application.
+- Utiliser un lien Google Drive, OneDrive, Dropbox ou équivalent.
+- L'échéance n'est pas bloquante.
+- La note est affichée sur 20.
+
+--------------------------------------------------------------------------------
+50. COMPÉTENCES, IMPLICATION, COMPORTEMENT ET OBSERVATIONS
+--------------------------------------------------------------------------------
+
+50.1 Compétences
+
+Page : /app/mon-espace/competences
+
+Affiche :
+- compétence ;
+- dernier niveau ;
+- commentaire ;
+- date.
+
+Niveaux : Non acquis, À renforcer, En cours, Acquis, Maîtrisé.
+Lecture seule.
+
+50.2 Implication
+
+Page : /app/mon-espace/implication
+
+Affiche les 8 dimensions sur 5, la moyenne et le commentaire.
+Lecture seule.
+
+50.3 Comportement
+
+Page : /app/mon-espace/comportement
+
+Affiche les 10 dimensions sur 5, la moyenne et l'appréciation.
+Lecture seule.
+
+50.4 Observations
+
+Page : /app/mon-espace/observations
+
+Affiche uniquement les observations partagées avec le stagiaire.
+Les observations internes ne sont pas affichées.
+Lecture seule.
+
+--------------------------------------------------------------------------------
+51. PROGRESSION ET PLANS D'AMÉLIORATION
+--------------------------------------------------------------------------------
+
+51.1 Progression
+
+Page : /app/mon-espace/progression
+
+Affiche :
+- notes publiées par module ;
+- moyenne par module ;
+- moyenne générale ;
+- assiduité ;
+- moyenne QCM ;
+- moyenne TP ;
+- compétences acquises ;
+- moyenne finale et décision ;
+- barre de progression.
+
+51.2 Plans d'amélioration
+
+Page : /app/mon-espace/plans
+
+Affiche :
+- difficulté ;
+- objectif ;
+- dates ;
+- statut ;
+- commentaire ;
+- actions et résultats.
+
+Lecture seule.
+
+--------------------------------------------------------------------------------
+52. JOURNAL ET OBJECTIFS DE STAGE
+--------------------------------------------------------------------------------
+
+52.1 Journal de stage
+
+Page : /app/mon-espace/journal
+
+Le stagiaire peut :
+- créer une entrée ;
+- modifier une entrée non validée ;
+- lire ses entrées.
+
+Champs :
+- date ;
+- activité ;
+- compétence ;
+- durée ;
+- observation.
+
+Une entrée validée est verrouillée.
+
+52.2 Objectifs de stage
+
+Page : /app/mon-espace/objectifs
+
+Affiche :
+- titre ;
+- description ;
+- statut ;
+- commentaire de validation ;
+- compteurs.
+
+Lecture seule.
+
+--------------------------------------------------------------------------------
+53. PROJET FINAL
+--------------------------------------------------------------------------------
+
+Page : /app/mon-espace/projet-final
+
+Affiche le projet le plus récent :
+- titre ;
+- description ;
+- statut ;
+- dates ;
+- soutenance ;
+- note ;
+- objectifs ;
+- appréciation ;
+- livrables.
+
+Lecture seule.
+
+--------------------------------------------------------------------------------
+54. BULLETIN ET DOCUMENTS
+--------------------------------------------------------------------------------
+
+54.1 Bulletin
+
+Page : /app/mon-espace/bulletin
+
+Affiche uniquement les bulletins publiés.
+Le bulletin le plus récent est sélectionné par défaut. Un sélecteur permet de
+choisir un autre bulletin publié.
+
+Actions :
+- « Télécharger » si un fichier est associé ;
+- « Imprimer ».
+
+54.2 Documents
+
+Page : /app/mon-espace/documents
+
+Affiche les documents générés pour le stagiaire :
+- titre ;
+- type ;
+- date ;
+- aperçu ;
+- téléchargement si disponible ;
+- impression.
+
+--------------------------------------------------------------------------------
+55. HISTORIQUE ET PARAMÈTRES
+--------------------------------------------------------------------------------
+
+55.1 Historique
+
+Page : /app/mon-espace/historique
+
+Affiche les traces liées au compte du stagiaire :
+- date ;
+- action ;
+- entité ;
+- motif.
+
+Seules les actions du compte sont affichées.
+
+55.2 Paramètres
+
+Page : /app/mon-espace/parametres
+
+Affiche :
+- email ;
+- rôle ;
+- statut ;
+- dernière connexion ;
+- matricule ;
+- statut stagiaire.
+
+Actions :
+- ouvrir le profil ;
+- exporter les données du compte en JSON ;
+- choisir le thème clair ou sombre.
+
+Le stagiaire ne peut pas changer son mot de passe ni son email depuis cette page.
+
+
+================================================================================
+PARTIE 8 - MODES OPÉRATOIRES COMPLETS
+================================================================================
+
+--------------------------------------------------------------------------------
+56. OUVRIR UNE NOUVELLE FORMATION
+--------------------------------------------------------------------------------
+
+Objectif : préparer une formation complète avant les inscriptions.
+
+Étape 1 - Créer la formation
+1. /app/formations > « Nouvelle formation ».
+2. Renseigner le nom, le domaine, le niveau, la durée et le statut « Active ».
+3. Créer.
+
+Étape 2 - Créer les modules
+1. /app/modules > « Nouveau module ».
+2. Choisir la formation.
+3. Renseigner le nom, le coefficient, les heures et le seuil.
+4. Créer chaque module.
+
+Étape 3 - Créer une promotion
+1. /app/promotions > « Nouvelle promotion ».
+2. Choisir la formation.
+3. Saisir le code, les dates et la capacité.
+4. Statut « Planifiée » ou « Active ».
+5. Créer.
+
+Étape 4 - Créer les séances
+1. /app/seances > « Nouvelle séance ».
+2. Choisir le module et la promotion.
+3. Renseigner la date, l'heure, la salle et le formateur.
+4. Créer.
+
+Étape 5 - Vérifier
+1. La formation est active.
+2. La promotion est ouverte.
+3. Les modules sont actifs.
+4. Les séances sont planifiées.
+5. Les formateurs sont affectés.
+
+Étape 6 - Inscrire les stagiaires
+- Via /app/inscriptions pour une inscription manuelle.
+- Via /app/reservations pour les demandes en ligne.
+
+--------------------------------------------------------------------------------
+57. INSCRIRE UN CANDIDAT MANUELLEMENT
+--------------------------------------------------------------------------------
+
+Utiliser ce circuit quand le candidat ne passe pas par le formulaire public.
+
+1. Créer le dossier dans /app/stagiaires.
+2. Créer l'inscription dans /app/inscriptions avec le statut « Validée ».
+3. Créer l'affectation dans /app/affectations.
+4. Créer le compte dans /app/utilisateurs :
+   - rôle Stagiaire ;
+   - dossier stagiaire lié ;
+   - mot de passe ;
+   - statut Actif.
+5. Communiquer les identifiants au stagiaire.
+6. Vérifier que le stagiaire voit son espace.
+
+Si le candidat possède déjà un dossier, ne le recréez pas : utilisez le dossier
+existant.
+
+--------------------------------------------------------------------------------
+58. TRAITER UNE RÉSERVATION DE BOUT EN BOUT
+--------------------------------------------------------------------------------
+
+1. Le candidat remplit /reservation.
+2. Il note sa référence.
+3. L'administration ouvre /app/reservations.
+4. Elle vérifie les places disponibles.
+5. Elle ouvre le détail.
+6. Elle confirme.
+7. Elle copie le mot de passe temporaire.
+8. Elle communique les identifiants.
+9. Le stagiaire se connecte.
+10. Il complète son profil.
+11. L'administration vérifie l'inscription et l'affectation.
+12. Le stagiaire apparaît dans les listes de présence.
+
+Si la réservation est annulée, aucune inscription n'est créée.
+
+--------------------------------------------------------------------------------
+59. FAIRE L'APPEL DE BOUT EN BOUT
+--------------------------------------------------------------------------------
+
+1. Vérifier que la séance existe dans /app/seances.
+2. Vérifier que la promotion de la séance est correcte.
+3. Ouvrir /app/presences.
+4. Choisir la séance.
+5. Cliquer sur « Tous présents » si la majorité est présente.
+6. Corriger les absents, retards et sorties.
+7. Ajouter les justifications.
+8. Enregistrer la feuille.
+9. Vérifier le taux affiché.
+10. Consulter le dossier d'un stagiaire si nécessaire.
+
+Si le message d'enregistrement partiel apparaît :
+- noter les stagiaires non enregistrés ;
+- recharger la page ;
+- recommencer l'enregistrement ;
+- vérifier les doublons.
+
+--------------------------------------------------------------------------------
+60. ORGANISER UN QCM DE BOUT EN BOUT
+--------------------------------------------------------------------------------
+
+Étape 1 - Créer l'évaluation
+1. /app/evaluations > « Nouvelle évaluation ».
+2. Choisir le type « QCM ».
+3. Cocher « Cette évaluation est un QCM ».
+4. Choisir la formation, le module, la date et le statut.
+5. Créer.
+
+Étape 2 - Ajouter les questions
+1. /app/qcm.
+2. Choisir le QCM.
+3. « Ajouter une question ».
+4. Saisir la question, le type, les points et l'ordre.
+5. Saisir les options, une par ligne.
+6. Saisir la réponse correcte.
+7. Créer la question.
+8. Répéter.
+
+Étape 3 - Vérifier
+1. Relire chaque question.
+2. Vérifier les réponses correctes.
+3. Vérifier les points.
+4. Faire une passation test.
+5. Lire le résultat.
+
+Étape 4 - Faire passer
+1. « Lancer une passation ».
+2. Choisir le stagiaire.
+3. Le stagiaire répond.
+4. Soumettre.
+5. Vérifier la tentative dans l'onglet Passations.
+
+Étape 5 - Exploiter le résultat
+- Le score est enregistré dans l'onglet « Passations ».
+- Aucune note n'est créée.
+- Pour une note, la saisir dans /app/notes.
+- Pour la moyenne finale, le critère QCM est repris automatiquement.
+
+Étape 6 - Sécuriser
+- Surveiller la passation.
+- Éviter de laisser un stagiaire seul avec les réponses.
+- Ne pas utiliser le QCM comme examen à fort enjeu sans contrôle.
+
+Réglages à éviter :
+- options vides pour un choix unique ;
+- réponse correcte ne correspondant à aucune option ;
+- plusieurs réponses sans virgule ;
+- type « Association » sans tests ;
+- points à zéro ;
+- QCM non coché « Cette évaluation est un QCM ».
+
+--------------------------------------------------------------------------------
+61. ORGANISER UN TRAVAIL PRATIQUE DE BOUT EN BOUT
+--------------------------------------------------------------------------------
+
+1. Créer le TP dans /app/travaux.
+2. Renseigner le module, l'échéance, les consignes et les livrables.
+3. Passer le statut à « Publié ».
+4. Le stagiaire dépose un lien depuis /app/mon-espace/travaux.
+5. Ouvrir l'onglet « Soumissions & corrections ».
+6. Consulter le dépôt.
+7. Saisir la note sur 20.
+8. Rédiger le feedback.
+9. Choisir le statut de la soumission.
+10. Enregistrer.
+11. Saisir éventuellement une note dans /app/notes si le TP doit compter dans
+    la moyenne de module.
+12. Le critère TP de l'évaluation finale reprend automatiquement les notes.
+
+--------------------------------------------------------------------------------
+62. ÉVALUER ET PUBLIER LES RÉSULTATS
+--------------------------------------------------------------------------------
+
+62.1 Circuit des notes classiques
+1. Créer l'évaluation.
+2. Saisir les notes.
+3. Enregistrer ou valider.
+4. Faire publier les notes par l'administrateur (statut Publiée).
+5. Le stagiaire voit les notes publiées.
+
+62.2 Circuit QCM
+1. Créer l'évaluation QCM.
+2. Créer les questions.
+3. Faire passer.
+4. Consulter les tentatives.
+5. Saisir une note manuellement si nécessaire.
+
+62.3 Circuit TP
+1. Créer et publier le TP.
+2. Recevoir le dépôt.
+3. Corriger et noter.
+4. Saisir une note manuellement si nécessaire.
+
+62.4 Circuit final
+1. Vérifier notes, présences, QCM, TP, projet, implication et comportement.
+2. Calculer l'évaluation finale.
+3. Choisir la décision.
+4. Enregistrer ou valider et publier.
+5. Générer le bulletin.
+6. Publier le bulletin.
+7. Générer les documents.
+8. Imprimer ou enregistrer en PDF.
+
+62.5 Ordre recommandé
+1. Notes de modules.
+2. Résultats QCM.
+3. Notes TP.
+4. Projet final.
+5. Implication et comportement.
+6. Présences.
+7. Évaluation finale.
+8. Bulletin.
+9. Documents.
+
+--------------------------------------------------------------------------------
+63. CLÔTURER UNE FORMATION
+--------------------------------------------------------------------------------
+
+1. Vérifier que toutes les notes sont saisies.
+2. Vérifier les présences.
+3. Vérifier les QCM et TP.
+4. Vérifier le projet final.
+5. Vérifier l'implication et le comportement.
+6. Créer l'évaluation finale.
+7. Choisir la décision.
+8. Générer et publier les bulletins.
+9. Générer les attestations et certificats.
+10. Passer les inscriptions à « Terminée ».
+11. Passer les stagiaires à « Terminé ».
+12. Archiver les stagiaires qui quittent le suivi actif.
+13. Clôturer ou archiver la promotion.
+14. Archiver éventuellement la formation.
+
+Ne supprimez pas les données : l'archivage suffit.
+
+--------------------------------------------------------------------------------
+64. ARCHIVER ET RESTAURER
+--------------------------------------------------------------------------------
+
+Archiver un stagiaire :
+1. /app/stagiaires.
+2. Modifier.
+3. Statut « Archivé ».
+4. Enregistrer.
+
+Archiver une formation :
+1. /app/formations.
+2. Modifier.
+3. Statut « Archivée ».
+
+Archiver une promotion :
+1. /app/promotions.
+2. Modifier.
+3. Statut « Archivée ».
+
+Restaurer :
+1. /app/archivage.
+2. Choisir l'onglet.
+3. Cliquer sur « Restaurer ».
+4. Confirmer.
+
+Rappel :
+- stagiaire restauré => Actif ;
+- formation restaurée => Active ;
+- promotion restaurée => Planifiée.
+
+
+================================================================================
+PARTIE 9 - AIDE
+================================================================================
+
+--------------------------------------------------------------------------------
+65. RÔLES ET ACCÈS
+--------------------------------------------------------------------------------
+
+65.1 Administrateur
+Accès complet. Gère les comptes, les paramètres, les archives et toutes les
+données. Il est le seul à pouvoir créer des comptes et modifier les paramètres.
+
+65.2 Direction
+Accès large :
+- dossiers ;
+- pédagogie ;
+- évaluations ;
+- suivi ;
+- résultats ;
+- rapports ;
+- archivage.
+Pas d'accès aux utilisateurs, au journal d'audit ni aux paramètres.
+
+65.3 Responsable de formation
+Accès proche de la direction, sans archivage, sans utilisateurs, sans audit et
+sans paramètres. Il possède les permissions de validation et de publication.
+
+65.4 Responsable pédagogique
+Accès proche du responsable de formation. Il possède la validation des notes,
+mais pas la permission de publication des bulletins.
+
+65.5 Formateur
+Accès aux stagiaires, formations, promotions, séances, présences, évaluations,
+notes, QCM, TP, compétences, implication, comportement, observations,
+progression, plans, journal, objectifs et projet final.
+Pas d'accès aux inscriptions, réservations, affectations, évaluations
+intermédiaires, évaluation finale, bulletins, documents, rapports, archivage,
+utilisateurs, audit ou paramètres.
+
+65.6 Maître de stage
+Accès aux stagiaires, objectifs, journal, compétences, implication, comportement,
+observations, projet final, notifications et recherche.
+
+65.7 Service administratif
+Accès aux stagiaires, inscriptions, réservations, affectations, documents,
+notifications, recherche et archivage.
+
+65.8 RH
+Accès aux stagiaires, rapports, documents, notifications et recherche.
+
+65.9 Auditeur
+Accès aux stagiaires, rapports, audit, notifications et recherche.
+
+65.10 Stagiaire
+Accès uniquement à son espace personnel et à ses 22 pages.
+
+65.11 Point important sur le dossier stagiaire
+
+Tout rôle qui possède la page Stagiaires peut ouvrir le dossier détail et voir :
+- les notes ;
+- les présences ;
+- les compétences ;
+- les observations ;
+- le suivi.
+
+Cela s'applique aussi aux rôles qui n'ont pas les pages Notes ou Observations.
+Ne considérez donc pas le dossier détail comme un espace réservé à l'équipe
+pédagogique.
+
+65.12 Changement de rôle
+
+Un changement de rôle n'est pas appliqué en temps réel. L'utilisateur doit se
+déconnecter puis se reconnecter.
+
+--------------------------------------------------------------------------------
+66. PROBLÈMES FRÉQUENTS
+--------------------------------------------------------------------------------
+
+66.1 « Je ne vois pas une page dans le menu »
+
+Cause : le rôle n'a pas la permission.
+Solution :
+1. Vérifier votre rôle avec l'administrateur.
+2. Faire changer le rôle si nécessaire.
+3. Se déconnecter puis se reconnecter.
+
+66.2 « Accès refusé »
+
+Cause : vous avez ouvert une adresse non autorisée.
+Solution : revenir au tableau de bord ou demander l'accès.
+
+66.3 « Aucun stagiaire éligible » dans Présences
+
+Causes :
+- la séance n'a pas de promotion ;
+- aucun stagiaire n'est inscrit à cette promotion ;
+- l'inscription n'existe pas.
+Solution :
+1. Vérifier la promotion de la séance.
+2. Vérifier les inscriptions.
+3. Corriger la séance ou inscrire les stagiaires.
+
+66.4 « Aucun stagiaire éligible » dans Notes
+
+Causes :
+- l'évaluation est liée à une formation sans inscrits ;
+- les inscriptions manquent.
+Solution :
+1. Vérifier la formation de l'évaluation.
+2. Vérifier les inscriptions.
+3. Si l'évaluation n'a pas de formation, tous les stagiaires sont proposés.
+
+66.5 Une note n'apparaît pas chez le stagiaire
+
+Cause : la note n'est pas au statut « Publiée ».
+Solution :
+1. Vérifier le statut dans /app/notes.
+2. Demander à l'administrateur de publier la note dans Forge.
+3. Recharger l'espace stagiaire.
+
+66.6 Le QCM n'apparaît pas dans /app/qcm
+
+Causes :
+- l'évaluation n'est pas cochée « Cette évaluation est un QCM » ;
+- l'évaluation n'existe pas.
+Solution : modifier l'évaluation et cocher la case.
+
+66.7 Le QCM n'apparaît pas chez le stagiaire
+
+Causes :
+- l'évaluation est en brouillon ;
+- l'évaluation est archivée ;
+- la formation ne correspond pas.
+Solution : changer le statut et vérifier la formation.
+
+66.8 Les boutons de bulletin sont grisés
+
+Cause : aucune évaluation finale n'existe pour le stagiaire.
+Solution : aller dans /app/evaluation-finale et enregistrer une évaluation.
+
+66.9 Le bulletin ne se met pas à jour
+
+Cause : le contenu du bulletin est figé.
+Solution : générer un nouveau bulletin après avoir corrigé les notes.
+
+66.10 Une réservation ne peut pas être confirmée
+
+Causes possibles :
+- promotion complète ;
+- email déjà utilisé ;
+- dossier archivé ;
+- compte existant incompatible ;
+- table reservations absente.
+Solution : lire le message, corriger la situation, puis réessayer.
+
+66.11 La page Réservations affiche une erreur de table
+
+Cause : la table reservations n'est pas installée.
+Solution : contacter l'administrateur technique.
+
+66.12 Le mot de passe est perdu
+
+L'application ne permet pas de le réinitialiser.
+Solution : contacter l'administrateur. Il peut recréer le compte ou intervenir
+dans Forge.
+
+66.13 Un email, un SMS ou un push n'est pas parti
+
+Cause : seules les notifications internes sont enregistrées.
+Solution : utiliser un autre canal ou contacter l'administrateur.
+
+66.14 Un fichier ne s'ouvre pas
+
+Cause : le champ contient une URL externe, pas un fichier hébergé.
+Solution : vérifier le lien, les droits de partage et le réseau.
+
+66.15 L'impression est vide
+
+Vérifier :
+- qu'un stagiaire est sélectionné ;
+- qu'un bulletin ou document est affiché ;
+- que la zone d'impression est visible ;
+- que le navigateur n'empêche pas l'impression.
+
+66.16 Les données ne se mettent pas à jour
+
+- Recharger la page.
+- Attendre une minute pour les listes de référence.
+- Vérifier que l'enregistrement a bien été confirmé.
+
+66.17 Une liste s'arrête à 200 lignes
+
+C'est une limite de l'application. Utiliser la recherche ou contacter
+l'administrateur pour les gros volumes.
+
+66.18 Une évaluation finale ou un bulletin est en double
+
+C'est possible : chaque enregistrement crée une nouvelle ligne. La plus récente
+est utilisée. Supprimer les anciennes si nécessaire.
+
+66.19 Un stagiaire n'apparaît pas dans une promotion
+
+Vérifier :
+- son inscription ;
+- la formation ;
+- la promotion ;
+- le statut de l'inscription.
+
+66.20 Le thème ne change pas
+
+Cliquer sur l'icône lune/soleil en haut à droite, ou utiliser
+/app/mon-espace/parametres pour un stagiaire.
+
+--------------------------------------------------------------------------------
+67. LIMITES À CONNAÎTRE
+--------------------------------------------------------------------------------
+
+67.1 Listes
+- 200 lignes maximum par liste.
+- Pas de pagination.
+- Les statistiques peuvent être partielles.
+
+67.2 Notes
+- Coefficients non appliqués.
+- Coefficients de modules non appliqués.
+- Pas de bouton Publier dans Notes.
+- Les notes validées ne sont pas visibles par le stagiaire sans publication.
+- Les notes non publiées sont prises en compte dans les calculs du personnel.
+
+67.3 Résultats
+- Aucune décision automatique.
+- Aucun bulletin automatique.
+- Aucun document automatique.
+- Aucune note automatique depuis un QCM ou un TP.
+
+67.4 Réservations
+- Capacité contrôlée pour les réservations, pas pour les inscriptions manuelles.
+- Pas de transaction globale.
+- Risque de dépassement en cas de confirmations simultanées.
+
+67.5 Communications
+- Pas d'email réel.
+- Pas de SMS réel.
+- Pas de push réel.
+- Pas de notification automatique sur note, bulletin ou échéance.
+
+67.6 Fichiers
+- Pas d'upload.
+- Pas de stockage de fichiers.
+- Pas de PDF serveur.
+- Impression via navigateur.
+
+67.7 Comptes
+- Pas de mot de passe oublié.
+- Pas de changement de mot de passe dans l'interface.
+- Suppression directe possible.
+- Un admin peut supprimer son propre compte.
+- Un compte au statut « Bloqué » ou « Inactif » peut encore se connecter dans
+  l'état actuel. Pour bloquer réellement un accès, supprimez le compte ou
+  intervenez dans Forge.
+
+67.8 Suivi
+- Les observations internes sont chargées côté navigateur avant masquage.
+- Les réponses QCM sont présentes côté navigateur.
+- Les permissions sont contrôlées côté interface.
+- L'application ne filtre pas les données par formateur ou promotion.
+
+67.9 Journal d'audit
+- Toutes les actions ne sont pas tracées.
+- Page en lecture seule.
+- 200 lignes maximum.
+
+67.10 Paramètres
+- Les règles de notation ne sont pas utilisées par les calculs.
+- Le JSON doit être valide.
+
+67.11 Documents
+- Certains types utilisent un contenu générique.
+- Vérifier l'aperçu avant impression.
+- Aucune unicité : plusieurs copies possibles.
+
+--------------------------------------------------------------------------------
+68. BONNES PRATIQUES
+--------------------------------------------------------------------------------
+
+68.1 Avant de saisir
+- Vérifier la formation, la promotion et le module.
+- Vérifier que la séance est la bonne.
+- Vérifier que l'évaluation est la bonne.
+
+68.2 Pendant la saisie
+- Remplir tous les champs obligatoires.
+- Ne pas laisser vide un champ d'implication ou de comportement.
+- Saisir explicitement 0 quand la note est zéro.
+- Vérifier la réponse correcte des QCM.
+- Vérifier les dates.
+
+68.3 Après la saisie
+- Relire la liste.
+- Vérifier les totaux.
+- Vérifier le dossier du stagiaire.
+- Vérifier la progression.
+
+68.4 Avant de publier
+- Vérifier les notes.
+- Vérifier les présences.
+- Vérifier la décision.
+- Vérifier l'appréciation.
+- Vérifier le bulletin.
+
+68.5 Sécurité
+- Ne pas partager le compte administrateur.
+- Se déconnecter sur un poste partagé.
+- Ne pas communiquer les mots de passe par un canal public.
+- Ne pas supprimer les données utilisées.
+- Préférer l'archivage.
+- Faire des sauvegardes avant une opération de masse.
+
+68.6 Organisation
+- Utiliser des codes de promotion clairs.
+- Utiliser des matricules uniques.
+- Utiliser des emails uniques.
+- Éviter les doublons d'inscription.
+- Éviter les doublons d'affectation.
+- Ne pas supprimer une formation ou un module déjà utilisé.
+
+68.7 Formation des utilisateurs
+- Montrer d'abord le tableau de bord.
+- Montrer la fiche stagiaire.
+- Montrer la feuille de présence.
+- Montrer la saisie des notes.
+- Montrer le circuit QCM.
+- Montrer le circuit TP.
+- Montrer l'évaluation finale et le bulletin.
+- Montrer l'espace stagiaire.
+
+68.8 Checklist avant ouverture
+- [ ] Formation créée et active.
+- [ ] Modules créés.
+- [ ] Promotion créée et ouverte.
+- [ ] Séances planifiées.
+- [ ] Formateurs affectés.
+- [ ] Capacité vérifiée.
+- [ ] Comptes créés.
+- [ ] Stagiaires inscrits.
+- [ ] Affectations créées.
+- [ ] Test de connexion stagiaire.
+- [ ] Test d'une feuille de présence.
+- [ ] Test d'une évaluation.
+- [ ] Test d'un QCM.
+- [ ] Test d'un bulletin.
+- [ ] Test d'impression.
+
+68.9 Checklist de fin de formation
+- [ ] Toutes les notes sont saisies.
+- [ ] Les notes à publier sont publiées.
+- [ ] Les présences sont complètes.
+- [ ] Les QCM sont corrigés.
+- [ ] Les TP sont corrigés.
+- [ ] Les projets finaux sont à jour.
+- [ ] L'implication et le comportement sont saisis.
+- [ ] L'évaluation finale est enregistrée.
+- [ ] La décision est choisie.
+- [ ] Le bulletin est généré.
+- [ ] Le bulletin est publié.
+- [ ] Les documents sont générés.
+- [ ] Les inscriptions sont terminées.
+- [ ] Les stagiaires sont terminés ou archivés.
+
+--------------------------------------------------------------------------------
+69. GLOSSAIRE
+--------------------------------------------------------------------------------
+
+Affectation
+Lien entre un stagiaire et un service, un formateur référent, un maître de stage
+ou un groupe.
+
+Année académique
+Période de référence des promotions.
+
+Bulletin
+Document de synthèse des résultats, généré à partir de l'évaluation finale.
+
+Capacité
+Nombre maximum de places d'une promotion.
+
+Coefficient
+Valeur de pondération affichée. Dans l'état actuel, les coefficients des notes
+et des modules ne sont pas appliqués aux moyennes.
+
+Compétence
+Savoir ou savoir-faire évalué par un niveau.
+
+Évaluation
+Activité notée : devoir, examen, QCM, TP, projet, etc.
+
+Évaluation finale
+Synthèse pondérée des résultats, avec une décision manuelle.
+
+Évaluation intermédiaire
+Photographie des résultats à mi-parcours.
+
+Inscription
+Lien entre un stagiaire et une formation/promotion.
+
+Module
+Partie d'une formation.
+
+Promotion
+Groupe daté d'une formation.
+
+QCM
+Questionnaire à choix multiples, corrigé automatiquement.
+
+Réservation
+Demande de place en ligne, avant confirmation administrative.
+
+Séance
+Créneau de cours planifié.
+
+Stagiaire
+Personne inscrite à une formation.
+
+Statut
+État d'un dossier, d'une inscription, d'une séance, d'une note, etc.
+
+TP
+Travail pratique avec dépôt et correction.
+
+--------------------------------------------------------------------------------
+70. COMPTES DE DÉMONSTRATION
+--------------------------------------------------------------------------------
+
+Ces comptes servent uniquement à la formation et aux tests.
+
+admin@stagebuild.local
+direction@stagebuild.local
+resp.formation@stagebuild.local
+resp.pedagogique@stagebuild.local
+formateur.dev@stagebuild.local
+formateur.data@stagebuild.local
+maitre.stage@stagebuild.local
+administration@stagebuild.local
+stagiaire@stagebuild.local
+rh@stagebuild.local
+auditeur@stagebuild.local
+
+Mot de passe commun : Admin@123
+
+ATTENTION : changez ou supprimez ces comptes avant toute utilisation réelle.
+
+--------------------------------------------------------------------------------
+FIN DU GUIDE
+--------------------------------------------------------------------------------

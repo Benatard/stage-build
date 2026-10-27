@@ -1,0 +1,4315 @@
+================================================================================
+STAGEBUILD
+Documentation fonctionnelle et technique complète
+Gestion et suivi des stagiaires
+================================================================================
+
+Version du document : 1.0
+Date de référence : 26 octobre 2026
+Langue : français
+Public : service documentation, équipe projet, administrateurs, formateurs,
+        support et agent IA de connaissance.
+Périmètre : application StageBuild du dossier stage-build.
+
+IMPORTANT
+Ce document décrit le comportement réel du code analysé. Il ne remplace pas un
+cahier des charges contractuel. Lorsqu'une règle métier n'est pas implémentée,
+elle est signalée comme limite ou absence, et non présentée comme acquise.
+
+Fichier de référence principal :
+- stage-build/docs/DOCUMENTATION_STAGEBUILD_COMPLETE.txt
+
+Sources de vérité :
+- Code React/TypeScript dans stage-build/src
+- Schéma PostgreSQL dans stage-build/sql/forge_stagiaires.sql
+- Migration complémentaire dans stage-build/sql/add_reservations.sql
+- Jeu de démonstration dans stage-build/scripts/seed-forge.mjs
+- Configuration dans stage-build/.env.example et stage-build/vercel.json
+
+================================================================================
+SOMMAIRE
+================================================================================
+
+1. Résumé exécutif
+2. Périmètre, conventions et avertissements
+3. Glossaire
+4. Architecture, configuration et exploitation
+5. Authentification, sessions et sécurité
+6. Rôles et permissions : vue d'ensemble
+7. Navigation, interface et comportements communs
+8. Portail public
+9. Modules du personnel
+   9.1 Tableau de bord
+   9.2 Dossiers
+   9.3 Pédagogie
+   9.4 Évaluations et activités
+   9.5 Suivi pédagogique
+   9.6 Résultats et documents
+   9.7 Administration et supervision
+10. Espace stagiaire
+11. Workflows métier de bout en bout
+12. Règles de calcul et invariants métier
+13. Dictionnaire des données
+14. Matrice détaillée des permissions
+15. Limites connues, risques et points de vigilance
+16. Dépannage et exploitation
+17. Base de connaissances pour agent IA
+18. Annexes : routes, statuts, comptes, fichiers
+
+================================================================================
+1. RÉSUMÉ EXÉCUTIF
+================================================================================
+
+StageBuild est une application web de gestion et de suivi de stagiaires. Elle
+couvre :
+
+- la présentation publique et la réservation en ligne ;
+- la gestion des dossiers stagiaires, inscriptions, réservations et affectations ;
+- la structuration pédagogique : formations, modules, promotions et séances ;
+- la saisie des présences ;
+- les évaluations : notes, QCM, travaux pratiques, compétences, implication et
+  comportement professionnel ;
+- le suivi : observations, progression, plans d'amélioration, évaluations
+  intermédiaires, journal de stage, objectifs et projet final ;
+- les résultats : évaluation finale, bulletins, documents imprimables et rapports ;
+- l'administration : utilisateurs, audit, paramètres, archivage, notifications et
+  recherche globale ;
+- un espace stagiaire en lecture sur la majorité des données, avec quelques
+  actions limitées (profil, journal, dépôt de travaux, QCM, signalements,
+  notifications).
+
+L'application est une SPA React. Les données et l'authentification sont fournies
+par Forge Console via une API REST et un endpoint SQL. Il n'y a pas de serveur
+applicatif propre à StageBuild.
+
+Points structurants à retenir :
+
+- 10 rôles sont définis, avec l'administrateur système comme super-utilisateur.
+- 36 entrées de route sont prévues côté personnel, et 22 routes composent
+  l'espace stagiaire.
+- Le schéma principal comporte 36 tables, 2 vues de reporting et des triggers de
+  mise à jour de updated_at.
+- Les permissions sont contrôlées côté navigateur. Les services de données ne
+  refiltrent pas les lignes selon le rôle.
+- Les listes sont plafonnées et ne disposent pas de pagination fonctionnelle.
+- Plusieurs règles métier sont volontairement manuelles : décision finale,
+  publication, validation de notes, archivage.
+- Aucun PDF n'est généré côté serveur : les documents et bulletins sont des
+  enregistrements JSON et des vues imprimables via window.print().
+
+================================================================================
+2. PÉRIMÈTRE, CONVENTIONS ET AVERTISSEMENTS
+================================================================================
+
+2.1 Conventions de lecture
+
+- « Page » désigne un écran React monté par le routeur.
+- « Module » désigne un domaine fonctionnel de l'application, pas un module
+  JavaScript ni un module pédagogique.
+- « Module pédagogique » désigne un enregistrement de la table modules.
+- « Personnel » désigne tous les rôles autres que stagiaire.
+- « CRUD » signifie créer, lire, modifier, supprimer.
+- « Self » désigne les 22 routes de l'espace personnel du stagiaire.
+- Les montants, notes et pourcentages sont arrondis à 2 décimales par les
+  utilitaires communs, sauf mention contraire.
+- Les dates sont affichées au format français par Intl.DateTimeFormat.
+
+2.2 Statut du document
+
+Le document décrit :
+
+- ce que l'application fait réellement ;
+- ce qu'elle ne fait pas ;
+- les contournements et limites observables ;
+- les dépendances à Forge Console.
+
+Il ne faut pas déduire du vocabulaire marketing de la page d'accueil qu'une
+fonctionnalité est opérationnelle. Par exemple, la page publique peut annoncer
+des principes de sécurité ou de gouvernance qui ne sont pas implémentés dans le
+code client analysé.
+
+2.3 Données personnelles
+
+Les données manipulées sont des données d'identité, de scolarité, de présence,
+d'évaluation et de comportement. En production, l'accès doit être restreint, les
+comptes de démonstration doivent être supprimés ou modifiés, et une politique de
+conservation doit être définie. Le code ne fournit pas à lui seul un cadre de
+conformité RGPD ou équivalent.
+
+================================================================================
+3. GLOSSAIRE
+================================================================================
+
+Stagiaire
+Personne suivie par l'organisme. Table stagiaires. Statuts : candidat, admis,
+actif, termine, archive.
+
+Formation
+Programme pédagogique global. Table formations. Statuts : active, inactive,
+archivee.
+
+Module pédagogique
+Composante d'une formation avec coefficient, heures, seuil de réussite et
+formateur. Table modules. Statuts : active, inactive.
+
+Promotion
+Groupe daté rattaché à une formation, avec code, dates et capacité. Table
+promotions. Statuts : planifiee, active, cloturee, archivee.
+
+Inscription
+Lien entre un stagiaire, une formation et éventuellement une promotion. Table
+inscriptions. Statuts : en_attente, validee, annulee, terminee.
+
+Réservation
+Demande publique de place, avant création du dossier stagiaire. Table
+reservations. Statuts : en_attente, confirmee, annulee.
+
+Affectation
+Positionnement d'un stagiaire dans un service, un groupe, auprès d'un formateur
+et/ou d'un maître de stage. Table affectations.
+
+Séance
+Créneau planifié pour un module et éventuellement une promotion. Table seances.
+Statuts : planifiee, en_cours, terminee, annulee.
+
+Présence
+Statut d'un stagiaire à une séance. Table presences. Statuts : present, absent,
+retard, absence_justifiee, absence_non_justifiee, sortie_autorisee.
+
+Évaluation
+Activité évaluée : interrogation, devoir, QCM, examen, TP, projet, présentation,
+oral, compétence, comportement, évaluation finale. Table evaluations.
+
+Note
+Résultat d'un stagiaire à une évaluation. Table notes. Statuts : saisie, soumise,
+validee, publiee.
+
+QCM
+Questionnaire à choix multiples. Questions dans qcm_questions, tentatives dans
+qcm_attempts. Types de question : single, multiple, true_false, short_answer,
+matching.
+
+Travail pratique (TP)
+Activité avec consignes, livrables, échéance et dépôt. Tables
+travaux_pratiques et travaux_soumissions.
+
+Compétence
+Savoir-faire évalué sur une échelle : non_acquis, a_renforcer, en_cours, acquis,
+maitrise. Tables competences et competence_levels.
+
+Implication
+Évaluation sur 5 de huit dimensions d'engagement. Table implications.
+
+Comportement professionnel
+Évaluation sur 5 de dix dimensions comportementales. Table comportements.
+
+Progression
+Synthèse calculée des notes, présences, QCM, TP, compétences et résultats finaux.
+Ce n'est pas une table : la page agrège plusieurs tables.
+
+Plan d'amélioration
+Plan de remédiation avec actions. Tables improvement_plans et
+improvement_actions.
+
+Évaluation intermédiaire
+Synthèse datée à mi-parcours avec décision pédagogique. Table
+intermediate_evaluations.
+
+Journal de stage
+Activités quotidiennes déclarées par le stagiaire. Table stage_journal.
+
+Objectif de stage
+Objectif individuel et son statut. Table stage_objectives.
+
+Projet final
+Projet de fin de parcours, livrables, soutenance et note. Table final_projects.
+
+Évaluation finale
+Consolidation pondérée des résultats et décision. Table final_evaluations.
+
+Bulletin
+Instantané imprimable des résultats. Table bulletins. Statuts : brouillon, valide,
+publie, archive.
+
+Document
+Document officiel généré et imprimable. Table documents. Onze types sont
+supportés.
+
+Notification
+Message interne adressé à un utilisateur ou à un stagiaire. Table notifications.
+Canaux prévus : internal, email, sms, push.
+
+Audit
+Journal de traçabilité. Table audit_logs. La consultation existe, mais les pages
+métier n'écrivent pas automatiquement dans cette table.
+
+Forge Console
+Plateforme externe fournissant l'API REST, l'authentification, le stockage
+PostgreSQL et l'endpoint SQL utilisés par StageBuild.
+
+RLS
+Row Level Security PostgreSQL. Aucune politique RLS n'est définie dans le schéma
+fourni. Le cloisonnement des données n'est donc pas garanti par la base.
+
+================================================================================
+4. ARCHITECTURE, CONFIGURATION ET EXPLOITATION
+================================================================================
+
+4.1 Stack technique
+
+- React 18.3
+- TypeScript 5.6
+- Vite 5.4
+- React Router 7.18
+- Tailwind CSS 3.4
+- Axios 1.7
+- React Icons 5.4
+- SweetAlert2 11.15
+- react-helmet-async 3.0
+
+Le projet est une application front-end statique. Le build Vite produit le
+dossier dist. Le déploiement prévu est Vercel, avec réécriture de toutes les
+routes vers index.html.
+
+4.2 Organisation du code
+
+src/App.tsx
+Point d'entrée applicatif, fournit les contextes de thème et d'authentification.
+
+src/router.tsx
+Définition des routes publiques, protégées, personnel et stagiaire.
+
+src/config/
+- env.ts : lecture des variables Vite et configuration Forge.
+- permissions.ts : rôles, libellés et permissions par rôle.
+- appNavigation.ts : groupes de navigation et permissions d'affichage.
+- options.ts : libellés des statuts et listes de choix.
+- navigation.ts, site.ts : navigation publique et métadonnées.
+
+src/context/
+- AuthContext.tsx : session, utilisateur, login, logout, can().
+- ThemeContext.tsx : thème clair/sombre persistant.
+
+src/services/
+- auth.service.ts : normalisation de l'utilisateur, login, restauration, signup.
+- data.service.ts : façade CRUD, listAll, SQL.
+- reservation.service.ts : disponibilités et confirmation des réservations.
+- forge/client.ts : client Axios, en-têtes et gestion d'erreurs.
+- forge/auth.ts : login, signup, me, logout.
+- forge/repository.ts : REST générique, GraphQL et SQL.
+- forge/row.ts : aplatissement des réponses Forge.
+- forge/token-storage.ts : jeton dans localStorage.
+
+src/hooks/
+- useForgeTable.ts : chargement d'une table avec filtre, tri et limite.
+- useScopedRows.ts : chargement par identifiants pour un stagiaire.
+- useReferenceData.ts : cache de neuf référentiels.
+- useCrud.ts : actions CRUD et rechargement.
+- useForgeConnection.ts : test de connexion Forge.
+- useReveal.ts : animation d'apparition.
+
+src/components/
+- auth : ProtectedRoute, PermissionRoute.
+- layout : MainLayout, AppLayout, Navbar, Footer.
+- ui : EntityManager, DataTable, Modal, Form, Badge, Button, Feedback, etc.
+
+src/pages/
+- HomePage, ReservationPage, LoginPage, ForgeStatusPage.
+- app/ : pages du personnel.
+- app/stagiaire/ : espace stagiaire.
+
+src/utils/
+- format.ts : dates, nombres, moyennes, pourcentages, noms.
+- csv.ts : export CSV.
+- alerts.ts : confirmations et notifications SweetAlert2.
+- options.ts : construction d'options de listes.
+
+sql/forge_stagiaires.sql
+Schéma complet : tables, index, triggers, vues, rôles et administrateur initial.
+
+sql/add_reservations.sql
+Migration isolée pour ajouter la table reservations.
+
+scripts/seed-forge.mjs
+Génération d'un jeu de démonstration et commande de réinitialisation.
+
+4.3 Variables d'environnement
+
+Fichier local : .env.local, non versionné.
+Modèle : .env.example.
+
+VITE_APP_NAME
+Nom affiché de l'application. Valeur par défaut : StageBuild.
+
+VITE_FORGE_API_URL
+URL de base de l'API Forge. Valeur par défaut :
+https://forgeconsole.app/api/public/v1
+
+VITE_FORGE_PROJECT_KEY
+Clé du projet Forge. Elle est ajoutée à l'URL de base :
+${VITE_FORGE_API_URL}/${VITE_FORGE_PROJECT_KEY}
+
+VITE_FORGE_API_KEY
+Clé API du projet, envoyée dans l'en-tête x-api-key.
+Elle est nécessaire côté navigateur dans l'architecture actuelle. Ce n'est pas un
+secret serveur et elle ne doit pas être présentée comme telle.
+
+La configuration est considérée comme valide si PROJECT_KEY et API_KEY sont
+renseignées. Sinon, les appels de données lèvent une erreur explicite.
+
+Pour la démonstration locale, le fichier .env.local du dépôt contient une
+configuration Forge existante. Il ne doit pas être publié.
+
+4.4 Installation locale
+
+Prérequis :
+- Node.js et npm. Aucune version n'est verrouillée par package.json.
+- Accès réseau à Forge Console.
+- Un projet Forge configuré avec le schéma StageBuild.
+
+Commandes :
+- npm install
+- npm run dev
+- npm run typecheck
+- npm run build
+- npm run preview
+
+Le serveur Vite écoute sur le port 3000 et ouvre automatiquement le navigateur.
+L'alias @ pointe vers src.
+
+4.5 Scripts npm
+
+npm run dev
+Démarre Vite en développement.
+
+npm run build
+Exécute tsc --noEmit, puis vite build. Le build échoue si le typage échoue.
+
+npm run preview
+Sert le build de production localement.
+
+npm run typecheck
+Vérifie TypeScript sans générer de fichiers.
+
+npm run seed
+Exécute scripts/seed-forge.mjs. Le script s'arrête si les données de démo
+semblent déjà présentes.
+
+npm run seed:reset
+Exécute le seed avec --reset. Le script tente de vider les tables applicatives,
+conserve le compte admin@stagebuild.local, puis réinsère le jeu de démonstration.
+Cette commande est destructrice pour les données du projet ciblé.
+
+4.6 Initialisation Forge
+
+Étapes recommandées :
+1. Créer ou ouvrir le projet Forge.
+2. Exécuter le contenu de sql/forge_stagiaires.sql dans l'import SQL ou
+   l'éditeur de schéma Forge, pas via l'endpoint /sql.
+3. Vérifier que la table d'authentification est users, la colonne identifiant est
+   email et la colonne mot de passe est password_hash.
+4. Marquer password_hash comme colonne cachée.
+5. Configurer une durée de JWT de 24 heures selon le commentaire du schéma.
+6. Ajouter les variables VITE_FORGE_* dans .env.local.
+7. Lancer npm run seed si les données de démonstration sont souhaitées.
+8. Se connecter avec le compte administrateur initial, puis changer le mot de
+   passe.
+9. Si la table reservations manque sur une base ancienne, exécuter
+   sql/add_reservations.sql via l'import SQL Forge.
+
+4.7 API Forge utilisée
+
+Le client construit l'URL de base avec la clé projet et applique :
+- x-api-key: VITE_FORGE_API_KEY
+- Authorization: Bearer <jeton> si une session existe
+- Content-Type: application/json
+- Accept: application/json
+- timeout: 20 secondes
+
+Endpoints :
+- POST /auth/login
+- POST /auth/signup
+- GET /auth/me
+- GET /:table
+- GET /:table/:id
+- POST /:table
+- PATCH /:table/:id
+- DELETE /:table/:id
+- POST /sql
+- POST /graphql
+
+Particularités :
+- Le login envoie password_hash et non password.
+- Les réponses REST sont aplaties. Une ligne Forge de forme
+  { id, data: {...}, created_at, updated_at } devient un objet unique.
+- Les erreurs sont transformées en ForgeApiError avec message, statut et détails.
+
+4.8 Contraintes de l'endpoint SQL
+
+Le service reservation.service.ts utilise /sql pour compter et lire des places.
+Les contraintes observées dans le projet imposent :
+- pas de DDL via /sql ;
+- pas de ORDER BY dans les requêtes SQL utilisées ;
+- une condition simple par requête ;
+- éviter les alias, IN, OR, LIKE et les combinaisons AND complexes.
+
+Les requêtes réellement utilisées sont des count(*) et des select de colonnes
+avec une seule égalité. Toute nouvelle requête SQL doit respecter ce cadre ou
+être testée sur le projet Forge cible.
+
+4.9 Déploiement
+
+vercel.json définit :
+- framework : vite
+- buildCommand : npm run build
+- outputDirectory : dist
+- réécriture /(.*) vers /index.html
+- en-têtes X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin
+- X-Frame-Options: SAMEORIGIN
+
+Le build de référence produit un chunk JavaScript d'environ 816 kB. Ce n'est pas
+un échec, mais cela justifie un découpage ultérieur si la performance devient
+critique.
+
+4.10 Jeu de démonstration
+
+Le seed crée notamment :
+- un compte administrateur et neuf autres comptes de rôles différents ;
+- trois formations : Développement Web Full-Stack, Data Analyse & Business
+  Intelligence, et Réseaux & Cybersécurité (archivée) ;
+- des modules, promotions, inscriptions, affectations et séances ;
+- des évaluations, notes, QCM, travaux pratiques et soumissions ;
+- des compétences, implications, comportements et observations ;
+- des plans, évaluations intermédiaires, objectifs, journal et projets ;
+- des évaluations finales, bulletins, documents, notifications et logs d'audit.
+
+Mot de passe commun des comptes de démonstration : Admin@123.
+Ce mot de passe doit être changé hors démonstration.
+
+Comptes seedés :
+- admin@stagebuild.local
+- direction@stagebuild.local
+- resp.formation@stagebuild.local
+- resp.pedagogique@stagebuild.local
+- formateur.dev@stagebuild.local
+- formateur.data@stagebuild.local
+- maitre.stage@stagebuild.local
+- administration@stagebuild.local
+- stagiaire@stagebuild.local
+- rh@stagebuild.local
+- auditeur@stagebuild.local
+
+Le seed est idempotent de manière defensive : si la formation de démonstration
+existe déjà, il s'arrête sans réinsérer. La commande seed:reset est le moyen
+prévu pour repartir d'un état propre.
+
+================================================================================
+5. AUTHENTIFICATION, SESSIONS ET SÉCURITÉ
+================================================================================
+
+5.1 Parcours de connexion
+
+1. L'utilisateur ouvre /login.
+2. Le formulaire demande email et mot de passe.
+3. L'email est trimé et passé en minuscules.
+4. auth.service appelle forgeAuth.login.
+5. forgeAuth envoie POST /auth/login avec password_hash.
+6. Le jeton est lu dans token, accessToken, access_token ou jwt.
+7. Le jeton est stocké dans localStorage sous forge.auth.token.
+8. Le profil est normalisé depuis la réponse de login ou via GET /auth/me.
+9. L'utilisateur est redirigé vers la page demandée ou /app.
+
+Si un utilisateur déjà authentifié ouvre /login, il est redirigé vers /app.
+
+5.2 Restauration de session
+
+Au montage, AuthContext tente de restaurer la session :
+- sans jeton, aucun appel ;
+- avec jeton, appel GET /auth/me ;
+- en cas d'échec, le jeton est supprimé et l'utilisateur devient anonyme.
+
+Il n'y a pas de rafraîchissement automatique du jeton, pas de polling et pas de
+renouvellement silencieux.
+
+5.3 Normalisation de l'utilisateur
+
+- role principal : premier rôle du Set construit à partir de role et roles[].
+- rôle inconnu ou absent : stagiaire.
+- permissions : union des permissions de tous les rôles connus.
+- statut : inactive et blocked sont conservés ; toute autre valeur devient
+  active.
+- stagiaire_id conservé uniquement si c'est une chaîne.
+- email, first_name, last_name, phone, last_login_at et avatar_url sont
+  normalisés.
+
+Conséquence : un rôle mal saisi ou inconnu produit un compte stagiaire, ce qui
+peut masquer une erreur d'administration.
+
+5.4 Déconnexion
+
+La déconnexion supprime le jeton local et redirige vers /login. Aucun appel de
+déconnexion serveur n'est effectué.
+
+5.5 Contrôles d'accès
+
+ProtectedRoute :
+- pendant le chargement : indicateur plein écran ;
+- anonyme : redirection vers /login avec l'état from ;
+- authentifié : rendu des routes enfants.
+
+PermissionRoute :
+- si can(permission) est faux : AccessDeniedPage ;
+- sinon : rendu de la page.
+
+AppLayout :
+- filtre les entrées de navigation selon can(permission) ;
+- choisit le menu stagiaire si user.role === stagiaire ;
+- sinon le menu du personnel.
+
+5.6 Portée réelle de la sécurité
+
+La sécurité applicative est principalement côté client :
+- les routes sont gardées par des composants React ;
+- la navigation est masquée selon les permissions ;
+- les requêtes sont construites par le navigateur.
+
+Les services data.service, forgeRepository, useForgeTable et useScopedRows
+n'appliquent aucun contrôle de rôle. La clé API Forge est présente dans le bundle
+client. Le schéma SQL fourni ne contient aucune politique RLS.
+
+Il en résulte que :
+- un utilisateur qui obtient la clé API et un jeton peut appeler Forge selon les
+  droits configurés sur le projet ;
+- un utilisateur autorisé sur une page peut généralement effectuer toutes les
+  actions CRUD de cette page ;
+- les permissions fines grade_validate et bulletin_publish ne sont pas vérifiées
+  par les pages concernées ;
+- un compte inactive ou blocked n'est pas refusé par le code de login ou de
+  restauration analysé.
+
+Ce point est une limite majeure à traiter avant une exposition publique réelle.
+
+5.7 Stockage du jeton
+
+Le jeton est stocké dans localStorage. Il n'est donc pas protégé contre un XSS.
+Aucune politique de cookies HttpOnly n'est implémentée.
+
+5.8 Absences de fonctions de compte
+
+Il n'y a pas :
+- de mot de passe oublié ;
+- de changement de mot de passe depuis l'espace stagiaire ;
+- de vérification d'email ;
+- de double authentification ;
+- de verrouillage après échecs ;
+- de gestion de sessions actives.
+
+La création de compte passe par /auth/signup, notamment depuis Utilisateurs et
+depuis la confirmation d'une réservation.
+
+================================================================================
+6. RÔLES ET PERMISSIONS : VUE D'ENSEMBLE
+================================================================================
+
+6.1 Les dix rôles
+
+Les descriptions ci-dessous correspondent aux permissions directes. Un rôle qui
+possède la permission stagiaires accède aussi au dossier détail et à ses onglets
+Notes, Présences, Compétences et Suivi, même s'il n'a pas les permissions notes,
+presences, observations ou competences. Voir la section 9.2.2 et la section 14.5.
+
+admin
+Administrateur système. Permission * : accès à toutes les routes.
+
+direction
+Direction. Accès large aux dossiers, à la pédagogie, aux évaluations, au suivi,
+aux résultats, aux rapports et à l'archivage. Pas d'accès aux utilisateurs, à
+l'audit ni aux paramètres.
+
+responsable_formation
+Responsable de formation. Périmètre proche de la direction, avec archivage en
+moins, mais avec validation de notes et publication de bulletins.
+
+responsable_pedagogique
+Responsable pédagogique. Même périmètre que responsable_formation, avec
+validation de notes mais sans bulletin_publish.
+
+formateur
+Formateur. Accès aux stagiaires, formations, promotions, séances, présences,
+évaluations, notes, QCM, travaux, compétences, implication, comportement,
+observations, progression, plans, journal, objectifs et projet final. Pas
+d'inscriptions, réservations, affectations, évaluations intermédiaires,
+évaluation finale, bulletins, documents, rapports, archivage, utilisateurs,
+audit ou paramètres.
+
+maitre_stage
+Maître de stage. Accès aux stagiaires, objectifs, journal, compétences,
+implication, comportement, observations, projet final, notifications et
+recherche. Pas de notes, QCM, travaux, évaluations, bulletins.
+
+administration
+Service administratif. Accès aux stagiaires, inscriptions, réservations,
+affectations, documents, notifications, recherche et archivage. Pas de
+pédagogie, présences, évaluations, résultats détaillés, utilisateurs, audit ou
+paramètres.
+
+stagiaire
+Espace personnel uniquement : dashboard self et 22 permissions self_*. Le rôle
+possède aussi dashboard, mais /app redirige vers /app/mon-espace.
+
+rh
+Ressources humaines. Stagiaires, rapports, documents, notifications, recherche.
+
+auditeur
+Auditeur ou superviseur. Stagiaires, rapports, audit, notifications, recherche.
+
+6.2 Principe d'attribution
+
+Les permissions sont statiques dans src/config/permissions.ts. Elles ne sont pas
+lues depuis la table roles en base au moment de l'exécution. La table roles existe
+et est seedée, mais les décisions d'accès de l'interface reposent sur le mapping
+TypeScript.
+
+6.3 Permissions spéciales
+
+grade_validate
+Présente pour direction, responsable_formation et responsable_pedagogique. Elle
+n'est pas testée dans NotesPage ni dans EvaluationFinalePage.
+
+bulletin_publish
+Présente pour direction et responsable_formation. Elle n'est pas testée dans
+BulletinsPage. La publication est donc contrôlée uniquement par l'accès à la
+route bulletins.
+
+6.4 Limites de la matrice
+
+- Le rôle est global, pas contextuel : pas de restriction à une formation, une
+  promotion ou un formateur donné.
+- Les données ne sont pas filtrées par périmètre dans les pages.
+- Un administrateur peut ouvrir les routes self_* en saisissant l'URL.
+- Les routes self_* vérifient une permission, pas explicitement le rôle
+  stagiaire.
+
+================================================================================
+7. NAVIGATION, INTERFACE ET COMPORTEMENTS COMMUNS
+================================================================================
+
+7.1 Layout public
+
+MainLayout affiche :
+- Navbar ;
+- Outlet ;
+- Footer ;
+- bouton BackToTop ;
+- remontée automatique en haut à chaque changement de route.
+
+Navbar :
+- Accueil, Réservation ;
+- ancres Modules, Parcours, Profils ;
+- bascule de thème ;
+- bouton Se connecter ;
+- menu mobile.
+
+Footer :
+- présentation ;
+- liens publics ;
+- couverture fonctionnelle ;
+- bloc espace sécurisé.
+
+La page /forge est accessible directement mais n'est pas exposée dans le menu.
+
+7.2 Layout personnel et stagiaire
+
+AppLayout affiche :
+- sidebar avec groupes et compteurs ;
+- accordéon mobile ;
+- en-tête ;
+- notifications non lues ;
+- menu utilisateur ;
+- déconnexion.
+
+La sidebar est filtrée par permission. Le groupe contenant la route active est
+ouvert automatiquement. Sur mobile, la navigation se ferme après un clic.
+
+7.3 Rendu des tableaux
+
+DataTable :
+- en dessous de 1280 px, les lignes sont rendues en cartes ;
+- à partir de 1280 px, elles sont rendues en tableau ;
+- les colonnes peuvent être masquées selon hideBelow ;
+- pas de pagination, pas de tri interactif, pas de sélection multiple.
+
+EntityManager :
+- formulaire modal générique ;
+- limite de chargement par défaut : 500 demandée, mais plafonnée à 200 par le
+  repository ;
+- recherche côté client ;
+- création, modification, suppression ;
+- confirmation SweetAlert2 avant suppression ;
+- pas d'audit, pas d'invalidation du cache de référentiels.
+
+7.4 Chargement des données
+
+useForgeTable :
+- limite par défaut 200 ;
+- filtres appliqués côté client après chargement ;
+- tri transmis si fourni ;
+- pas de pagination.
+
+useReferenceData :
+- charge stagiaires, formations, modules, promotions, users, competences,
+  evaluations, inscriptions, seances ;
+- cache module de 60 secondes ;
+- déduplication des requêtes en vol ;
+- erreur sur une table remplacée silencieusement par un tableau vide ;
+- invalidateReferenceData existe mais n'est appelé par aucune page.
+
+useScopedRows :
+- sélectionne jusqu'à 200 identifiants par SQL ;
+- effectue un findRow par identifiant ;
+- trie côté client ;
+- renvoie au maximum 200 lignes ;
+- pas d'offset, pas de pagination, pas de cache.
+
+7.5 Plafonds réels
+
+- forgeRepository.list : tout limit demandé est ramené à 200 maximum.
+- forgeRepository.listAllRows : 50 pages de 200, soit 10 000 lignes avant filtre.
+- dataService.listAll : 20 pages de 200, soit 4 000 lignes.
+- useForgeTable : 200 par défaut.
+- EntityManager : 500 demandés, donc 200 effectifs.
+- useScopedRows : 200 identifiants, puis 200 lignes.
+- Les écrans qui demandent 500 lignes n'en obtiennent donc pas plus de 200.
+
+7.6 Expérience responsive
+
+La refonte responsive a été validée :
+- les écrans du personnel contrôlés à 390 px sans débordement ;
+- 22 routes stagiaire contrôlées à 390 px ;
+- 768, 1024, 1280 et 1366 px vérifiés sur les pages clés ;
+- 320 px, modales, détail stagiaire, bulletin et documents vérifiés ;
+- DataTable en cartes sous 1280 px ;
+- tableau à partir de 1280 px ;
+- débordement du dashboard stagiaire corrigé ;
+- impression des documents et bulletins validée ;
+- typecheck et build validés ;
+- aucune erreur console sur les audits finaux.
+
+Il reste un avertissement de taille de chunk JavaScript d'environ 816 kB.
+
+7.7 Formats et conventions d'affichage
+
+- Dates courtes : jour mois abrégé année, en français.
+- Dates longues : jour de semaine, jour, mois, année.
+- Date et heure : jour/mois/année heure:minute.
+- Heure : HH:MM.
+- Noms : prénom nom postnom pour les stagiaires, first_name last_name pour les
+  utilisateurs.
+- Les valeurs absentes sont souvent affichées avec un tiret cadratin.
+- Les statuts sont affichés via Badge et statusTone.
+- Les montants numériques sont arrondis à 2 décimales.
+
+================================================================================
+8. PORTAIL PUBLIC
+================================================================================
+
+8.1 Accueil /
+
+But : présenter StageBuild, les domaines couverts, le parcours stagiaire et les
+profils utilisateurs.
+
+Sections :
+- Hero avec trois appels à l'action : Se connecter, découvrir les modules,
+  réserver une place.
+- Statistiques marketing issues de landingStats : 8 domaines, 35 modules,
+  10 profils, 1 dossier.
+- Comparaison sans centralisation / avec StageBuild.
+- Trois piliers.
+- Modules présentés par onglets, en huit groupes.
+- Parcours en huit étapes.
+- Profils utilisateurs.
+- Appel à l'action final.
+
+Avertissement : les chiffres sont éditoriaux et ne sont pas calculés depuis la
+base. La page annonce 10 profils alors que la section détaillée en présente 7 et
+que l'application définit 10 rôles.
+
+8.2 Réservation publique /reservation
+
+But : permettre à un candidat de demander une place dans une promotion ouverte.
+
+Champs :
+- prénom, obligatoire ;
+- nom, obligatoire ;
+- postnom, optionnel ;
+- sexe, optionnel (M, F, Autre) ;
+- date de naissance, optionnelle, maximum aujourd'hui ;
+- téléphone, obligatoire ;
+- email, obligatoire ;
+- formation, obligatoire ;
+- promotion, obligatoire.
+
+Listes : alimentées par les disponibilités calculées. Le bouton de soumission
+n'est actif que si formation et promotion sont choisies, si la promotion est
+ouverte et si aucun chargement ou erreur n'est en cours.
+
+Disponibilité :
+- promotions planifiée ou active ;
+- formation active ;
+- used = inscriptions en_attente, validee ou terminee ;
+- pending = réservations en_attente ;
+- available = max(capacity - used - pending, 0) ;
+- capacité absente = illimité ;
+- tri par nom de formation puis code de promotion.
+
+Validations :
+- nom, prénom, téléphone et email non vides après trim ;
+- email conforme à une regex simple ;
+- téléphone d'au moins 6 chiffres ;
+- sexe dans la liste ;
+- promotion existante et ouverte ;
+- refus d'une réservation en_attente ou confirmee pour le même email, formation
+  et promotion ;
+- refus si un stagiaire ou un utilisateur existe déjà avec cet email ;
+- référence unique RES-ANNÉE-XXXXXX, vérifiée jusqu'à 6 fois.
+
+Après succès :
+- affichage de la référence ;
+- message indiquant que la confirmation se fait sur place ;
+- possibilité de créer une nouvelle réservation ;
+- retour à l'accueil.
+
+Limites :
+- aucun paiement en ligne ;
+- aucun contrôle des dates d'ouverture de la promotion ;
+- pas de transaction ni de verrou entre vérification de capacité et création ;
+- deux réservations simultanées peuvent dépasser la capacité ;
+- l'email est unique par réservation mais pas au niveau base ;
+- la table reservations peut manquer sur une base ancienne.
+
+8.3 Login /login
+
+- email et mot de passe obligatoires ;
+- formulaire standard ;
+- avertissement si Forge n'est pas configuré ;
+- redirection vers la page d'origine ou /app ;
+- pas de mot de passe oublié ;
+- pas de création de compte publique.
+
+8.4 État Forge /forge
+
+- page publique de diagnostic ;
+- affiche l'URL API, la clé projet et la clé API masquée ;
+- teste la connexion par SELECT count(*) FROM users ;
+- affiche l'état idle, checking, success ou error ;
+- rappelle les capacités déclarées : Axios, JWT, CRUD, GraphQL/SQL, auth ;
+- non listée dans la navigation.
+
+================================================================================
+9. MODULES DU PERSONNEL
+================================================================================
+
+Les pages du personnel sont sous /app. Sauf mention contraire, elles utilisent
+EntityManager ou useForgeTable, n'écrivent pas dans audit_logs et n'envoient pas
+de notifications automatiques.
+
+9.1 Tableau de bord /app
+
+But : vue de synthèse pour le personnel.
+
+Tables :
+- notes, presences : limite demandée 500, effective 200 ;
+- improvement_plans filtrés sur en_cours ;
+- final_evaluations triées created_at.desc ;
+- référentiels stagiaires, seances, evaluations, modules.
+
+Indicateurs :
+- stagiaires actifs : statut actif ;
+- moyenne globale : moyenne des notes normalisées sur 20 ;
+- taux de présence : présents / total, présents = present, retard,
+  sortie_autorisee ;
+- taux de réussite : décisions valide / total des évaluations finales.
+
+Blocs :
+- accès rapides filtrés par permission ;
+- alertes ;
+- stagiaires à risque ;
+- derniers stagiaires ;
+- évaluations à venir.
+
+Règle stagiaire à risque :
+- stagiaire actif ;
+- données disponibles ;
+- moyenne < 10 ou présence < 80 % ;
+- tri par moyenne croissante, six maximum.
+
+Séances et évaluations à venir :
+- date >= aujourd'hui ;
+- statut de séance différent de annulee ;
+- évaluation non brouillon/archivée ;
+- tri ascendant, cinq maximum.
+
+Particularités :
+- /app n'est pas gardée par PermissionRoute dashboard ; tout utilisateur
+  authentifié non stagiaire y accède.
+- AppHomePage redirige le rôle stagiaire vers /app/mon-espace.
+- Les statistiques ne portent que sur les lignes chargées, donc au plus 200 par
+  table.
+- La branche stagiaire de DashboardPage est en pratique inaccessible via /app.
+
+9.2 Dossiers
+
+9.2.1 Stagiaires /app/stagiaires
+
+But : gérer les dossiers administratifs.
+
+Table : stagiaires. Permission : stagiaires.
+
+Colonnes : nom complet et matricule, email et téléphone, domaine ou spécialité,
+date de naissance, statut, action d'ouverture du dossier.
+
+Champs :
+- obligatoires : matricule, prénom, nom, statut ;
+- optionnels : postnom, sexe, date de naissance, lieu de naissance, email,
+  téléphone, adresse, établissement d'origine, niveau d'études, diplôme, domaine,
+  spécialité, contact d'urgence nom, contact d'urgence téléphone.
+
+Statuts : candidat, admis, actif, termine, archive.
+Statut par défaut : candidat.
+
+Actions : recherche, création, modification, suppression, ouverture du dossier.
+
+Règles :
+- trim des textes ;
+- chaînes vides converties en null ;
+- email de type HTML email ;
+- aucune vérification d'unicité du matricule ou de l'email dans la page ;
+- suppression directe, sans contrôle des dépendances.
+
+9.2.2 Détail stagiaire /app/stagiaires/:id
+
+But : dossier de synthèse en lecture seule.
+
+Tables lues : notes, presences, competence_levels, observations,
+stage_objectives, improvement_plans, stage_journal, final_evaluations, bulletins,
+toutes filtrées par stagiaire_id. Référentiels via useReferenceData.
+
+Affichage :
+- identité, matricule, statut, coordonnées ;
+- moyenne, présence, compétences acquises, moyenne finale ;
+- onglets Aperçu, Notes, Présences, Compétences, Suivi pédagogique ;
+- inscriptions, notes, présences, compétences, objectifs, journal, bulletins,
+  observations, plans.
+
+Règles :
+- moyenne des notes normalisées sur 20, arrondie à 2 ;
+- note >= 10/20 affichée comme acquise ;
+- présence = present + retard + sortie_autorisee ;
+- compétence acquise = acquis ou maitrise ;
+- dernières compétences par evaluated_at desc ;
+- évaluation finale la plus récente ;
+- bulletin le plus récent ;
+- observations limitées à 10.
+
+Contrôle complémentaire :
+- si le rôle principal est stagiaire, accès seulement si stagiaire_id correspond
+  à l'identifiant de la route ;
+- avec la matrice par défaut, le stagiaire n'a pas la permission stagiaires, donc
+  la route est déjà bloquée en amont.
+
+Limites : aucune écriture ; jusqu'à 200 lignes par table ; observations
+interne non masquées ici.
+
+Important : la seule permission testée par la route est stagiaires. Les onglets
+Notes, Présences, Compétences et Suivi ne sont pas protégés par les permissions
+notes, presences, observations ou competences. Tout rôle ayant stagiaires peut
+donc consulter ces informations dans ce dossier, y compris un auditeur, un
+membre du service administratif ou des RH.
+
+9.2.3 Inscriptions /app/inscriptions
+
+But : inscrire un stagiaire dans une formation et éventuellement une promotion.
+
+Tables : inscriptions ; référentiels stagiaires, formations, promotions.
+Permission : inscriptions.
+
+Colonnes : stagiaire et matricule, formation et code promotion, période, statut.
+
+Champs :
+- stagiaire_id, obligatoire ;
+- formation_id, obligatoire ;
+- promotion_id, optionnel ;
+- start_date, end_date, optionnels ;
+- status, obligatoire, défaut en_attente.
+
+Statuts : en_attente, validee, annulee, terminee.
+
+Actions : recherche, création, modification, suppression.
+
+Règles et limites :
+- aucun contrôle end_date >= start_date ;
+- aucun contrôle de doublon ;
+- responsible_id non renseigné ;
+- une inscription validée peut être créée directement ;
+- les inscriptions en_attente, validee et terminee comptent dans les places
+  occupées des réservations ;
+- les présences considèrent les inscrits d'une promotion sans filtrer le statut
+  de l'inscription.
+
+9.2.4 Réservations /app/reservations
+
+But : suivre les demandes publiques, contrôler les places et confirmer une
+réservation en dossier stagiaire.
+
+Tables : reservations ; référentiels formations, promotions, inscriptions,
+stagiaires, users. La confirmation écrit dans stagiaires, inscriptions, users et
+reservations.
+
+Permission : reservations.
+
+Affichage :
+- cartes de disponibilité par promotion : illimité, complet ou N places libres ;
+- tableau : référence, date, candidat, contact, formation, promotion, naissance,
+  statut ;
+- modale de détail ;
+- modale de confirmation avec matricule, type de compte, mot de passe temporaire
+  éventuel et liens.
+
+Actions :
+- actualiser ;
+- rechercher ;
+- filtrer par statut ;
+- voir ;
+- confirmer, seulement si en_attente ;
+- annuler, seulement si en_attente ;
+- copier le mot de passe temporaire.
+
+Règles de confirmation :
+- utilisateur authentifié requis ;
+- réservation rechargée et vérifiée en_attente ;
+- formation et promotion existantes ;
+- capacité contrôlée avec used + autres en_attente + 1 si pas déjà inscrit ;
+- dossier stagiaire réutilisé par email sauf s'il est archivé ;
+- inscription existante non annulée réutilisée, sinon création validée avec les
+  dates de la promotion et responsible_id = utilisateur courant ;
+- compte existant réutilisé seulement si rôle stagiaire et stagiaire_id
+  correspondant ;
+- sinon création de compte stagiaire avec mot de passe temporaire
+  SB-XXXX#### ;
+- mise à jour de la réservation avec confirmee, confirmed_at, confirmed_by,
+  stagiaire_id, inscription_id, user_id ;
+- en cas d'échec avant confirmation, suppression compensatoire des enregistrements
+  créés.
+
+Annulation :
+- seulement une réservation en_attente ;
+- passage à annulee.
+
+Limites :
+- pas de transaction globale ;
+- risque de course sur la capacité ;
+- pas de création ou modification manuelle depuis la page ;
+- un utilisateur autorisé peut confirmer, sans permission finer ;
+- la table reservations doit exister.
+
+9.2.5 Affectations /app/affectations
+
+But : affecter un stagiaire à un service, un formateur, un maître de stage et un
+groupe.
+
+Tables : affectations ; référentiels stagiaires, formations, promotions, users.
+Permission : affectations.
+
+Colonnes : stagiaire et formation, service, formateur référent, maître de stage,
+groupe.
+
+Champs :
+- stagiaire_id, obligatoire ;
+- formation_id, promotion_id, optionnels ;
+- service, texte ;
+- formateur_id, utilisateurs de rôle formateur ou responsable_pedagogique ;
+- maitre_stage_id, utilisateurs de rôle maitre_stage ;
+- groupe, texte.
+
+Actions : recherche, création, modification, suppression.
+
+Règles et limites :
+- seul stagiaire_id est obligatoire ;
+- trim de service et groupe ;
+- created_by = utilisateur courant ;
+- aucune unicité stagiaire/promotion ;
+- aucune vérification que la formation correspond à une inscription ;
+- inscription_id existe dans le type mais n'est pas saisi ;
+- suppression directe.
+
+9.3 Pédagogie
+
+9.3.1 Formations /app/formations
+
+But : définir les programmes.
+
+Table : formations. Permission : formations.
+
+Colonnes : nom et domaine ou niveau, durée en mois, objectifs ou description,
+date de création, statut.
+
+Champs :
+- name, obligatoire ;
+- domain, level ;
+- duration_months, nombre >= 0 ;
+- status, obligatoire, défaut active ;
+- description, objectives, program.
+
+Statuts : active, inactive, archivee.
+
+Actions : recherche, création, modification, suppression.
+
+Limites :
+- pas d'unicité du nom ;
+- created_by non renseigné ;
+- suppression directe sans contrôle des dépendances.
+
+9.3.2 Modules /app/modules
+
+But : structurer une formation en modules pondérés.
+
+Table : modules ; référentiels formations, users.
+Permission : formations, pas modules. La route est volontairement rattachée à
+formations.
+
+Colonnes : module et formation, heures, coefficient, seuil /20, formateur,
+statut.
+
+Champs :
+- formation_id, obligatoire ;
+- formateur_id, formateur ou responsable_pedagogique ;
+- name, obligatoire ;
+- coefficient, obligatoire, défaut 1, pas 0,5 ;
+- hours, obligatoire, défaut 0 ;
+- pass_mark, défaut 10, entre 0 et 20 ;
+- sort_order, défaut 0 ;
+- status, active ou inactive ;
+- description, objectives ;
+- competencies, texte séparé par virgules ;
+- evaluation_types, texte séparé par virgules.
+
+Actions : recherche, création, modification, suppression.
+
+Règles et limites :
+- competencies et evaluation_types deviennent des tableaux de chaînes ;
+- le rôle du formateur n'est pas revérifié à l'enregistrement ;
+- pas de contrôle du total des coefficients ;
+- suppression directe.
+
+9.3.3 Promotions /app/promotions
+
+But : gérer les groupes datés et leur capacité.
+
+Table : promotions ; référentiel formations. Permission : promotions.
+
+Colonnes : code et formation, période, capacité, statut.
+
+Champs :
+- formation_id, obligatoire ;
+- code, obligatoire ;
+- name ;
+- start_date, end_date ;
+- capacity, nombre >= 0 ;
+- status, obligatoire, défaut planifiee.
+
+Statuts : planifiee, active, cloturee, archivee.
+
+Actions : recherche, création, modification, suppression.
+
+Règles et limites :
+- pas de contrôle end_date >= start_date ;
+- pas d'unicité du code dans l'UI, mais contrainte unique en base ;
+- capacité non contrôlée lors d'une inscription manuelle ;
+- seules les promotions planifiee et active sont ouvertes aux réservations ;
+- les dates servent de valeurs par défaut à l'inscription issue d'une
+  réservation.
+
+9.3.4 Séances /app/seances
+
+But : planifier les créneaux.
+
+Table : seances ; référentiels modules, promotions, formations, users.
+Permission : seances.
+
+Colonnes : titre ou module, module, date, horaire, salle, formateur, statut.
+
+Champs :
+- module_id, obligatoire ;
+- promotion_id, optionnel ;
+- title ;
+- date, obligatoire ;
+- start_time, end_time ;
+- room ;
+- formateur_id, formateur ou responsable_pedagogique ;
+- status, obligatoire, défaut planifiee.
+
+Statuts : planifiee, en_cours, terminee, annulee.
+
+Actions : recherche, création, modification, suppression, tri date desc.
+
+Règles et limites :
+- pas de contrôle end_time > start_time ;
+- pas de contrôle de conflit de salle ou de formateur ;
+- pas de contrôle de cohérence promotion/formation ;
+- si promotion_id est absent, tous les stagiaires sont éligibles à la feuille de
+  présence ;
+- une séance annulée reste saisissable dans Présences.
+
+9.3.5 Présences /app/presences
+
+But : saisir la feuille de présence d'une séance.
+
+Tables : presences ; référentiels seances, modules, inscriptions, stagiaires.
+Permission : presences.
+
+Fonctionnement :
+- sélection d'une séance ;
+- liste des stagiaires éligibles ;
+- statut éditable et note de justification ;
+- boutons Tous présents et Tous absents ;
+- enregistrement de la feuille.
+
+Éligibilité :
+- si la séance n'a pas de promotion_id : tous les stagiaires ;
+- sinon : stagiaires ayant une inscription sur cette promotion, sans filtrer le
+  statut de l'inscription.
+
+Initialisation :
+- statut existant ou present ;
+- note existante ou vide ;
+- identifiant existant conservé.
+
+Statuts : present, absent, retard, absence_justifiee, absence_non_justifiee,
+sortie_autorisee.
+
+Calculs :
+- présents = present, retard, sortie_autorisee ;
+- absents = absent, absence_justifiee, absence_non_justifiee ;
+- taux = présents / effectif total.
+
+Enregistrement :
+- confirmation ;
+- boucle séquentielle sur tous les stagiaires ;
+- updateRow si identifiant existant, sinon createRow ;
+- payload avec seance_id, stagiaire_id, status, note, recorded_by, recorded_at ;
+- message d'enregistrement partiel si au moins une erreur ;
+- aucun endpoint batch.
+
+Limites :
+- aucune suppression des présences devenues non éligibles ;
+- pas de contrôle du statut de la séance ;
+- doublons possibles en base si l'unicité n'est pas respectée ;
+- une seule présence réutilisée par stagiaire/séance ;
+- limite 200 lignes.
+
+9.4 Évaluations et activités
+
+9.4.1 Évaluations /app/evaluations
+
+But : planifier et gérer les activités évaluées.
+
+Table : evaluations ; référentiels formations, modules, users.
+Permission : evaluations.
+
+Colonnes : évaluation, type, module, date, barème et coefficient, statut.
+
+Champs :
+- title, obligatoire ;
+- formation_id, module_id, formateur_id ;
+- type, obligatoire, défaut devoir ;
+- date, obligatoire ;
+- duration_minutes ;
+- max_score, obligatoire, défaut 20 ;
+- coefficient, obligatoire, défaut 1, pas 0,5 ;
+- weight, 0 à 100, défaut 100 ;
+- period ;
+- status, obligatoire, défaut brouillon ;
+- is_qcm, booléen ;
+- feeds_gradebook, booléen, défaut vrai ;
+- instructions.
+
+Types : interrogation, devoir, qcm, examen, travail_pratique, projet,
+presentation, evaluation_orale, evaluation_competence,
+evaluation_comportementale, evaluation_finale.
+
+Statuts : brouillon, programmee, en_cours, terminee, corrigee, soumise, validee,
+publiee, archivee.
+
+Actions : recherche, création, modification, suppression, tri date desc.
+
+Règles et limites :
+- pas de sélection en cascade formation puis module ;
+- weight et feeds_gradebook ne sont pas exploités dans cette page ;
+- aucune note, notification, bulletin ou document n'est créé ;
+- pas de contrôle de cohérence des coefficients ;
+- suppression directe.
+
+9.4.2 Notes /app/notes
+
+But : saisir les notes d'une évaluation pour les stagiaires éligibles.
+
+Tables : notes ; référentiels evaluations, stagiaires, inscriptions, modules.
+Permission : notes.
+
+Fonctionnement :
+- sélection d'une évaluation ;
+- tableau de saisie directe : stagiaire, note, commentaire, état ;
+- bouton Enregistrer avec statut saisie ;
+- bouton Enregistrer et valider avec statut validee ;
+- confirmation avant sauvegarde ;
+- création ou mise à jour par note.
+
+Éligibilité :
+- si l'évaluation a une formation_id : stagiaires inscrits à cette formation ;
+- si formation_id absente ou si aucun inscrit n'est trouvé : tous les stagiaires.
+
+Règles :
+- la note est saisie sur le max_score de l'évaluation ;
+- coefficient copié depuis l'évaluation ;
+- graded_by et graded_at renseignés ;
+- validated_by et validated_at renseignés seulement si statut validee ;
+- lignes vides ignorées à l'enregistrement ;
+- réussite statistique si score / max_score * 20 >= 10 ;
+- moyenne statistique simple des notes saisies, arrondie à 2.
+
+Limites :
+- Number('') vaut 0 : les brouillons vides peuvent être comptés comme 0 dans les
+  statistiques de la page ;
+- aucune moyenne pondérée persistée ;
+- aucune génération de bulletin, document ou notification ;
+- grade_validate non vérifiée ;
+- appariement de note par premier stagiaire_id trouvé ;
+- limite 200 lignes.
+
+9.4.3 QCM /app/qcm
+
+But : construire un QCM, lancer une passation et consulter les résultats.
+
+Tables : qcm_questions, qcm_attempts ; référentiels evaluations filtrées is_qcm,
+modules, stagiaires. Permission : qcm.
+
+Fonctionnement :
+- sélection du questionnaire ;
+- onglet Questions et onglet Passations ;
+- création, modification, suppression de questions ;
+- bouton Lancer une passation vers /app/qcm/:evaluationId/passer.
+
+Champs d'une question :
+- question_text ;
+- type : single, multiple, true_false, short_answer, matching ;
+- options, une par ligne ;
+- correct_answer, virgules si multiple ;
+- points, minimum 0,5, défaut 1 ;
+- sort_order, défaut 0.
+
+Règles :
+- single, multiple et true_false exigent au moins deux options ;
+- true_false sans options propose Vrai et Faux ;
+- réponse multiple stockée en tableau ;
+- moyenne des résultats = moyenne des scores bruts en points des tentatives
+  corrigées, pas une moyenne sur 20 ;
+- taux de réussite = passed / corrections.
+
+Limites :
+- la page ne crée pas de tentative ;
+- aucune note, notification, bulletin ou document ;
+- pas de limite de tentatives ;
+- pas de contrôle de durée ;
+- limite 200 questions et 200 tentatives.
+
+9.4.4 Passation QCM /app/qcm/:evaluationId/passer
+
+But : faire passer un QCM à un stagiaire et corriger automatiquement.
+
+Tables : qcm_questions, qcm_attempts ; référentiels evaluations, stagiaires.
+Permission : qcm.
+
+Fonctionnement :
+- sélection du stagiaire, préremplie si user.stagiaire_id ;
+- questions triées par sort_order ;
+- réponses par cases, champ texte ou boutons radio ;
+- soumission avec confirmation ;
+- correction locale ;
+- création d'une tentative ;
+- retour à /app/qcm.
+
+Règles de correction :
+- maxScore = somme des points des questions ;
+- normalisation des réponses en minuscules, sans espaces autour ;
+- multiple : correspondance exacte, aucun crédit partiel ;
+- short_answer et autres types simples : comparaison de chaîne complète ;
+- matching n'a pas de traitement spécifique et tombe dans la branche réponse
+  unique ;
+- question sans réponse : zéro ;
+- percentage = round(score / maxScore * 100, 2) ;
+- passed = percentage >= 50 ;
+- attempt_number = nombre de tentatives chargées + 1 ;
+- time_spent_seconds = au moins 1 seconde ;
+- statut enregistré : corrige.
+
+Limites :
+- aucune note n'est créée ;
+- aucune limite de tentative ;
+- aucune vérification de formation ou de fenêtre de disponibilité ;
+- le numéro de tentative dépend des 200 lignes chargées ;
+- les réponses correctes sont présentes côté client ;
+- liste de stagiaires non filtrée par formation.
+
+9.4.5 Travaux pratiques /app/travaux
+
+But : publier des TP et gérer les dépôts et corrections.
+
+Tables : travaux_pratiques, travaux_soumissions ; référentiels modules, users,
+stagiaires. Permission : travaux.
+
+Onglet TP :
+- titre, module, formateur, échéance, note max, coefficient, statut, consignes,
+  livrables ;
+- livrables séparés par virgules ;
+- statuts : brouillon, publie, cloture, archive.
+
+Onglet Soumissions :
+- TP, stagiaire, URL fichier, nom fichier, lien externe, date, note /20, statut,
+  feedback ;
+- statuts : soumis, en_correction, corrige, valide, a_refaire ;
+- lien de consultation du dépôt.
+
+Règles et limites :
+- la note de soumission est saisie et affichée sur 20, sans utiliser le
+  max_score du TP ;
+- le statut n'est pas mis à jour automatiquement lors de la notation ;
+- pas de moyenne calculée ;
+- pas de notification, note, bulletin ou document ;
+- libellé de TP parfois incorrect car recherche dans modules avec tp_id ;
+- options TP limitées aux 200 premières lignes ;
+- CRUD direct.
+
+9.4.6 Compétences /app/competences
+
+But : gérer le référentiel de compétences et évaluer leur niveau.
+
+Tables : competences, competence_levels ; référentiels stagiaires, competences,
+formations, modules. Permission : competences.
+
+Onglet Définitions :
+- nom, formation, module, ordre, description.
+
+Onglet Évaluations :
+- stagiaire, compétence, niveau, date d'évaluation, commentaire ;
+- niveaux : non_acquis, a_renforcer, en_cours, acquis, maitrise ;
+- evaluated_at par défaut maintenant ;
+- evaluated_by = utilisateur courant.
+
+Limites :
+- pas de pourcentage d'acquisition ;
+- pas de moyenne ;
+- aucune unicité stagiaire/compétence ;
+- formation et module non liés en cascade ;
+- CRUD direct, sans écriture d'audit.
+
+9.4.7 Implication /app/implication
+
+But : évaluer l'engagement sur 5.
+
+Table : implications ; référentiels stagiaires, modules.
+Permission : implication.
+
+Huit dimensions : participation, assiduité, curiosité, qualité des questions,
+travail personnel, collaboration, respect des consignes, autonomie.
+Champs de 0 à 5, pas 0,5. Période et commentaire libres.
+
+Calcul :
+- moyenne arithmétique des 8 valeurs, arrondie à 2 ;
+- badge acquis si moyenne >= 3, sinon à renforcer.
+
+Limite de calcul :
+- les champs sont convertis avec Number(); une chaîne vide vaut 0. Un formulaire
+  partiellement rempli peut donc inclure des zéros dans la moyenne.
+
+9.4.8 Comportement /app/comportement
+
+But : évaluer les attitudes professionnelles sur 5.
+
+Table : comportements ; référentiel stagiaires. Permission : comportement.
+
+Dix dimensions : ponctualité, discipline, respect, communication, esprit
+d'équipe, autonomie, responsabilité, attitude professionnelle, respect du
+matériel, capacité d'adaptation. Champs de 0 à 5, pas 0,5. Appréciation libre.
+
+Calcul :
+- moyenne arithmétique des 10 valeurs, arrondie à 2 ;
+- badge acquis si moyenne >= 3, sinon à renforcer ;
+- même limite de conversion des champs vides en zéro.
+
+9.5 Suivi pédagogique
+
+9.5.1 Observations /app/observations
+
+But : consigner des observations qualitatives.
+
+Table : observations ; référentiels stagiaires, modules, evaluations, seances.
+Permission : observations.
+
+Colonnes : observation et date, stagiaire, contexte, visibilité.
+
+Champs :
+- stagiaire_id, obligatoire ;
+- module_id, evaluation_id, seance_id, optionnels ;
+- content, obligatoire ;
+- visibility, obligatoire, défaut interne.
+
+Visibilités : interne, publiee, stagiaire.
+
+Actions : recherche, création, modification, suppression.
+
+Règles et limites :
+- author_id = utilisateur courant à chaque écriture, y compris modification ;
+- aucune filtration par visibilité côté personnel ;
+- une observation interne est chargée côté stagiaire puis masquée côté client ;
+- competence_id existe dans le type mais n'est pas géré ;
+- pas d'audit.
+
+9.5.2 Progression /app/progression
+
+But : synthèse individuelle des résultats.
+
+Tables : notes, presences, competence_levels, implications, comportements,
+qcm_attempts, travaux_soumissions ; référentiels stagiaires, evaluations,
+modules, competences. Permission : progression.
+
+Fonctionnement : sélection d'un stagiaire ; aucune écriture.
+
+Calculs :
+- notes normalisées sur 20 ;
+- moyenne par module = moyenne simple des notes du module ;
+- moyenne générale = moyenne simple des moyennes de modules non nulles ;
+- présence = present, retard, sortie_autorisee ;
+- compétence acquise = acquis ou maitrise ;
+- QCM = tentatives corrigées ;
+- TP = moyenne des scores, supposés sur 20 ;
+- implication et comportement = moyenne des champs average stockés ;
+- barre de progression plafonnée à 100 %, verte si moyenne >= 10.
+
+Limites :
+- coefficients ignorés ;
+- statuts de notes non filtrés ;
+- listes limitées à 200 ;
+- un QCM ou TP à 0 peut être affiché avec un tiret à cause d'un test de
+  véracité ;
+- un utilisateur autorisé peut consulter n'importe quel stagiaire.
+
+9.5.3 Plans d'amélioration /app/plans
+
+But : définir des plans de remédiation et leurs actions.
+
+Tables : improvement_plans, improvement_actions ; référentiels stagiaires,
+users. Permission : plans.
+
+Plans :
+- stagiaire, difficulté, objectif, dates, responsable, statut, commentaire
+  d'évaluation ;
+- statuts : cree, en_cours, evalue, atteint, non_atteint.
+
+Actions :
+- titre, type, échéance, statut, résultat ;
+- statuts : a_faire, en_cours, termine, annule ;
+- ouverture dans une modale depuis un plan ;
+- ajout, suppression et changement de statut.
+
+Règles et limites :
+- responsable limité à formateur, responsable_formation,
+  responsable_pedagogique ou maitre_stage ;
+- pas de validation end_date >= start_date ;
+- suppression d'un plan sans suppression explicite des actions ;
+- résultat d'action modifiable seulement à la création ;
+- limite 200 plans.
+
+9.5.4 Évaluations intermédiaires /app/evaluations-intermediaires
+
+But : produire une synthèse datée à mi-parcours.
+
+Tables : notes, presences, qcm_attempts, travaux_soumissions,
+competence_levels, implications, comportements, intermediate_evaluations ;
+référentiel stagiaires. Permission : intermediate.
+
+Calculs :
+- moyenne des notes normalisées ;
+- taux de présence ;
+- moyenne QCM des tentatives corrigées ;
+- moyenne TP ;
+- nombre de compétences acquises ;
+- moyenne implication et comportement ;
+- décision choisie parmi progression_normale, surveillance,
+  plan_amelioration, entretien_obligatoire.
+
+Enregistrement :
+- confirmation ;
+- date du jour ;
+- snapshot des calculs ;
+- evaluator_id = utilisateur courant ;
+- nouvelle ligne à chaque enregistrement.
+
+Limites :
+- pas de modification ni de suppression de l'historique ;
+- compétences chargées sans tri, donc dernière non garantie ;
+- statuts de notes non filtrés ;
+- limite 200 par table.
+
+9.5.5 Journal de stage /app/journal
+
+But : consulter et valider les activités quotidiennes.
+
+Table : stage_journal ; référentiel stagiaires. Permission : journal.
+
+Colonnes : date, activité et compétence, stagiaire, durée, statut.
+
+Champs :
+- stagiaire_id, obligatoire ;
+- date, obligatoire, défaut aujourd'hui ;
+- activity, obligatoire ;
+- competence ;
+- duration_hours, min 0, pas 0,5 ;
+- observation ;
+- status : soumis, valide, commente ;
+- comment.
+
+Règles et limites :
+- validated_by = utilisateur courant seulement si statut valide, sinon null ;
+- éditer une entrée validée réattribue le validateur ;
+- statut commente ne remplit pas automatiquement le commentaire ;
+- aucune restriction par stagiaire dans la page ;
+- limite 200.
+
+9.5.6 Objectifs de stage /app/objectifs
+
+But : définir et valider les objectifs individuels.
+
+Table : stage_objectives ; référentiel stagiaires. Permission : objectives.
+
+Champs : stagiaire, titre, description, statut, commentaire de validation.
+Statuts : non_commence, en_cours, atteint, depasse, non_atteint.
+
+Actions : recherche, création, modification, suppression.
+
+Limites :
+- aucune métadonnée automatique de validation ;
+- pas de tri explicite ;
+- limite 200.
+
+9.5.7 Projet final /app/projet-final
+
+But : piloter les projets de fin de stage.
+
+Table : final_projects ; référentiels stagiaires, users. Permission : project.
+
+Champs :
+- stagiaire, obligatoire ;
+- superviseur ;
+- titre, obligatoire ;
+- dates début, fin, soutenance ;
+- note sur 20 ;
+- description, objectifs, livrables, appréciation, commentaires ;
+- statut : en_cours, soutenu, valide, non_valide, archive.
+
+Règles et limites :
+- superviseur limité à formateur, maitre_stage ou responsable_pedagogique ;
+- livrables séparés par virgules ;
+- members et jury sont forcés à [] à chaque enregistrement ;
+- pas de contrôle des dates ;
+- pas de tri ;
+- limite 200.
+
+9.6 Résultats et documents
+
+9.6.1 Évaluation finale /app/evaluation-finale
+
+But : consolider les résultats et formaliser une décision.
+
+Tables lues : notes, presences, qcm_attempts, travaux_soumissions,
+final_projects, implications, comportements, final_evaluations.
+Table écrite : final_evaluations.
+Permission : final.
+
+Coefficients par défaut :
+- modules : 40
+- QCM : 10
+- TP : 15
+- projet : 20
+- implication : 5
+- comportement : 5
+- présence : 5
+
+Calculs :
+- notes normalisées sur 20 ;
+- modulesAverage = moyenne des notes normalisées ;
+- présence = present, retard, sortie_autorisee ;
+- qcmPercentage = moyenne des pourcentages des tentatives corrigées ;
+- qcmAverage = qcmPercentage / 100 * 20 ;
+- tpAverage = moyenne des scores de travaux_soumissions ;
+- projectAverage = moyenne des scores de final_projects ;
+- implicationAverage = moyenne des average des implications, sur 5 ;
+- professionalismAverage = moyenne des average des comportements, sur 5 ;
+- attendanceRate = présents / total * 100 ;
+- pondération :
+  modules * coef.modules
+  + qcm * coef.qcm
+  + tp * coef.tp
+  + projet * coef.project
+  + (implication * 4) * coef.implication
+  + (comportement * 4) * coef.professionalism
+  + (taux de présence * 0,2) * coef.attendance ;
+- finalAverage = pondéré / somme des coefficients, arrondi à 2 ;
+- décision choisie manuellement : en_attente, valide, non_valide ;
+- le seuil 10 ne sert qu'à la couleur du badge.
+
+Enregistrement :
+- Enregistrer crée une nouvelle final_evaluation ;
+- Valider et publier crée aussi une nouvelle ligne et renseigne published_at ;
+- validated_by est renseigné même pour un simple enregistrement ;
+- chaque enregistrement ajoute une ligne, sans mise à jour de l'ancienne.
+
+Limites :
+- coefficients d'évaluation, coefficients de module, feeds_gradebook et statuts
+  de notes non utilisés ;
+- TP et projet supposés sur 20 ;
+- listes limitées à 200 ;
+- aucune notification, bulletin ou document créé ;
+- pas de contrôle grade_validate.
+
+9.6.2 Bulletins /app/bulletins
+
+But : générer, publier et imprimer un bulletin.
+
+Tables lues : final_evaluations, notes, presences, bulletins.
+Tables écrites : bulletins.
+Référentiels : stagiaires, evaluations, modules.
+Permission : bulletins.
+
+Fonctionnement :
+- sélection d'un stagiaire ;
+- choix entre Générer en brouillon, Générer et publier, Publier un bulletin
+  existant, Imprimer, Supprimer ;
+- génération confirmée ;
+- boutons désactivés sans évaluation finale.
+
+Calculs :
+- évaluation finale la plus récente ;
+- regroupement des notes par module ;
+- notes normalisées sur 20, arrondies à 2 ;
+- coefficient du module affiché ;
+- moyenne de module = moyenne simple des notes ;
+- taux de présence recalculé ;
+- moyenne finale non recalculée : reprise de final_evaluations.final_average.
+
+Contenu :
+- identité du stagiaire ;
+- tableau modules, coefficient, moyenne /20 ;
+- QCM, TP, projet ;
+- implication et comportement /5 ;
+- présence ;
+- moyenne finale /20 ;
+- décision ;
+- appréciation ;
+- signature.
+
+Règles et limites :
+- période enregistrée au format AAAA-MM ;
+- contenu est un instantané : republier ne recalcule pas ;
+- coefficients de notes et de modules non appliqués ;
+- plusieurs bulletins possibles pour un stagiaire ;
+- notes et présences limitées à 200 ;
+- bulletin_publish non testée ;
+- impression via window.print(), pas de PDF serveur.
+
+9.6.3 Documents /app/documents
+
+But : générer des documents officiels imprimables.
+
+Tables lues : notes, final_evaluations, documents.
+Table écrite : documents.
+Référentiels : stagiaires, evaluations, modules.
+Permission : documents.
+
+Types :
+fiche_inscription, fiche_stagiaire, carte_stagiaire, attestation_stage,
+certificat_formation, certificat_reussite, releve_notes, bulletin,
+rapport_evaluation, rapport_stage, fiche_evaluation_finale.
+
+Fonctionnement :
+- sélection d'un stagiaire ;
+- choix du type ;
+- titre personnalisé optionnel ;
+- génération ;
+- impression ;
+- suppression.
+
+Règles :
+- titre par défaut = libellé du type ;
+- contenu JSON avec identité, évaluation finale éventuelle, moyennes de modules
+  et date ;
+- aucun fichier PDF réel n'est généré ;
+- window.print() imprime la zone affichée.
+
+Limites :
+- génération possible sans évaluation finale ;
+- types sans bloc dédié utilisent un texte générique d'attestation ;
+- moyennes de modules simples ;
+- pas d'unicité ;
+- pas de notification ;
+- limite 200.
+
+9.6.4 Rapports et statistiques /app/rapports
+
+But : produire des statistiques globales et exporter les stagiaires.
+
+Tables : presences, notes, final_evaluations avec limite demandée 500 ;
+référentiels stagiaires, formations, modules, promotions, seances, evaluations,
+inscriptions. Aucune écriture Forge.
+Permission : reports.
+
+Indicateurs :
+- effectifs ;
+- moyenne globale ;
+- taux de réussite ;
+- taux de présence ;
+- répartition des notes ;
+- résultats par formation ;
+- dernières évaluations finales.
+
+Calculs :
+- notes normalisées sur 20 ;
+- présence = present, retard, sortie_autorisee ;
+- moyenne finale = moyenne simple des final_average ;
+- réussite = décisions valide / total ;
+- par formation : inscrits distincts, notes de la formation ou des stagiaires
+  inscrits, moyenne simple, taux de réussite ;
+- répartition : [0,5), [5,10), [10,14), [14,17), [17,20.01) ;
+- seuils d'affichage : moyenne >= 10, présence >= 80.
+
+Export CSV :
+- séparateur point-virgule ;
+- BOM UTF-8 ;
+- colonnes Matricule, Nom, Prénom, Email, Téléphone, Domaine, Spécialité,
+  Statut ;
+- fichier stagiaires-AAAA-MM-JJ.csv ;
+- tous les stagiaires, sans filtre.
+
+Limites :
+- statistiques limitées aux 200 lignes effectives malgré la demande de 500 ;
+- une note peut compter dans plusieurs formations ;
+- plusieurs évaluations finales d'un même stagiaire comptent plusieurs fois ;
+- la carte Bulletins générés compte en réalité les évaluations finales.
+
+9.7 Administration et supervision
+
+9.7.1 Utilisateurs et rôles /app/utilisateurs
+
+But : gérer les comptes.
+
+Table : users ; référentiel stagiaires. Permission : users, admin uniquement.
+
+Colonnes : nom et email, rôle, téléphone, dernière connexion, statut.
+
+Champs :
+- prénom, nom, email, téléphone ;
+- mot de passe, création seulement, minimum 6 caractères ;
+- rôle parmi les 10 ;
+- statut : active, inactive, blocked ;
+- dossier stagiaire lié.
+
+Actions :
+- créer via authService.createAccount, donc POST /auth/signup ;
+- modifier via updateRow, sans mot de passe ;
+- supprimer la ligne users.
+
+Règles et limites :
+- email en minuscules ;
+- le signup restaure le jeton courant ;
+- pas de changement de mot de passe ;
+- suppression de la ligne users sans suppression explicite du compte
+  d'authentification Forge ;
+- pas de protection contre l'auto-suppression ou la suppression d'un admin ;
+- statistiques sur les lignes chargées ;
+- changement de rôle non propagé en temps réel ;
+- limite 200.
+
+9.7.2 Journal d'audit /app/audit
+
+But : consulter la traçabilité.
+
+Table : audit_logs ; référentiel users.
+Permission : audit, admin et auditeur.
+
+Colonnes : date, action et entité, auteur, identifiant d'entité, motif.
+Recherche côté client.
+Lecture seule : aucune création, modification ou suppression.
+
+Limites :
+- old_values, new_values, validated_by et ip_address non affichés ;
+- pas de tri explicite ;
+- limite 200 ;
+- les pages métier n'écrivent pas dans audit_logs.
+
+9.7.3 Paramètres /app/parametres
+
+But : gérer les paramètres et les règles de notation.
+
+Tables : settings, grading_rules. Permission : settings, admin uniquement.
+
+Paramètres :
+- clé, description, valeur JSON ;
+- édition d'une valeur existante ;
+- création d'un nouveau paramètre ;
+- pas de suppression.
+
+Règles de notation :
+- catégorie, poids 0-100, seuil 0-20, arrondi 0-4 ;
+- création et modification ;
+- pas de suppression ;
+- pas de contrôle de somme des poids.
+
+Limites :
+- normalisation JSON tolérante aux guillemets et cast jsonb ;
+- toute erreur d'enregistrement peut afficher JSON invalide ;
+- les règles ne sont pas consommées par les calculs métier ;
+- limite 200.
+
+9.7.4 Archivage /app/archivage
+
+But : restaurer des éléments archivés.
+
+Tables : stagiaires, formations, promotions. Permission : archive.
+
+Onglets :
+- stagiaires avec statut archive ;
+- formations avec statut archivee ;
+- promotions avec statut archivee.
+
+Actions : restaurer avec confirmation.
+- stagiaire restauré en actif ;
+- formation restaurée en active ;
+- promotion restaurée en planifiee.
+
+Limites :
+- la page ne permet pas d'archiver ;
+- le statut antérieur n'est pas restauré ;
+- aucune cascade ;
+- limite 200 par onglet.
+
+9.7.5 Notifications /app/notifications
+
+But : consulter et envoyer des notifications internes.
+
+Table : notifications ; référentiels users, stagiaires.
+Permission : notifications.
+
+Fonctionnement :
+- cartes avec titre, indicateur non lu, type, canal, message, date,
+  destinataire ;
+- filtres Toutes / Non lues ;
+- marquer une notification lue ;
+- tout marquer comme lu ;
+- supprimer ;
+- créer une notification.
+
+Champs :
+- titre, obligatoire ;
+- message, obligatoire ;
+- type : info, evaluation, affectation, presence, echeance, resultat, plan,
+  bulletin ;
+- canal : internal, email, sms, push ;
+- utilisateur destinataire ;
+- stagiaire concerné.
+
+Visibilité :
+- isManager = permission * ou users ;
+- non-manager : voit si user_id est nul ou égal à son id, et stagiaire_id nul ou
+  égal à son stagiaire_id ;
+- notification sans destinataire = diffusion à tous les non-managers.
+
+Règles et limites :
+- seule la notification interne est enregistrée ;
+- email, SMS et push nécessitent un fournisseur externe ;
+- tout utilisateur ayant la permission peut créer ou supprimer ;
+- un non-manager peut supprimer une diffusion qu'il voit ;
+- limite 200.
+
+9.7.6 Recherche globale /app/recherche
+
+But : rechercher un stagiaire, une formation, un module, une promotion, une
+évaluation ou un utilisateur.
+
+Source : cache useReferenceData. Aucune requête directe.
+Permission : search.
+
+Règles :
+- terme d'au moins 2 caractères ;
+- correspondance includes, insensible à la casse ;
+- stagiaires : nom, matricule, email, téléphone, domaine, spécialité ;
+- formations : nom, domaine, niveau ;
+- modules : nom, description ;
+- promotions : code, nom ;
+- évaluations : titre, période, type ;
+- utilisateurs : nom, email, rôle, seulement si can(users) ;
+- liens vers les pages correspondantes.
+
+Limites :
+- recherche côté client sur le cache de 60 secondes ;
+- résultats non paginés ;
+- données potentiellement incomplètes si une table de référence a échoué ou
+  dépasse les plafonds.
+
+================================================================================
+10. ESPACE STAGIAIRE
+================================================================================
+
+10.1 Principe général
+
+L'espace stagiaire est monté sous /app/mon-espace. Il comporte 22 routes.
+Chaque route est protégée par une permission self_*. AppLayout affiche le menu
+stagiaire uniquement si user.role === stagiaire. Un administrateur possédant *
+peut ouvrir ces routes par URL.
+
+10.2 Résolution du dossier
+
+useStagiaireSelf recherche le dossier :
+- par user.stagiaire_id s'il existe ;
+- sinon par email ;
+- limit 1.
+
+Il charge ensuite toutes les inscriptions du stagiaire, triées created_at.desc.
+Il choisit :
+1. la première inscription validee ;
+2. sinon la première non annulee ;
+3. sinon la première.
+
+Cette inscription détermine formationId et promotionId. useSelfAcademic charge
+ensuite la formation, la promotion, les modules de la formation, les évaluations
+de la formation et les séances de la promotion.
+
+Si aucun dossier n'est trouvé, un écran d'erreur explicite est affiché avec
+possibilité de réessayer.
+
+10.3 Tableau de bord /app/mon-espace
+
+Tables : dossier, inscription, formation, promotion, modules, évaluations,
+séances, notes, presences, stage_journal, improvement_plans, bulletins,
+final_evaluations, competence_levels.
+
+Affiche :
+- prénom, formation, code promotion, matricule ;
+- moyenne publiée, assiduité, compétences acquises, moyenne finale ;
+- cinq prochaines séances ;
+- cinq prochaines évaluations ;
+- cinq dernières notes publiées ;
+- cinq dernières entrées de journal ;
+- points d'attention.
+
+Calculs :
+- notes publiées seulement ;
+- notes normalisées sur 20 ;
+- moyenne = moyenne des notes normalisées ;
+- assiduité = présents / total, présents = present, retard, sortie_autorisee ;
+- dernière compétence par competence_id ;
+- compétences acquises = acquis ou maitrise ;
+- moyenne finale = final_evaluations la plus récente ;
+- bulletin publié = bulletin publie le plus récent ;
+- séances futures non annulées ;
+- évaluations futures non brouillon/archivées ;
+- plans actifs = cree ou en_cours.
+
+Limites : lecture seule ; 200 lignes par requête ; pas de filtre par promotion
+sur les séances et évaluations affichées.
+
+10.4 Mon profil /app/mon-espace/profil
+
+Table : stagiaires.
+
+Lecture : photo, identité, matricule, domaine, email, téléphone, statut, données
+administratives, formation, promotion, inscription.
+
+Écriture limitée à :
+- photo_url ;
+- telephone ;
+- adresse.
+
+Email affiché mais non modifiable. Aucune validation d'URL, de téléphone ou
+d'adresse.
+
+10.5 Ma formation /app/mon-espace/formation
+
+Tables : modules, evaluations, notes.
+
+Affiche :
+- formation, niveau, domaine, promotion, dates, durée, statut d'inscription,
+  matricule ;
+- description ;
+- tableau des modules : nom, heures, coefficient, seuil, moyenne, validation.
+
+Calculs :
+- notes publiées seulement ;
+- évaluations du module ;
+- notes normalisées sur 20 ;
+- moyenne simple par module ;
+- module validé si moyenne >= module.pass_mark ;
+- volume horaire total = somme des hours.
+
+Limites : coefficients non appliqués ; évaluations brouillon/archivées comptées
+dans le nombre ; lecture seule.
+
+10.6 Notifications /app/mon-espace/notifications
+
+Tables : notifications par user_id et par stagiaire_id, fusionnées par id.
+
+Actions :
+- marquer une notification lue ;
+- tout marquer comme lu.
+
+Limites : pas de suppression, pas de pagination, 200 lignes par requête, badge
+plafonné à 9+.
+
+10.7 Présences /app/mon-espace/presences
+
+Table : presences du stagiaire ; séances et modules via académique.
+
+Affiche : séance, module, statut, observation.
+
+Calculs :
+- présents = present, retard, sortie_autorisee ;
+- justifiées = absence_justifiee, sortie_autorisee ;
+- non justifiées = absent, absence_non_justifiee ;
+- taux = présents / total.
+
+Action : Signaler une absence ou un problème via un prompt.
+Cela crée une notification :
+- user_id null ;
+- stagiaire_id = stagiaire courant ;
+- type presence ;
+- statut unread ;
+- lien /app/presences.
+
+Aucune modification de la présence officielle. Aucun contrôle de doublon.
+
+10.8 Évaluations /app/mon-espace/evaluations
+
+Tables : evaluations de la formation, notes du stagiaire.
+
+Affiche les évaluations hors brouillon/archivées avec module, type, date,
+durée, statut et résultat.
+- note liée et publiee : score / max_score, vert si ratio >= 0,5 ;
+- sinon QCM programmee, en_cours ou terminee : lien Passer le QCM ;
+- sinon Non publié.
+
+Compteurs : total, à venir, résultats publiés, QCM.
+
+10.9 Notes /app/mon-espace/notes
+
+Tables : notes du stagiaire, évaluations, modules.
+
+Affiche uniquement les notes publiees.
+- normalized = round(score / (max_score || 20) * 20, 2) ;
+- moyenne = moyenne simple des notes normalisées ;
+- réussites = notes normalisées >= 10.
+
+Lecture seule ; coefficients non appliqués.
+
+10.10 QCM /app/mon-espace/qcm
+
+Tables : evaluations QCM de la formation, qcm_questions, qcm_attempts.
+
+QCM proposés : is_qcm, statut différent de brouillon/archivee, tri date desc.
+Passation dans une modale :
+- questions triées par sort_order ;
+- maxScore = somme des points ;
+- types multiples, short_answer, autres ;
+- correction locale ;
+- création d'une tentative corrigée ;
+- attempt_number = tentatives chargées + 1.
+
+Règles :
+- multiple : correspondance exacte ;
+- autres : réponse normalisée incluse dans correct_answer ;
+- score = somme des points corrects ;
+- percentage = round(score / maxScore * 100, 2) ;
+- réussi si >= 50 %.
+
+Limites :
+- aucune limite de tentatives ;
+- aucun contrôle de date ou de durée ;
+- réponses correctes côté client ;
+- 200 questions et 200 tentatives.
+
+10.11 Travaux pratiques /app/mon-espace/travaux
+
+Tables : travaux_pratiques publies, travaux_soumissions.
+
+Affiche les TP publiés dont le module appartient à la formation.
+- titre, module, échéance, barème, coefficient, statut du dépôt ;
+- dépôt : lien/fichier, date, note /20, statut, feedback.
+
+Dépôt possible si :
+- aucun dépôt ;
+- statut soumis ;
+- statut a_refaire.
+
+Champs : file_url, file_name, link_url. Au moins un lien ou fichier requis.
+Le dépôt met à jour ou crée une soumission avec statut soumis et remet à zéro
+score, feedback, graded_by et graded_at.
+
+Limites :
+- aucun contrôle d'échéance ;
+- note affichée sur 20, indépendamment du max_score du TP ;
+- un seul dépôt utilisé ;
+- TP chargés globalement puis filtrés côté client ;
+- 200 lignes.
+
+10.12 Compétences /app/mon-espace/competences
+
+Tables : competence_levels du stagiaire, competences de la formation.
+
+Dernier niveau par compétence selon evaluated_at desc.
+- acquises = acquis ou maitrise ;
+- en progression = en_cours ou a_renforcer ;
+- affichage du commentaire et de la date.
+
+Lecture seule.
+
+10.13 Implication /app/mon-espace/implication
+
+Table : implications du stagiaire.
+Affiche les 8 dimensions /5, la moyenne stockée et le commentaire.
+Moyenne affichée = moyenne des champs average.
+Lecture seule.
+
+10.14 Comportement /app/mon-espace/comportement
+
+Table : comportements du stagiaire.
+Affiche les 10 dimensions /5, la moyenne stockée et l'appréciation.
+Lecture seule.
+
+10.15 Observations /app/mon-espace/observations
+
+Table : observations du stagiaire.
+Filtre client : visibility différente de interne, donc seules publiee et
+stagiaire sont affichées.
+Contexte : module ou évaluation. Lecture seule.
+
+Limite : les observations interne sont chargées puis masquées côté client, pas
+exclues de la requête.
+
+10.16 Progression /app/mon-espace/progression
+
+Tables : notes, presences, qcm_attempts, travaux_soumissions,
+competence_levels, final_evaluations.
+
+Calculs :
+- notes publiées par module, normalisées sur 20 ;
+- moyenne par module ;
+- moyenne modules = moyenne simple des moyennes non nulles ;
+- assiduité selon la règle commune ;
+- moyenne QCM = moyenne de percentage/100*20 ;
+- moyenne TP = moyenne des scores, supposés sur 20 ;
+- compétences acquises = acquis ou maitrise ;
+- moyenne finale et décision = final_evaluations la plus récente ;
+- barre de progression plafonnée à 100 %, verte si >= 10.
+
+Limite : QCM ou TP à 0 affiché avec un tiret à cause du test de véracité.
+
+10.17 Plans d'amélioration /app/mon-espace/plans
+
+Tables : improvement_plans du stagiaire, improvement_actions par plan_id.
+
+Affiche difficulté, objectif, dates, statut, commentaire, actions et résultats.
+Compteurs : total, en cours, atteint. Lecture seule.
+
+10.18 Journal de stage /app/mon-espace/journal
+
+Table : stage_journal du stagiaire.
+
+Lecture : date, activité, compétence, durée, statut, commentaire.
+
+Création :
+- date, activité, compétence, durée, observation ;
+- statut soumis ;
+- validated_by null ;
+- comment null.
+
+Modification autorisée si statut différent de valide.
+Toute modification réécrit le payload avec statut soumis et efface validated_by
+et comment, y compris pour une entrée commente.
+
+Limites : date future possible, durée non plafonnée, pas d'unicité par jour.
+
+10.19 Objectifs de stage /app/mon-espace/objectifs
+
+Table : stage_objectives du stagiaire.
+Affiche titre, description, statut, commentaire de validation.
+Compteurs : total, atteints/dépassés, en cours. Lecture seule.
+
+10.20 Projet final /app/mon-espace/projet-final
+
+Table : final_projects du stagiaire, tri created_at.desc, premier uniquement.
+Affiche titre, description, statut, dates, soutenance, note /20, objectifs,
+appréciation, livrables. Lecture seule.
+
+10.21 Bulletin /app/mon-espace/bulletin
+
+Table : bulletins du stagiaire, tri generated_at.desc.
+Seuls les bulletins publies sont accessibles. Le plus récent est sélectionné par
+défaut ; un sélecteur permet de changer.
+
+Affiche le contenu du bulletin : moyennes, modules, assiduité, décision,
+appréciation, période, établissement, stagiaire.
+Actions : téléchargement si file_url, impression via window.print().
+
+Limite : le contenu est affiché sans recalcul.
+
+10.22 Documents /app/mon-espace/documents
+
+Table : documents du stagiaire, tri created_at.desc.
+Affiche titre, type, date, aperçu modal, téléchargement si file_url,
+impression. Aucun filtre de statut ou de publication. Lecture seule.
+
+10.23 Historique /app/mon-espace/historique
+
+Table : audit_logs filtrés user_id = utilisateur connecté, tri created_at.desc,
+limite 100.
+
+Affiche date, action, entité, motif, compteur, dernière action.
+Limite : uniquement les logs du compte, pas les actions d'un administrateur sur
+le dossier.
+
+10.24 Paramètres /app/mon-espace/parametres
+
+Affiche email, rôle, statut, dernière connexion, matricule, statut stagiaire.
+Actions :
+- lien vers le profil ;
+- export JSON local des données de compte, profil et inscription ;
+- choix du thème clair/sombre.
+
+Aucune écriture en base, aucun changement de mot de passe ou d'email.
+
+================================================================================
+11. WORKFLOWS MÉTIER DE BOUT EN BOUT
+================================================================================
+
+11.1 Mise en service
+
+1. Créer le projet Forge.
+2. Importer sql/forge_stagiaires.sql dans l'éditeur de schéma Forge.
+3. Vérifier la configuration Auth : table users, email, password_hash.
+4. Renseigner .env.local.
+5. Lancer npm install.
+6. Lancer npm run seed si nécessaire.
+7. Se connecter avec admin@stagebuild.local.
+8. Changer le mot de passe de démonstration.
+9. Créer les comptes réels.
+10. Vérifier la page /forge.
+
+11.2 Réservation publique puis admission
+
+1. Le candidat ouvre /reservation.
+2. Il choisit une formation et une promotion ouvertes.
+3. L'application vérifie capacité, doublon d'email et existence d'un dossier ou
+   compte.
+4. Une réservation en_attente est créée avec une référence RES-ANNÉE-XXXXXX.
+5. L'administration ouvre /app/reservations.
+6. Elle vérifie la demande et confirme.
+7. Le système crée ou réutilise :
+   - un stagiaire avec matricule STG-ANNÉE-#### ;
+   - une inscription validee ;
+   - un compte stagiaire avec mot de passe temporaire SB-XXXX####.
+8. La réservation passe à confirmee avec les liens.
+9. Le mot de passe temporaire est communiqué au candidat.
+10. Le candidat se connecte et complète son profil.
+
+11.3 Création manuelle d'un stagiaire
+
+1. /app/stagiaires, créer.
+2. Renseigner identité, coordonnées, parcours et statut.
+3. Enregistrer.
+4. Ouvrir le dossier avec l'icône œil.
+5. Créer l'inscription dans /app/inscriptions.
+6. Affecter un formateur, un maître de stage, un service ou un groupe dans
+   /app/affectations.
+7. Créer un compte dans /app/utilisateurs en liant stagiaire_id.
+
+11.4 Structuration d'une formation
+
+1. Créer la formation dans /app/formations.
+2. Créer les modules dans /app/modules.
+3. Renseigner coefficient, heures, seuil, compétences et types d'évaluation.
+4. Créer une promotion dans /app/promotions.
+5. Définir dates et capacité.
+6. Créer les séances dans /app/seances.
+7. Inscrire les stagiaires.
+8. Vérifier les places disponibles dans /app/reservations.
+
+11.5 Saisie des présences
+
+1. Ouvrir /app/presences.
+2. Sélectionner une séance.
+3. Vérifier la liste des stagiaires éligibles.
+4. Utiliser Tous présents ou saisir individuellement.
+5. Ajouter une justification si nécessaire.
+6. Enregistrer la feuille.
+7. Vérifier les taux dans le dossier stagiaire ou la progression.
+
+11.6 Évaluation classique
+
+1. Créer l'évaluation dans /app/evaluations.
+2. Choisir formation, module, type, date, barème et coefficient.
+3. Laisser le statut brouillon ou programmer.
+4. Ouvrir /app/notes.
+5. Sélectionner l'évaluation.
+6. Saisir les notes.
+7. Enregistrer ou Enregistrer et valider.
+8. Vérifier les résultats dans le dossier, la progression et les rapports.
+
+11.7 QCM
+
+1. Créer une évaluation de type QCM avec is_qcm.
+2. Ouvrir /app/qcm.
+3. Sélectionner le QCM.
+4. Créer les questions, options, bonnes réponses et points.
+5. Lancer une passation depuis la page personnel ou depuis l'espace stagiaire.
+6. Le système corrige localement et crée qcm_attempts.
+7. Aucune note n'est créée automatiquement.
+8. Si nécessaire, saisir une note dans /app/notes.
+
+11.8 Travaux pratiques
+
+1. Créer le TP dans /app/travaux.
+2. Renseigner module, échéance, livrables, barème et coefficient.
+3. Publier le TP.
+4. Le stagiaire dépose un lien ou un fichier.
+5. Le formateur consulte la soumission.
+6. Il saisit une note sur 20, un feedback et un statut.
+7. La note n'alimente pas automatiquement notes ou bulletin.
+
+11.9 Évaluation finale, bulletin et document
+
+1. Vérifier que les notes, présences, QCM, TP, implications et comportements
+   sont saisis.
+2. Ouvrir /app/evaluation-finale.
+3. Sélectionner le stagiaire.
+4. Ajuster les coefficients si nécessaire.
+5. Enregistrer ou Valider et publier.
+6. Choisir manuellement la décision.
+7. Ouvrir /app/bulletins.
+8. Générer le bulletin en brouillon ou publier.
+9. Imprimer.
+10. Ouvrir /app/documents pour générer un document officiel.
+11. Imprimer.
+
+11.10 Suivi d'un stagiaire en difficulté
+
+1. Repérer le stagiaire via le dashboard ou les rapports.
+2. Consulter le dossier et la progression.
+3. Ajouter une observation.
+4. Créer un plan d'amélioration avec actions.
+5. Réaliser une évaluation intermédiaire.
+6. Choisir une décision : progression_normale, surveillance,
+   plan_amelioration ou entretien_obligatoire.
+7. Suivre le journal, les objectifs et le projet final.
+8. Réévaluer.
+
+11.11 Archivage et restauration
+
+1. L'archivage n'est pas proposé par /app/archivage.
+2. Il s'effectue par modification directe du statut dans les pages métier ou
+   via Forge.
+3. /app/archivage liste les éléments archivés.
+4. Restaurer un stagiaire le repasse en actif.
+5. Restaurer une formation la repasse en active.
+6. Restaurer une promotion la repasse en planifiee.
+
+11.12 Notification interne
+
+1. Ouvrir /app/notifications.
+2. Créer une notification.
+3. Choisir type et canal.
+4. Choisir un utilisateur ou un stagiaire, ou laisser vide pour diffusion.
+5. Envoyer.
+6. Seule la notification interne est enregistrée.
+7. Les canaux email, SMS et push nécessitent un fournisseur externe.
+
+================================================================================
+12. RÈGLES DE CALCUL ET INVARIANTS MÉTIER
+================================================================================
+
+12.1 Utilitaires communs
+
+average(values)
+- ignore les valeurs qui ne sont pas des nombres finis ;
+- renvoie 0 si aucune valeur valide ;
+- fait une moyenne arithmétique simple ;
+- arrondit à 2 décimales.
+
+percentage(value, maximum)
+- renvoie 0 si maximum <= 0 ;
+- sinon round(value / maximum * 100, 2).
+
+round(value, decimals = 2)
+- arrondit avec Number.EPSILON pour limiter les erreurs flottantes ;
+- renvoie 0 si la valeur n'est pas finie.
+
+toNumber(value, fallback = 0)
+- accepte un nombre fini ;
+- accepte une chaîne avec virgule ou point ;
+- renvoie le fallback sinon.
+
+12.2 Note normalisée sur 20
+
+Formule générale :
+normalized = round(score / (max_score || 20) * 20, 2)
+
+Cette formule est utilisée dans :
+- le dossier stagiaire ;
+- le tableau de bord ;
+- les notes ;
+- la progression ;
+- les évaluations intermédiaires ;
+- les bulletins ;
+- les documents ;
+- les rapports ;
+- l'espace stagiaire.
+
+Conséquence : une évaluation sur 10, 30 ou 50 est ramenée sur 20.
+
+Exceptions :
+- l'évaluation finale ne réarrondit pas chaque note avant la moyenne ;
+- les TP sont souvent supposés déjà sur 20 ;
+- les QCM sont convertis depuis percentage dans certains calculs.
+
+12.3 Taux de présence
+
+Statuts considérés présents :
+- present
+- retard
+- sortie_autorisee
+
+Statuts considérés absents :
+- absent
+- absence_justifiee
+- absence_non_justifiee
+
+Formule :
+taux = percentage(nb_présents, max(total_présences, 1))
+
+Autres conventions :
+- dans l'espace stagiaire, justifiées = absence_justifiee + sortie_autorisee ;
+- non justifiées = absent + absence_non_justifiee ;
+- sortie_autorisee est donc à la fois présente et justifiée ;
+- un taux sans donnée vaut 0 %, pas 100 %.
+
+12.4 Moyenne des notes et des modules
+
+Notes :
+- moyenne simple des notes normalisées ;
+- les coefficients de notes ne sont pas appliqués ;
+- les statuts de notes ne sont généralement pas filtrés côté personnel ;
+- l'espace stagiaire filtre souvent sur publiee.
+
+Modules :
+- moyenne simple des notes du module ;
+- le coefficient du module est affiché mais non appliqué ;
+- dans le bulletin, le coefficient est également affiché sans pondération.
+
+Progression :
+- moyenne générale = moyenne simple des moyennes de modules non nulles ;
+- ce n'est pas la moyenne de toutes les notes.
+
+12.5 Seuils
+
+- note réussie : >= 10 / 20 ;
+- module validé : moyenne >= module.pass_mark ;
+- QCM réussi : percentage >= 50 ;
+- stagiaire à risque : moyenne < 10 ou présence < 80 % ;
+- implication ou comportement acquis : moyenne >= 3 / 5 ;
+- badge de moyenne finale : >= 10 / 20 ;
+- taux de présence satisfaisant : >= 80 %.
+
+Aucun seuil ne déclenche automatiquement une décision finale.
+
+12.6 Calcul QCM
+
+maxScore = somme des points des questions.
+
+Correction :
+- multiple : correspondance exacte, pas de crédit partiel ;
+- short_answer et types simples : comparaison textuelle normalisée ;
+- matching : pas de logique dédiée, traité comme réponse simple ;
+- question sans réponse : 0.
+
+percentage = round(score / maxScore * 100, 2)
+passed = percentage >= 50
+
+Moyenne QCM :
+- dans QcmPage : moyenne des scores bruts en points ;
+- dans EvaluationFinalePage : moyenne des percentage, puis conversion sur 20 ;
+- dans Progression : conversion de chaque percentage sur 20, puis moyenne.
+
+12.7 Implication et comportement
+
+Implication :
+- 8 dimensions sur 5 ;
+- moyenne arithmétique ;
+- arrondi à 2.
+
+Comportement :
+- 10 dimensions sur 5 ;
+- moyenne arithmétique ;
+- arrondi à 2.
+
+Nuance importante :
+- les champs passent par Number() ;
+- Number('') vaut 0 ;
+- un champ laissé vide peut donc être compté comme zéro ;
+- la moyenne peut porter sur 8 ou 10 champs, y compris des zéros.
+
+Dans l'évaluation finale :
+- implication /5 est convertie en /20 par multiplication par 4 ;
+- comportement /5 est converti en /20 par multiplication par 4.
+
+12.8 Compétences
+
+Niveau acquis si :
+- acquis ;
+- maitrise.
+
+Dernier niveau :
+- tri evaluated_at desc ;
+- dédoublonnage par competence_id ;
+- première occurrence conservée.
+
+Limites :
+- pas de pourcentage global ;
+- pas de pondération ;
+- pas d'unicité stagiaire/compétence ;
+- certaines pages ne trient pas les niveaux avant dédoublonnage.
+
+12.9 Évaluation finale
+
+Coefficients par défaut :
+modules 40, qcm 10, tp 15, project 20, implication 5,
+professionalism 5, attendance 5.
+
+Formule :
+weighted =
+  modulesAverage * coef.modules
++ qcmAverage * coef.qcm
++ tpAverage * coef.tp
++ projectAverage * coef.project
++ (implicationAverage * 4) * coef.implication
++ (professionalismAverage * 4) * coef.professionalism
++ (attendanceRate * 0.2) * coef.attendance
+
+finalAverage = totalWeight > 0 ? round(weighted / totalWeight, 2) : 0
+
+Invariants :
+- les coefficients n'ont pas besoin de sommer à 100 ;
+- la décision est manuelle ;
+- le seuil 10 ne change pas la décision ;
+- chaque enregistrement crée une nouvelle ligne ;
+- la dernière évaluation finale est celle triée created_at desc.
+
+12.10 Bulletins
+
+- sélection de l'évaluation finale la plus récente ;
+- notes normalisées sur 20 ;
+- moyenne de module simple ;
+- coefficient de module affiché mais non appliqué ;
+- taux de présence recalculé pour le contenu ;
+- moyenne finale reprise de l'évaluation finale ;
+- période AAAA-MM ;
+- contenu figé au moment de la génération.
+
+12.11 Réservation et capacité
+
+used = inscriptions en_attente + validee + terminee pour la promotion
+pending = réservations en_attente pour la promotion
+available = max(capacity - used - pending, 0)
+isOpen = capacity null OU available > 0
+
+À la confirmation :
+capacité dépassée si
+used + pendingOthers + (déjà inscrit ? 0 : 1) > capacity
+
+Invariants :
+- une capacité nulle ou absente est traitée comme illimitée ;
+- une promotion doit être planifiee ou active ;
+- une formation doit être active ;
+- une réservation confirmée ne peut plus être annulée par le service ;
+- l'annulation n'est possible qu'en attente.
+
+12.12 Transitions de statut
+
+Stagiaire :
+candidat -> admis -> actif -> termine -> archive
+La restauration force actif.
+
+Formation :
+active <-> inactive ; archivee peut être restaurée en active.
+
+Promotion :
+planifiee -> active -> cloturee -> archivee
+La restauration force planifiee.
+
+Inscription :
+en_attente -> validee -> terminee
+ou annulee.
+
+Réservation :
+en_attente -> confirmee
+en_attente -> annulee
+
+Séance :
+planifiee -> en_cours -> terminee
+ou annulee.
+
+Note :
+saisie -> soumise -> validee -> publiee
+Le code utilise surtout saisie, validee et publiee.
+
+Bulletin :
+brouillon -> valide -> publie -> archive
+Le code génère brouillon ou publie.
+
+Évaluation :
+brouillon -> programmee -> en_cours -> terminee -> corrigee -> soumise ->
+validee -> publiee -> archivee
+Les transitions ne sont pas contrôlées par une machine à états.
+
+12.13 Invariants de cohérence à respecter
+
+Pour qu'un dossier soit exploitable :
+- le stagiaire doit exister ;
+- une inscription doit relier le stagiaire à une formation ;
+- une promotion doit être rattachée à la formation ;
+- une séance doit être rattachée à un module ;
+- une évaluation doit être rattachée à une formation et idéalement un module ;
+- une note doit référencer une évaluation et un stagiaire ;
+- un compte stagiaire doit référencer le bon stagiaire_id ;
+- un bulletin doit référencer une évaluation finale du même stagiaire.
+
+Ces cohérences ne sont pas toutes garanties par des contraintes SQL ou par l'UI.
+
+================================================================================
+13. DICTIONNAIRE DES DONNÉES
+================================================================================
+
+13.1 Vue d'ensemble
+
+Le schéma principal contient 36 tables :
+stagiaires, users, roles, user_roles, formations, modules, promotions,
+inscriptions, reservations, affectations, seances, presences, evaluations,
+notes, qcm_questions, qcm_attempts, travaux_pratiques, travaux_soumissions,
+competences, competence_levels, implications, comportements, observations,
+improvement_plans, improvement_actions, intermediate_evaluations,
+stage_objectives, stage_journal, final_projects, final_evaluations, bulletins,
+documents, notifications, audit_logs, settings, grading_rules.
+
+Deux vues :
+- v_stagiaire_presences
+- v_stagiaire_competences_latest
+
+Toutes les clés primaires sont des UUID générés par gen_random_uuid().
+Les horodatages principaux sont created_at et updated_at.
+
+13.2 Identité et comptes
+
+stagiaires
+Rôle : dossier administratif du stagiaire.
+Clés : id.
+Champs clés : matricule unique, nom, postnom, prenom, sexe, date_naissance,
+lieu_naissance, telephone, email unique, adresse, photo_url,
+contact_urgence_nom, contact_urgence_telephone, etablissement_origine,
+niveau_etudes, diplome, domaine, specialite, statut.
+Statuts : candidat, admis, actif, termine, archive.
+Relations : référencé par users, inscriptions, reservations, affectations,
+presences, notes, etc.
+
+users
+Rôle : compte et profil d'authentification.
+Clés : id.
+Champs clés : email unique, password_hash, first_name, last_name, phone, role,
+statut, last_login_at, avatar_url, stagiaire_id.
+Statuts : active, inactive, blocked.
+Relations : stagiaire_id vers stagiaires ; utilisé par user_roles,
+affectations, seances, evaluations, notes, observations, etc.
+
+roles
+Rôle : catalogue des rôles.
+Champs : name unique, label, permissions jsonb.
+Note : l'application n'utilise pas cette table pour calculer les permissions à
+l'exécution ; elle utilise le mapping TypeScript.
+
+user_roles
+Rôle : association many-to-many entre users et roles.
+Clé primaire composite : user_id, role_id.
+Relations : cascade sur users et roles.
+
+13.3 Programme pédagogique
+
+formations
+Rôle : programme de formation.
+Champs : name, description, duration_months, objectives, level, domain,
+program, status, created_by.
+Statuts : active, inactive, archivee.
+
+modules
+Rôle : module pédagogique d'une formation.
+Champs : formation_id, name, description, coefficient, hours, formateur_id,
+objectives, competencies jsonb, evaluation_types jsonb, pass_mark, sort_order,
+status.
+Statuts : active, inactive.
+Relations : formation_id vers formations ; formateur_id vers users.
+
+promotions
+Rôle : groupe daté et capacité.
+Champs : formation_id, code unique, name, start_date, end_date, capacity,
+status, created_by.
+Statuts : planifiee, active, cloturee, archivee.
+
+13.4 Parcours et places
+
+inscriptions
+Rôle : lien stagiaire/formation/promotion.
+Champs : stagiaire_id, formation_id, promotion_id, start_date, end_date,
+responsible_id, status.
+Statuts : en_attente, validee, annulee, terminee.
+
+reservations
+Rôle : demande publique de place.
+Champs : reference unique, identité, telephone, email, formation_id,
+promotion_id, status, notes, confirmed_at, confirmed_by, stagiaire_id,
+inscription_id, user_id.
+Statuts : en_attente, confirmee, annulee.
+Index : status, (promotion_id, status), email.
+
+affectations
+Rôle : positionnement opérationnel.
+Champs : stagiaire_id, inscription_id, formation_id, promotion_id, service,
+formateur_id, maitre_stage_id, groupe.
+Contrainte : unique (stagiaire_id, inscription_id).
+
+13.5 Planning et présence
+
+seances
+Rôle : créneau planifié.
+Champs : module_id, promotion_id, formateur_id, title, date, start_time,
+end_time, room, status.
+Statuts : planifiee, en_cours, terminee, annulee.
+
+presences
+Rôle : présence d'un stagiaire à une séance.
+Champs : seance_id, stagiaire_id, status, note, recorded_by, recorded_at.
+Statuts : present, absent, retard, absence_justifiee, absence_non_justifiee,
+sortie_autorisee.
+Contrainte : unique (seance_id, stagiaire_id).
+
+13.6 Évaluations et notes
+
+evaluations
+Rôle : activité évaluée.
+Champs : title, formation_id, module_id, formateur_id, type, date,
+duration_minutes, max_score, coefficient, weight, period, status, is_qcm,
+feeds_gradebook, instructions.
+Types : interrogation, devoir, qcm, examen, travail_pratique, projet,
+presentation, evaluation_orale, evaluation_competence,
+evaluation_comportementale, evaluation_finale.
+Statuts : brouillon, programmee, en_cours, terminee, corrigee, soumise,
+validee, publiee, archivee.
+
+notes
+Rôle : note d'un stagiaire à une évaluation.
+Champs : evaluation_id, stagiaire_id, score, max_score, coefficient, status,
+comment, graded_by, graded_at, validated_by, validated_at.
+Statuts : saisie, soumise, validee, publiee.
+Contraintes : unique (evaluation_id, stagiaire_id) ;
+score entre 0 et max_score.
+
+13.7 QCM
+
+qcm_questions
+Rôle : question d'un QCM.
+Champs : evaluation_id, question_text, type, options jsonb, correct_answer
+jsonb, points, sort_order.
+Types : single, multiple, true_false, short_answer, matching.
+
+qcm_attempts
+Rôle : tentative de QCM.
+Champs : evaluation_id, stagiaire_id, attempt_number, started_at, submitted_at,
+score, max_score, percentage, passed, time_spent_seconds, answers jsonb, status.
+Statuts : en_cours, soumis, corrige.
+Contrainte : unique (evaluation_id, stagiaire_id, attempt_number).
+
+13.8 Travaux pratiques
+
+travaux_pratiques
+Rôle : consigne de TP.
+Champs : title, module_id, formateur_id, description, deadline,
+deliverables jsonb, max_score, coefficient, status.
+Statuts : brouillon, publie, cloture, archive.
+
+travaux_soumissions
+Rôle : dépôt d'un stagiaire.
+Champs : tp_id, stagiaire_id, file_url, file_name, link_url, submitted_at,
+status, score, feedback, graded_by, graded_at.
+Statuts : soumis, en_correction, corrige, valide, a_refaire.
+Contrainte : unique (tp_id, stagiaire_id).
+
+13.9 Compétences et attitudes
+
+competences
+Rôle : référentiel de compétences.
+Champs : formation_id, module_id, name, description, sort_order.
+
+competence_levels
+Rôle : niveau d'un stagiaire sur une compétence.
+Champs : stagiaire_id, competence_id, level, comment, evaluated_by,
+evaluated_at.
+Niveaux : non_acquis, a_renforcer, en_cours, acquis, maitrise.
+Note : pas de contrainte unique stagiaire/compétence dans le schéma fourni.
+
+implications
+Rôle : évaluation d'engagement.
+Champs : stagiaire_id, module_id, period, participation, assiduite, curiosite,
+questions, travail_personnel, collaboration, respect_consignes, autonomie,
+average, comment, evaluated_by.
+
+comportements
+Rôle : évaluation comportementale.
+Champs : stagiaire_id, period, ponctualite, discipline, respect, communication,
+esprit_equipe, autonomie, responsabilite, attitude_professionnelle,
+respect_materiel, capacite_adaptation, average, appreciation, evaluated_by.
+
+13.10 Suivi
+
+observations
+Rôle : observation qualitative.
+Champs : stagiaire_id, module_id, seance_id, evaluation_id, competence_id,
+author_id, content, visibility.
+Visibilités : interne, publiee, stagiaire.
+
+improvement_plans
+Rôle : plan de remédiation.
+Champs : stagiaire_id, difficulty, objective, start_date, end_date,
+responsible_id, status, evaluation_comment.
+Statuts : cree, en_cours, evalue, atteint, non_atteint.
+
+improvement_actions
+Rôle : action d'un plan.
+Champs : plan_id, title, type, due_date, status, result.
+Statuts : a_faire, en_cours, termine, annule.
+
+intermediate_evaluations
+Rôle : synthèse intermédiaire.
+Champs : stagiaire_id, date, average, attendance_rate, qcm_average,
+tp_average, competencies_acquired, implication_average, behavior_average,
+strengths, improvements, recommendations, decision, observations, evaluator_id.
+Décisions : progression_normale, surveillance, plan_amelioration,
+entretien_obligatoire.
+
+stage_objectives
+Rôle : objectif individuel.
+Champs : stagiaire_id, title, description, status, validation_comment.
+Statuts : non_commence, en_cours, atteint, depasse, non_atteint.
+
+stage_journal
+Rôle : journal quotidien.
+Champs : stagiaire_id, date, activity, competence, duration_hours, observation,
+status, validated_by, comment.
+Statuts : soumis, valide, commente.
+
+final_projects
+Rôle : projet final.
+Champs : stagiaire_id, title, description, supervisor_id, objectives,
+start_date, end_date, deliverables jsonb, members jsonb, defense_date, jury
+jsonb, score, appreciation, comments, status.
+Statuts : en_cours, soutenu, valide, non_valide, archive.
+
+13.11 Résultats
+
+final_evaluations
+Rôle : consolidation finale.
+Champs : stagiaire_id, modules_average, qcm_average, tp_average,
+project_average, implication_average, professionalism_average, attendance_rate,
+coefficients jsonb, final_average, decision, appreciation, validated_by,
+published_at.
+Décisions : en_attente, valide, non_valide.
+
+bulletins
+Rôle : bulletin généré.
+Champs : stagiaire_id, final_evaluation_id, period, content jsonb, status,
+generated_by, generated_at, published_by, published_at, file_url.
+Statuts : brouillon, valide, publie, archive.
+
+documents
+Rôle : document officiel généré.
+Champs : stagiaire_id, type, title, file_url, content jsonb, generated_by.
+Types : fiche_inscription, fiche_stagiaire, carte_stagiaire, attestation_stage,
+certificat_formation, certificat_reussite, releve_notes, bulletin,
+rapport_evaluation, rapport_stage, fiche_evaluation_finale.
+
+13.12 Communication et administration
+
+notifications
+Rôle : message interne.
+Champs : user_id, stagiaire_id, title, message, type, channel, status, link,
+read_at.
+Types : info, evaluation, affectation, presence, echeance, resultat, plan,
+bulletin.
+Canaux : internal, email, sms, push.
+Statuts : unread, read.
+
+audit_logs
+Rôle : traçabilité.
+Champs : user_id, action, entity, entity_id, old_values jsonb, new_values jsonb,
+reason, validated_by, ip_address, created_at.
+Note : la table existe, mais les pages métier n'y écrivent pas.
+
+settings
+Rôle : paramètres applicatifs.
+Champs : key unique, value jsonb, description, updated_at.
+
+grading_rules
+Rôle : règles de notation configurables.
+Champs : formation_id, module_id, category, weight, pass_mark, rounding.
+Note : la page Paramètres les gère, mais aucun calcul ne les consomme.
+
+13.13 Vues
+
+v_stagiaire_presences
+Agrège par stagiaire : total séances, présences, retards, absences, taux de
+présence.
+presences = lignes au statut present uniquement.
+retards = lignes au statut retard uniquement.
+Absences = absent + absence_justifiee + absence_non_justifiee.
+Taux = (present + retard) / total * 100.
+La vue ne compte pas sortie_autorisee comme une présence, contrairement aux
+calculs de plusieurs pages React.
+
+v_stagiaire_competences_latest
+Dernier niveau par stagiaire et compétence, avec nom de compétence et date.
+
+13.14 Triggers
+
+La fonction set_updated_at met à jour updated_at avant chaque update.
+Elle est installée sur la majorité des tables métier, notamment stagiaires,
+users, formations, modules, promotions, inscriptions, affectations, seances,
+presences, evaluations, notes, QCM, TP, compétences, implications,
+comportements, observations, plans, évaluations intermédiaires, objectifs,
+journal, projets, évaluations finales, bulletins et grading_rules.
+
+Tables avec updated_at mais sans trigger explicite dans le script :
+reservations, documents, notifications, settings.
+La valeur updated_at de ces tables ne se met donc pas à jour automatiquement
+lors d'un update via SQL direct, sauf comportement propre à Forge.
+
+================================================================================
+14. MATRICE DÉTAILLÉE DES PERMISSIONS
+================================================================================
+
+14.1 Légende
+
+A   = admin (toujours autorisé via *)
+D   = direction
+RF  = responsable_formation
+RP  = responsable_pedagogique
+F   = formateur
+MS  = maître de stage
+ADM = administration
+RH  = ressources humaines
+AUD = auditeur
+STG = stagiaire
+
+Une permission accorde l'accès à la route. Elle ne restreint pas les données à
+un périmètre.
+
+14.2 Routes du personnel
+
+Tableau de bord /app
+Permission effective : aucune garde dédiée, ProtectedRoute seulement.
+Accès : tout utilisateur authentifié non stagiaire ; stagiaire redirigé.
+Rôles : A, D, RF, RP, F, MS, ADM, RH, AUD.
+
+Stagiaires /app/stagiaires
+Permission : stagiaires.
+Rôles : A, D, RF, RP, F, MS, ADM, RH, AUD.
+
+Détail stagiaire /app/stagiaires/:id
+Permission : stagiaires.
+Rôles : A, D, RF, RP, F, MS, ADM, RH, AUD.
+
+Inscriptions /app/inscriptions
+Permission : inscriptions.
+Rôles : A, D, RF, RP, ADM.
+
+Réservations /app/reservations
+Permission : reservations.
+Rôles : A, D, RF, RP, ADM.
+
+Affectations /app/affectations
+Permission : affectations.
+Rôles : A, D, RF, RP, ADM.
+
+Formations /app/formations
+Permission : formations.
+Rôles : A, D, RF, RP, F.
+
+Modules /app/modules
+Permission : formations.
+Rôles : A, D, RF, RP, F.
+
+Promotions /app/promotions
+Permission : promotions.
+Rôles : A, D, RF, RP, F.
+
+Séances /app/seances
+Permission : seances.
+Rôles : A, D, RF, RP, F.
+
+Présences /app/presences
+Permission : presences.
+Rôles : A, D, RF, RP, F.
+
+Évaluations /app/evaluations
+Permission : evaluations.
+Rôles : A, D, RF, RP, F.
+
+Notes /app/notes
+Permission : notes.
+Rôles : A, D, RF, RP, F.
+
+QCM /app/qcm
+Permission : qcm.
+Rôles : A, D, RF, RP, F.
+
+Passation QCM /app/qcm/:evaluationId/passer
+Permission : qcm.
+Rôles : A, D, RF, RP, F.
+
+Travaux pratiques /app/travaux
+Permission : travaux.
+Rôles : A, D, RF, RP, F.
+
+Compétences /app/competences
+Permission : competences.
+Rôles : A, D, RF, RP, F, MS.
+
+Implication /app/implication
+Permission : implication.
+Rôles : A, D, RF, RP, F, MS.
+
+Comportement /app/comportement
+Permission : comportement.
+Rôles : A, D, RF, RP, F, MS.
+
+Observations /app/observations
+Permission : observations.
+Rôles : A, D, RF, RP, F, MS.
+
+Progression /app/progression
+Permission : progression.
+Rôles : A, D, RF, RP, F.
+
+Plans d'amélioration /app/plans
+Permission : plans.
+Rôles : A, D, RF, RP, F.
+
+Évaluations intermédiaires /app/evaluations-intermediaires
+Permission : intermediate.
+Rôles : A, D, RF, RP.
+
+Journal de stage /app/journal
+Permission : journal.
+Rôles : A, D, RF, RP, F, MS.
+
+Objectifs de stage /app/objectifs
+Permission : objectives.
+Rôles : A, D, RF, RP, F, MS.
+
+Projet final /app/projet-final
+Permission : project.
+Rôles : A, D, RF, RP, F, MS.
+
+Évaluation finale /app/evaluation-finale
+Permission : final.
+Rôles : A, D, RF, RP.
+
+Bulletins /app/bulletins
+Permission : bulletins.
+Rôles : A, D, RF, RP.
+
+Documents /app/documents
+Permission : documents.
+Rôles : A, D, RF, RP, ADM, RH.
+
+Rapports /app/rapports
+Permission : reports.
+Rôles : A, D, RF, RP, RH, AUD.
+
+Utilisateurs /app/utilisateurs
+Permission : users.
+Rôles : A uniquement.
+
+Audit /app/audit
+Permission : audit.
+Rôles : A, AUD.
+
+Paramètres /app/parametres
+Permission : settings.
+Rôles : A uniquement.
+
+Archivage /app/archivage
+Permission : archive.
+Rôles : A, D, ADM.
+
+Notifications /app/notifications
+Permission : notifications.
+Rôles : A, D, RF, RP, F, MS, ADM, RH, AUD.
+
+Recherche /app/recherche
+Permission : search.
+Rôles : A, D, RF, RP, F, MS, ADM, RH, AUD.
+
+Accès refusé /app/acces-refuse
+Aucune permission. Page de repli.
+
+14.3 Routes stagiaire
+
+Toutes les routes ci-dessous sont autorisées à A via * et à STG via la
+permission self_* correspondante.
+
+/app/mon-espace : self_dashboard
+/app/mon-espace/profil : self_profile
+/app/mon-espace/formation : self_formation
+/app/mon-espace/notifications : self_notifications
+/app/mon-espace/presences : self_presences
+/app/mon-espace/evaluations : self_evaluations
+/app/mon-espace/notes : self_notes
+/app/mon-espace/qcm : self_qcm
+/app/mon-espace/travaux : self_travaux
+/app/mon-espace/competences : self_competences
+/app/mon-espace/implication : self_implication
+/app/mon-espace/comportement : self_comportement
+/app/mon-espace/observations : self_observations
+/app/mon-espace/progression : self_progression
+/app/mon-espace/plans : self_plans
+/app/mon-espace/journal : self_journal
+/app/mon-espace/objectifs : self_objectives
+/app/mon-espace/projet-final : self_project
+/app/mon-espace/bulletin : self_bulletin
+/app/mon-espace/documents : self_documents
+/app/mon-espace/historique : self_history
+/app/mon-espace/parametres : self_settings
+
+14.4 Permissions présentes mais non appliquées
+
+grade_validate
+- accordée à D, RF, RP ;
+- non testée dans NotesPage ni EvaluationFinalePage.
+
+bulletin_publish
+- accordée à D, RF ;
+- non testée dans BulletinsPage.
+
+dashboard
+- accordée à tous ;
+- /app n'utilise pas PermissionRoute dashboard.
+
+14.5 Implications de la matrice
+
+- La permission stagiaires ouvre le dossier détail et ses onglets Notes,
+  Présences, Compétences et Suivi sans contrôle supplémentaire. Les permissions
+  notes, presences, observations et competences ne protègent donc pas les
+  données affichées dans ce dossier.
+- Un formateur peut consulter tous les stagiaires, pas seulement ceux de ses
+  modules.
+- Un maître de stage peut consulter les compétences, les observations, les notes
+  et les présences de tous les stagiaires via le dossier détail.
+- Un auditeur peut consulter les dossiers et les rapports ; il voit aussi les
+  notes, présences et observations dans le détail stagiaire, mais n'a pas les
+  routes Notes, Bulletins ou Observations.
+- Le service administratif n'a pas les routes Notes, Évaluations ou Bulletins,
+  mais il accède aux notes et aux autres onglets via le dossier stagiaire.
+- Les RH n'ont pas les routes Notes ou Bulletins, mais accèdent aux notes et aux
+  autres onglets via le dossier stagiaire.
+- Seul l'admin gère les comptes et paramètres.
+- L'archivage est réservé à A, D et ADM, mais les autres rôles peuvent archiver
+  indirectement en modifiant un statut dans une page métier s'ils ont accès à
+  cette page.
+- Les restrictions par rôle sont donc des restrictions d'accès aux pages, pas
+  un cloisonnement des données à l'intérieur d'une page autorisée.
+
+================================================================================
+15. LIMITES CONNUES, RISQUES ET POINTS DE VIGILANCE
+================================================================================
+
+15.1 Sécurité et confidentialité
+
+Risque critique : permissions uniquement côté client.
+- Les guards React ne protègent pas l'API.
+- Un utilisateur peut appeler Forge directement s'il possède la clé et un jeton.
+- Les services de données n'appliquent aucun filtre de rôle.
+- Les permissions ne limitent pas les lignes à une formation ou une promotion.
+
+Risque critique : absence de RLS.
+- Le schéma fourni ne définit aucune politique Row Level Security.
+- Le cloisonnement dépend entièrement de Forge et des droits du projet.
+
+Risque élevé : clé API dans le front.
+- VITE_FORGE_API_KEY est incluse dans le bundle.
+- Elle doit être considérée comme publique.
+- Les opérations sensibles ne peuvent pas être sécurisées par cette clé seule.
+
+Risque élevé : jeton dans localStorage.
+- Vulnérable au XSS.
+- Pas de cookie HttpOnly, SameSite ou Secure.
+
+Risque élevé : comptes inactifs ou bloqués.
+- login et restoreSession ne refusent pas explicitement un statut inactive ou
+  blocked.
+- Les guards ne vérifient pas le statut.
+- Un compte bloqué peut donc conserver l'accès selon le comportement Forge.
+
+Risque élevé : données non cloisonnées.
+- Un formateur autorisé peut consulter tous les stagiaires.
+- Un maître de stage peut voir des observations de stagiaires hors de son
+  périmètre.
+- Un utilisateur autorisé peut consulter n'importe quel dossier par URL.
+
+Risque élevé : observations internes.
+- Les observations interne sont chargées côté stagiaire puis masquées côté
+  client.
+- Elles sont donc présentes dans la réponse réseau.
+
+Risque moyen : notes non publiées.
+- StagiaireEvaluations charge toutes les notes du stagiaire, puis n'affiche que
+  celles au statut publiee.
+- Les notes non publiées sont donc présentes dans la réponse réseau, même si
+  l'interface les masque.
+
+Risque élevé : QCM.
+- Les questions et correct_answer sont chargés côté client.
+- La correction est locale.
+- Un utilisateur techniquement avancé peut lire les réponses.
+
+Risque moyen : notifications.
+- Une notification destinée à un stagiaire peut être visible via user_id ou
+  stagiaire_id.
+- Un non-manager peut supprimer une diffusion qu'il voit.
+- Les canaux email, SMS et push ne sont pas réellement envoyés.
+
+Risque moyen : suppression.
+- Les suppressions sont directes, sans corbeille.
+- Aucune cascade applicative n'est vérifiée.
+- La suppression d'un user ne supprime pas explicitement le compte
+  d'authentification Forge.
+- Un admin peut se supprimer lui-même ou supprimer un autre admin.
+
+Risque moyen : création de compte.
+- POST /auth/signup peut créer un compte.
+- createAccount restaure le jeton courant après l'opération, mais l'opération
+  elle-même dépend des droits Forge.
+
+Recommandations minimales avant production :
+1. Mettre en place RLS ou une couche serveur d'autorisation.
+2. Retirer la clé API du client ou la remplacer par un backend proxy.
+3. Passer le jeton en cookie HttpOnly ou ajouter une protection XSS forte.
+4. Refuser les comptes inactive et blocked au login et à chaque restauration.
+5. Filtrer les données par périmètre côté serveur.
+6. Ne pas exposer correct_answer aux stagiaires.
+7. Exclure les observations interne de la requête stagiaire.
+8. Ajouter audit et journalisation des actions sensibles.
+9. Protéger les suppressions par corbeille ou archivage logique.
+10. Ajouter une politique de mot de passe et de réinitialisation.
+
+15.2 Règles métier absentes ou incomplètes
+
+- Aucune limite de tentatives QCM.
+- Aucune fenêtre de disponibilité QCM.
+- Aucune correction automatique vers notes.
+- Aucune note automatique depuis les TP.
+- Aucune génération automatique de bulletin.
+- Aucune décision automatique à partir de la moyenne.
+- Aucune mention littérale (Excellent, Très bien, etc.).
+- Aucune publication automatique des notes.
+- Aucun contrôle grade_validate.
+- Aucun contrôle bulletin_publish.
+- Aucune gestion de session ou de mot de passe oublié.
+- Aucune notification automatique sur affectation, note, bulletin ou échéance.
+- Aucun audit automatique des actions métier.
+- Aucune règle d'assiduité minimale pour valider.
+- Aucune règle de compensation entre modules.
+- Aucun contrôle de capacité lors d'une inscription manuelle.
+- Aucun contrôle des dates d'ouverture des promotions.
+- Aucun contrôle de conflit de salle ou de formateur.
+- Aucun contrôle de doublon d'affectation ou de compétence.
+- Aucune unicité de bulletin ou d'évaluation finale par stagiaire.
+
+15.3 Incohérences de calcul à connaître
+
+- Les coefficients de notes ne sont pas utilisés dans les moyennes.
+- Les coefficients de modules sont affichés mais non pondérés.
+- Les TP sont notés sur 20 sans utiliser le max_score du TP.
+- La moyenne QCM de QcmPage est en points bruts.
+- La moyenne QCM de l'évaluation finale est convertie sur 20.
+- La moyenne de progression est la moyenne des moyennes de modules, pas la
+  moyenne de toutes les notes.
+- L'évaluation finale ne met pas à jour une ligne existante : elle en crée une
+  nouvelle.
+- Les bulletins reprennent final_average et ne recalculent pas la moyenne
+  générale.
+- Les listes de notes, présences et résultats sont plafonnées, donc les
+  agrégats peuvent être partiels.
+- Un formulaire d'implication ou de comportement partiellement rempli peut
+  compter des champs vides comme 0.
+- Le nombre de compétences acquises peut dépendre de l'ordre de chargement
+  lorsque les niveaux ne sont pas triés.
+
+15.4 Performance et volumétrie
+
+- Aucune pagination fonctionnelle.
+- Les tables chargent tout ce qu'elles peuvent et rendent toutes les lignes.
+- Les filtres sont souvent appliqués après téléchargement.
+- useScopedRows fait une requête par identifiant : N+1.
+- Le plafond effectif de 200 lignes est atteint rapidement.
+- Le cache de référentiels de 60 secondes n'est pas invalidé après CRUD.
+- Une erreur sur une table de référence est masquée par un tableau vide.
+- Le build produit un chunk d'environ 816 kB.
+- Les rapports peuvent compter plusieurs fois une note ou une évaluation finale.
+
+15.5 Risques de cohérence transactionnelle
+
+- Confirmation de réservation : plusieurs écritures sans transaction globale.
+- Rollback compensatoire partiel : les suppressions peuvent échouer.
+- Risque de dépassement de capacité en cas de confirmations simultanées.
+- Création de compte via signup puis restauration du jeton : dépendance au
+  comportement Forge.
+- Suppression d'un plan sans ses actions.
+- Suppression d'une formation ou d'un stagiaire sans contrôle des dépendances.
+
+15.6 Risques d'usage
+
+- Confusion entre « évaluation finale enregistrée » et « bulletin publié ».
+- Confusion entre « note saisie », « note validée » et « note publiée ».
+- Confusion entre « TP publié », « TP clos » et « soumission corrigée ».
+- Confusion entre « réservation confirmée » et « inscription validée ».
+- Confusion entre « archivage » et « suppression ».
+- La page d'accueil peut laisser croire que des fonctions ne sont pas encore
+  implémentées.
+
+15.7 Priorisation recommandée
+
+P0 — bloquant pour une production réelle :
+- autorisation serveur et RLS ;
+- protection de la clé API ;
+- filtrage des données par périmètre ;
+- refus des comptes bloqués ;
+- protection des réponses QCM ;
+- audit des actions sensibles.
+
+P1 — fiabilité métier :
+- pagination et comptage serveur ;
+- transaction de confirmation de réservation ;
+- limites de tentatives QCM ;
+- décision finale et publication contrôlées ;
+- unicité des évaluations finales et bulletins ;
+- cohérence des coefficients et des notes TP ;
+- invalidation du cache.
+
+P2 — qualité et exploitation :
+- réduction du bundle ;
+- export PDF réel ;
+- gestion des fichiers ;
+- réinitialisation de mot de passe ;
+- notifications automatiques ;
+- tests automatisés ;
+- documentation des règles métier validées par le métier.
+
+================================================================================
+16. DÉPANNAGE ET EXPLOITATION
+================================================================================
+
+16.1 « Forge Console n'est pas configuré »
+
+Cause : VITE_FORGE_PROJECT_KEY ou VITE_FORGE_API_KEY absent.
+Solution :
+- vérifier .env.local ;
+- redémarrer npm run dev après modification ;
+- vérifier que les variables commencent bien par VITE_ ;
+- ouvrir /forge pour tester.
+
+16.2 Erreur 401 ou session perdue
+
+Cause possible :
+- jeton absent ou expiré ;
+- /auth/me en échec ;
+- utilisateur supprimé ;
+- configuration Forge modifiée.
+
+Solution :
+- se déconnecter ;
+- vider localStorage si nécessaire ;
+- se reconnecter ;
+- vérifier la durée JWT Forge.
+
+16.3 Accès refusé
+
+Cause : permission absente du rôle.
+Solution :
+- vérifier le rôle dans /app/utilisateurs ;
+- vérifier src/config/permissions.ts ;
+- se déconnecter puis se reconnecter pour recalculer les permissions ;
+- noter qu'un changement de rôle n'est pas propagé en temps réel.
+
+16.4 Liste vide ou incomplète
+
+Causes possibles :
+- table vide ;
+- erreur Forge silencieuse dans useReferenceData ;
+- plafond de 200 lignes ;
+- filtre côté client ;
+- cache de 60 secondes ;
+- limit 500 demandée mais ramenée à 200.
+
+Solution :
+- vérifier la table dans Forge ;
+- recharger la page ;
+- attendre l'expiration du cache ;
+- réduire le volume ou ajouter un filtre réellement serveur ;
+- consulter les erreurs réseau.
+
+16.5 Données de référence obsolètes
+
+Cause : cache useReferenceData non invalidé après CRUD.
+Solution :
+- attendre 60 secondes ;
+- recharger l'application ;
+- ou implémenter invalidateReferenceData dans les hooks CRUD.
+
+16.6 Table reservations absente
+
+Symptôme : message d'erreur ou page de réservation inutilisable.
+Solution :
+- exécuter sql/add_reservations.sql dans l'import SQL Forge ;
+- vérifier les droits du projet ;
+- ne pas utiliser /sql pour le DDL.
+
+16.7 Enregistrement partiel des présences
+
+Cause : boucle séquentielle, une requête par stagiaire, erreurs cumulées.
+Solution :
+- vérifier le réseau ;
+- relancer l'enregistrement ;
+- consulter les lignes déjà enregistrées ;
+- corriger les doublons éventuels.
+
+16.8 QCM sans note
+
+Comportement normal : un QCM crée une tentative, pas une note.
+Solution :
+- corriger ou convertir la tentative en note manuellement dans /app/notes ;
+- ou ajouter une règle métier de report.
+
+16.9 Évaluation finale non visible par le stagiaire
+
+Vérifier :
+- présence d'une ligne final_evaluations ;
+- final_average renseigné ;
+- décision renseignée ;
+- published_at si la logique d'affichage l'exige ;
+- bulletin publié séparément.
+La page stagiaire lit final_evaluations et bulletins, mais un simple
+enregistrement ne publie pas automatiquement un bulletin.
+
+16.10 Bulletin non généré
+
+Vérifier :
+- existence d'une évaluation finale pour le stagiaire ;
+- accès à la route bulletins ;
+- absence d'erreur Forge ;
+- sélection du bon stagiaire.
+
+16.11 Typecheck ou build en échec
+
+Commandes :
+- npm run typecheck
+- npm run build
+
+Vérifier :
+- imports et alias @ ;
+- types de domaine ;
+- variable d'environnement manquante ;
+- version Node ;
+- dépendances installées.
+
+16.12 Réinitialiser les données de démonstration
+
+Commande :
+- npm run seed:reset
+
+Avertissement : opération destructrice sur le projet Forge ciblé.
+Le compte admin@stagebuild.local est conservé.
+
+16.13 Le seed s'arrête sans insérer
+
+Cause : la formation de démonstration existe déjà.
+Solution :
+- utiliser npm run seed:reset ;
+- ou supprimer manuellement les données de démonstration.
+
+16.14 Le build fonctionne mais l'application semble lente
+
+Causes :
+- chunk volumineux ;
+- N+1 ;
+- chargement complet des tables ;
+- absence de pagination ;
+- cache non partagé côté stagiaire.
+
+Actions :
+- découper les routes avec import dynamique ;
+- ajouter pagination et comptage serveur ;
+- limiter les référentiels ;
+- réduire les appels par identifiant.
+
+16.15 Import de fichiers
+
+L'application ne gère pas l'upload de fichiers. Les champs file_url et link_url
+sont des URL ou des liens externes. La disponibilité du fichier dépend d'un
+service externe.
+
+16.16 Impression
+
+Les documents et bulletins utilisent window.print().
+Vérifier :
+- la zone #print-area ;
+- les styles d'impression ;
+- le navigateur ;
+- les pop-ups bloquées ;
+- l'absence de PDF serveur.
+
+================================================================================
+17. BASE DE CONNAISSANCES POUR AGENT IA
+================================================================================
+
+17.1 Instructions générales pour l'agent
+
+L'agent doit :
+1. Répondre en français, sauf demande contraire.
+2. Distinguer clairement :
+   - ce qui est implémenté ;
+   - ce qui est manuel ;
+   - ce qui est absent ;
+   - ce qui est une limite ou un risque.
+3. Ne jamais inventer une règle métier, un seuil, une mention ou une permission.
+4. Ne jamais affirmer qu'un contrôle serveur existe alors que le contrôle est
+   côté client.
+5. Ne jamais présenter les données de démonstration comme des données réelles.
+6. Ne jamais divulguer de mot de passe, clé API, jeton ou secret.
+7. Ne pas lire .env.local dans une réponse publique.
+8. Pour une donnée courante (nombre de stagiaires, notes, réservations), indiquer
+   qu'il faut interroger Forge ou l'application ; le document ne contient pas de
+   données temps réel.
+9. Citer la section du document ou le fichier source quand une règle est
+   importante.
+10. En cas d'ambiguïté, proposer la réponse la plus probable et signaler
+    l'incertitude.
+
+17.2 Faits canoniques
+
+- Nom : StageBuild.
+- Objet : gestion et suivi des stagiaires.
+- Type : SPA React.
+- Backend : Forge Console, API REST + SQL.
+- Auth : email + password_hash, JWT.
+- Rôles : 10.
+- Routes personnel : 36 entrées, hors 404 et accès refusé.
+- Routes stagiaire : 22.
+- Tables : 36.
+- Vues : 2.
+- Permissions : côté client.
+- RLS : absente du schéma.
+- Pagination : absente.
+- Limite effective : 200 lignes par requête de liste.
+- ListAll : 4 000 lignes maximum.
+- Cache référentiels : 60 secondes.
+- QCM : corrigé côté client, pas de limite de tentatives.
+- Décision finale : manuelle.
+- Publication bulletin : manuelle.
+- Notes : pas de génération automatique depuis QCM ou TP.
+- Documents : JSON + window.print(), pas de PDF serveur.
+- Responsive : validé.
+- Build : OK, chunk d'environ 816 kB.
+
+17.3 Cartographie route -> tables
+
+/app
+notes, presences, improvement_plans, final_evaluations,
+stagiaires, seances, evaluations, modules.
+
+/app/stagiaires
+stagiaires.
+
+/app/stagiaires/:id
+notes, presences, competence_levels, observations, stage_objectives,
+improvement_plans, stage_journal, final_evaluations, bulletins, inscriptions,
+formations, promotions, evaluations, modules, seances, competences.
+
+/app/inscriptions
+inscriptions, stagiaires, formations, promotions.
+
+/app/reservations
+reservations, inscriptions, stagiaires, users, formations, promotions.
+
+/app/affectations
+affectations, stagiaires, formations, promotions, users.
+
+/app/formations
+formations.
+
+/app/modules
+modules, formations, users.
+
+/app/promotions
+promotions, formations.
+
+/app/seances
+seances, modules, promotions, formations, users.
+
+/app/presences
+presences, seances, modules, inscriptions, stagiaires.
+
+/app/evaluations
+evaluations, formations, modules, users.
+
+/app/notes
+notes, evaluations, stagiaires, inscriptions, modules.
+
+/app/qcm
+qcm_questions, qcm_attempts, evaluations, modules, stagiaires.
+
+/app/qcm/:evaluationId/passer
+qcm_questions, qcm_attempts, evaluations, stagiaires.
+
+/app/travaux
+travaux_pratiques, travaux_soumissions, modules, users, stagiaires.
+
+/app/competences
+competences, competence_levels, stagiaires, formations, modules.
+
+/app/implication
+implications, stagiaires, modules.
+
+/app/comportement
+comportements, stagiaires.
+
+/app/observations
+observations, stagiaires, modules, evaluations, seances.
+
+/app/progression
+notes, presences, competence_levels, implications, comportements,
+qcm_attempts, travaux_soumissions, stagiaires, evaluations, modules,
+competences.
+
+/app/plans
+improvement_plans, improvement_actions, stagiaires, users.
+
+/app/evaluations-intermediaires
+notes, presences, qcm_attempts, travaux_soumissions, competence_levels,
+implications, comportements, intermediate_evaluations, stagiaires.
+
+/app/journal
+stage_journal, stagiaires.
+
+/app/objectifs
+stage_objectives, stagiaires.
+
+/app/projet-final
+final_projects, stagiaires, users.
+
+/app/evaluation-finale
+notes, presences, qcm_attempts, travaux_soumissions, final_projects,
+implications, comportements, final_evaluations, stagiaires.
+
+/app/bulletins
+final_evaluations, notes, presences, bulletins, stagiaires, evaluations,
+modules.
+
+/app/documents
+notes, final_evaluations, documents, stagiaires, evaluations, modules.
+
+/app/rapports
+presences, notes, final_evaluations, stagiaires, formations, modules,
+promotions, seances, evaluations, inscriptions.
+
+/app/utilisateurs
+users, stagiaires.
+
+/app/audit
+audit_logs, users.
+
+/app/parametres
+settings, grading_rules.
+
+/app/archivage
+stagiaires, formations, promotions.
+
+/app/notifications
+notifications, users, stagiaires.
+
+/app/recherche
+cache de référence : stagiaires, formations, modules, promotions, evaluations,
+users.
+
+/app/mon-espace et sous-routes
+voir la section 10 et la cartographie des 22 routes.
+
+17.4 Invariants à ne pas contredire
+
+- Un stagiaire peut avoir plusieurs inscriptions.
+- Une inscription relie un stagiaire à une formation et éventuellement une
+  promotion.
+- Une promotion appartient à une formation.
+- Un module appartient à une formation.
+- Une séance appartient à un module.
+- Une note appartient à une évaluation et à un stagiaire.
+- Une évaluation finale appartient à un stagiaire.
+- Un bulletin peut référencer une évaluation finale.
+- Une réservation confirmée référence un stagiaire, une inscription et un
+  utilisateur.
+- Le rôle stagiaire utilise self_dashboard et les permissions self_*.
+- L'admin possède *.
+- L'accès à une route ne garantit pas un filtrage des données.
+- Une note n'est pas automatiquement créée par un QCM.
+- Une décision finale n'est pas automatiquement calculée.
+- Un bulletin n'est pas automatiquement créé par l'évaluation finale.
+- Un document n'est pas un PDF.
+
+17.5 Affirmations interdites
+
+Ne pas dire :
+- « Les permissions sont appliquées côté serveur. »
+- « La base applique une RLS. »
+- « Un QCM crée automatiquement une note. »
+- « La moyenne finale détermine automatiquement la décision. »
+- « Le bulletin est généré automatiquement après l'évaluation finale. »
+- « Les bulletins sont en PDF. »
+- « Les fichiers sont uploadés dans l'application. »
+- « Les mentions Excellent/Très bien sont calculées. »
+- « Les tentatives QCM sont limitées. »
+- « Les emails et SMS sont envoyés. »
+- « Les actions sont auditées automatiquement. »
+- « Les données sont paginées. »
+- « Les 500 lignes demandées sont chargées. »
+- « Le rôle formateur ne voit que ses stagiaires. »
+- « Un auditeur ne peut pas voir les notes dans le dossier stagiaire. »
+- « Le service administratif et les RH ne voient jamais les notes. »
+- « Un compte bloqué ne peut pas se connecter. »
+- « Le mot de passe peut être réinitialisé depuis l'application. »
+
+17.6 Réponses types
+
+Question : « Comment obtenir une note à partir d'un QCM ? »
+Réponse : « Le QCM crée une tentative corrigée dans qcm_attempts, avec score,
+percentage et passed. Il ne crée pas de note dans notes. Il faut saisir la note
+manuellement dans /app/notes, ou ajouter une règle de report. »
+
+Question : « Comment est calculée la moyenne finale ? »
+Réponse : « Elle est pondérée avec les coefficients par défaut modules 40, QCM
+10, TP 15, projet 20, implication 5, comportement 5, présence 5. Implication et
+comportement sur 5 sont multipliés par 4 ; le taux de présence est multiplié par
+0,2. Le total est divisé par la somme des coefficients. La décision reste
+manuelle. »
+
+Question : « Le stagiaire peut-il voir ses notes non publiées ? »
+Réponse : « Non. Les pages stagiaire Notes, Formation et Dashboard filtrent
+généralement sur le statut publiee. Les évaluations peuvent être listées, mais le
+résultat n'est affiché que si la note est publiée. »
+
+Question : « Comment réserver une place ? »
+Réponse : « Le candidat utilise /reservation. La disponibilité tient compte des
+inscriptions en attente, validées ou terminées et des réservations en attente.
+La demande est créée en attente avec une référence RES-ANNÉE-XXXXXX. La
+confirmation se fait dans /app/reservations et crée ou réutilise le stagiaire,
+l'inscription et le compte. »
+
+Question : « Quels rôles peuvent publier un bulletin ? »
+Réponse : « En pratique, les rôles ayant la permission bulletins : admin,
+direction, responsable_formation, responsable_pedagogique. La permission
+bulletin_publish existe mais n'est pas testée dans la page. »
+
+Question : « Pourquoi une liste s'arrête-t-elle à 200 ? »
+Réponse : « Le repository plafonne tout limit à 200 et les écrans n'ont pas de
+pagination. Les pages qui demandent 500 n'obtiennent donc que 200 lignes. »
+
+Question : « Un formateur peut-il voir tous les stagiaires ? »
+Réponse : « Oui, la permission stagiaires donne accès à la page et aucun filtre
+par formateur, module ou promotion n'est appliqué aux données. »
+
+Question : « Un auditeur ou les RH peuvent-ils voir les notes ? »
+Réponse : « Oui, indirectement. Ils n'ont pas les routes Notes ou Bulletins,
+mais la permission stagiaires ouvre le dossier détail et ses onglets Notes,
+Présences, Compétences et Suivi, sans contrôle supplémentaire. »
+
+Question : « Le statut bloqué empêche-t-il la connexion ? »
+Réponse : « Pas dans le code analysé. Le statut est normalisé, mais ni login ni
+restoreSession ni les guards ne le refusent explicitement. »
+
+Question : « Comment archiver un stagiaire ? »
+Réponse : « La page Archivage ne fait que restaurer. L'archivage s'effectue en
+modifiant le statut dans la page Stagiaires ou directement dans Forge. »
+
+Question : « Où sont les fichiers PDF ? »
+Réponse : « Il n'y a pas de PDF serveur. Les documents et bulletins sont des
+enregistrements JSON et des vues HTML imprimables via window.print(). »
+
+17.7 Index machine-lisible simplifié
+
+Les lignes suivantes sont volontairement structurées pour un agent ou un script
+simple. Elles ne constituent pas un schéma JSON complet.
+
+APP=StageBuild
+TYPE=SPA React
+BACKEND=Forge Console
+AUTH=email+password_hash+JWT
+STORAGE_TOKEN=localStorage
+ROLES=admin,direction,responsable_formation,responsable_pedagogique,formateur,maitre_stage,administration,stagiaire,rh,auditeur
+ROUTES_PERSONNEL=36
+ROUTES_STAGIAIRE=22
+TABLES=36
+RLS=absent
+PERMISSIONS_SIDE=client
+PAGINATION=absent
+LIST_LIMIT=200
+LIST_ALL_LIMIT=4000
+REFERENCE_CACHE_SECONDS=60
+FINAL_DECISION=manual
+BULLETIN_PUBLISH=manual
+QCM_ATTEMPT_LIMIT=none
+QCM_TO_NOTE=manual
+TP_TO_NOTE=manual
+DOCUMENT_FORMAT=JSON+print
+RESPONSIVE=validated
+BUILD=ok
+BUILD_CHUNK_KB=816
+
+17.8 Sources à citer
+
+Pour une règle de permission :
+- src/config/permissions.ts
+- src/router.tsx
+
+Pour un calcul :
+- src/utils/format.ts
+- src/pages/app/EvaluationFinalePage.tsx
+- src/pages/app/BulletinsPage.tsx
+- src/pages/app/ProgressionPage.tsx
+
+Pour la réservation :
+- src/services/reservation.service.ts
+
+Pour les données :
+- sql/forge_stagiaires.sql
+
+Pour les limites :
+- src/hooks/useForgeTable.ts
+- src/hooks/useScopedRows.ts
+- src/hooks/useReferenceData.ts
+- src/services/forge/repository.ts
+- src/services/data.service.ts
+
+Pour l'authentification :
+- src/services/auth.service.ts
+- src/services/forge/auth.ts
+- src/context/AuthContext.tsx
+- src/components/auth/ProtectedRoute.tsx
+- src/components/auth/PermissionRoute.tsx
+
+================================================================================
+18. ANNEXES : ROUTES, STATUTS, COMPTES, FICHIERS
+================================================================================
+
+18.1 Routes publiques
+
+/                       Accueil
+/reservation            Réservation publique
+/forge                  Diagnostic Forge
+/login                  Connexion
+*                       Page 404 publique
+
+18.2 Inventaire des routes du personnel
+
+/app                                         Tableau de bord
+/app/stagiaires                              Stagiaires
+/app/stagiaires/:id                          Détail stagiaire
+/app/inscriptions                            Inscriptions
+/app/reservations                            Réservations
+/app/affectations                            Affectations
+/app/formations                              Formations
+/app/modules                                 Modules
+/app/promotions                              Promotions
+/app/seances                                 Séances
+/app/presences                               Présences
+/app/evaluations                             Évaluations
+/app/notes                                   Notes
+/app/qcm                                     QCM
+/app/qcm/:evaluationId/passer                Passation QCM
+/app/travaux                                 Travaux pratiques
+/app/competences                             Compétences
+/app/implication                             Implication
+/app/comportement                            Comportement
+/app/observations                            Observations
+/app/progression                             Progression
+/app/plans                                   Plans d'amélioration
+/app/evaluations-intermediaires              Évaluations intermédiaires
+/app/journal                                 Journal de stage
+/app/objectifs                               Objectifs de stage
+/app/projet-final                            Projet final
+/app/evaluation-finale                       Évaluation finale
+/app/bulletins                               Bulletins
+/app/documents                               Documents
+/app/rapports                                Rapports et statistiques
+/app/utilisateurs                            Utilisateurs et rôles
+/app/audit                                   Journal d'audit
+/app/parametres                              Paramètres
+/app/archivage                               Archivage
+/app/notifications                           Notifications
+/app/recherche                               Recherche globale
+/app/acces-refuse                            Accès refusé
+
+Total : 36 routes métier, plus /app/acces-refuse qui est une page de repli.
+La route 404 du routeur n'est pas comptée.
+
+18.3 Inventaire des routes stagiaire
+
+/app/mon-espace                              Tableau de bord
+/app/mon-espace/profil                       Profil
+/app/mon-espace/formation                    Formation
+/app/mon-espace/notifications                Notifications
+/app/mon-espace/presences                    Présences
+/app/mon-espace/evaluations                  Évaluations
+/app/mon-espace/notes                        Notes
+/app/mon-espace/qcm                          QCM
+/app/mon-espace/travaux                      Travaux pratiques
+/app/mon-espace/competences                  Compétences
+/app/mon-espace/implication                  Implication
+/app/mon-espace/comportement                 Comportement
+/app/mon-espace/observations                 Observations
+/app/mon-espace/progression                  Progression
+/app/mon-espace/plans                        Plans d'amélioration
+/app/mon-espace/journal                      Journal de stage
+/app/mon-espace/objectifs                    Objectifs de stage
+/app/mon-espace/projet-final                 Projet final
+/app/mon-espace/bulletin                     Bulletin
+/app/mon-espace/documents                    Documents
+/app/mon-espace/historique                   Historique
+/app/mon-espace/parametres                   Paramètres
+
+18.4 Tableau central des statuts
+
+Stagiaire
+candidat, admis, actif, termine, archive
+
+Utilisateur
+active, inactive, blocked
+
+Formation
+active, inactive, archivee
+
+Module
+active, inactive
+
+Promotion
+planifiee, active, cloturee, archivee
+
+Inscription
+en_attente, validee, annulee, terminee
+
+Réservation
+en_attente, confirmee, annulee
+
+Séance
+planifiee, en_cours, terminee, annulee
+
+Présence
+present, absent, retard, absence_justifiee, absence_non_justifiee,
+sortie_autorisee
+
+Type d'évaluation
+interrogation, devoir, qcm, examen, travail_pratique, projet, presentation,
+evaluation_orale, evaluation_competence, evaluation_comportementale,
+evaluation_finale
+
+Statut d'évaluation
+brouillon, programmee, en_cours, terminee, corrigee, soumise, validee, publiee,
+archivee
+
+Statut de note
+saisie, soumise, validee, publiee
+
+Type de question QCM
+single, multiple, true_false, short_answer, matching
+
+Statut de tentative QCM
+en_cours, soumis, corrige
+
+Statut de TP
+brouillon, publie, cloture, archive
+
+Statut de soumission TP
+soumis, en_correction, corrige, valide, a_refaire
+
+Niveau de compétence
+non_acquis, a_renforcer, en_cours, acquis, maitrise
+
+Statut de plan
+cree, en_cours, evalue, atteint, non_atteint
+
+Statut d'action
+a_faire, en_cours, termine, annule
+
+Décision intermédiaire
+progression_normale, surveillance, plan_amelioration, entretien_obligatoire
+
+Statut d'objectif
+non_commence, en_cours, atteint, depasse, non_atteint
+
+Statut de journal
+soumis, valide, commente
+
+Statut de projet final
+en_cours, soutenu, valide, non_valide, archive
+
+Décision finale
+en_attente, valide, non_valide
+
+Statut de bulletin
+brouillon, valide, publie, archive
+
+Visibilité d'observation
+interne, publiee, stagiaire
+
+Type de notification
+info, evaluation, affectation, presence, echeance, resultat, plan, bulletin
+
+Canal de notification
+internal, email, sms, push
+
+Statut de notification
+unread, read
+
+Type de document
+fiche_inscription, fiche_stagiaire, carte_stagiaire, attestation_stage,
+certificat_formation, certificat_reussite, releve_notes, bulletin,
+rapport_evaluation, rapport_stage, fiche_evaluation_finale
+
+18.5 Comptes de démonstration
+
+admin@stagebuild.local
+direction@stagebuild.local
+resp.formation@stagebuild.local
+resp.pedagogique@stagebuild.local
+formateur.dev@stagebuild.local
+formateur.data@stagebuild.local
+maitre.stage@stagebuild.local
+administration@stagebuild.local
+stagiaire@stagebuild.local
+rh@stagebuild.local
+auditeur@stagebuild.local
+
+Mot de passe commun : Admin@123.
+À changer ou supprimer avant toute mise en production.
+
+18.6 Fichiers de référence
+
+Documentation :
+- docs/DOCUMENTATION_STAGEBUILD_COMPLETE.txt
+
+Configuration :
+- .env.example
+- .env.local (non versionné)
+- vite.config.ts
+- vercel.json
+- package.json
+- tsconfig.json
+
+Base :
+- sql/forge_stagiaires.sql
+- sql/add_reservations.sql
+- sql/forge_import.sql
+
+Données de démonstration :
+- scripts/seed-forge.mjs
+
+Routage et permissions :
+- src/router.tsx
+- src/config/permissions.ts
+- src/config/appNavigation.ts
+- src/context/AuthContext.tsx
+
+Services :
+- src/services/auth.service.ts
+- src/services/data.service.ts
+- src/services/reservation.service.ts
+- src/services/forge/*.ts
+
+Hooks :
+- src/hooks/useForgeTable.ts
+- src/hooks/useScopedRows.ts
+- src/hooks/useReferenceData.ts
+- src/hooks/useCrud.ts
+
+Composants structurants :
+- src/components/ui/EntityManager.tsx
+- src/components/ui/DataTable.tsx
+- src/components/layout/AppLayout.tsx
+
+Pages clés :
+- src/pages/app/EvaluationFinalePage.tsx
+- src/pages/app/BulletinsPage.tsx
+- src/pages/app/ProgressionPage.tsx
+- src/pages/app/RapportsPage.tsx
+- src/pages/app/ReservationsPage.tsx
+- src/pages/app/stagiaire/*.tsx
+
+18.7 État de validation connu
+
+Au 26 octobre 2026 :
+- typecheck OK ;
+- build OK ;
+- avertissement de chunk d'environ 816 kB ;
+- responsive vérifié sur les routes personnel et stagiaire ;
+- 390 px, 768 px, 1024 px, 1280 px, 1366 px vérifiés ;
+- 320 px et modales vérifiés ;
+- impression documents et bulletins vérifiée ;
+- erreurs console finales vides sur les audits responsive.
+
+18.8 Maintenance du document
+
+Lors d'une évolution :
+1. Mettre à jour la section du module concerné.
+2. Vérifier les routes dans src/router.tsx.
+3. Vérifier les permissions dans src/config/permissions.ts.
+4. Vérifier le schéma SQL et les types de domaine.
+5. Mettre à jour les calculs si une formule change.
+6. Mettre à jour la section 17 pour l'agent IA.
+7. Relancer npm run typecheck et npm run build.
+8. Tester les parcours critique : réservation, confirmation, présence, note,
+   évaluation finale, bulletin, document, espace stagiaire.
+9. Consigner la date de mise à jour et les écarts métier connus.
+
+FIN DU DOCUMENT
+
+
+

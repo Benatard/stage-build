@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FiCheck, FiSave } from 'react-icons/fi';
+import { FiCheck, FiDownload, FiPrinter, FiSave } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
@@ -12,6 +12,7 @@ import { dataService } from '@/services/data.service';
 import { PRESENCE_OPTIONS, optionLabel } from '@/config/options';
 import type { Presence, PresenceStatus } from '@/types/domain';
 import { confirmAction, notifyError, notifySuccess } from '@/utils/alerts';
+import { downloadCsv } from '@/utils/csv';
 import { formatDate, formatTime, fullName, percentage } from '@/utils/format';
 
 type Draft = {
@@ -19,6 +20,15 @@ type Draft = {
   note: string;
   id?: string;
 };
+
+function safeFilenamePart(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+}
 
 export default function PresencesPage() {
   const { data } = useReferenceData();
@@ -73,6 +83,58 @@ export default function PresencesPage() {
       rate: values.length ? percentage(present, values.length) : 0,
     };
   }, [drafts]);
+
+  const seanceModule = data.modules.find((item) => item.id === seance?.module_id);
+  const seancePromotion = data.promotions.find((item) => item.id === seance?.promotion_id);
+  const seanceFormateur = data.users.find((item) => item.id === seance?.formateur_id);
+  const seanceModuleName = seanceModule?.name ?? 'Séance';
+  const seanceTime =
+    [formatTime(seance?.start_time), formatTime(seance?.end_time)]
+      .filter((value) => value !== '—')
+      .join(' - ') || '—';
+
+  function handleExport() {
+    if (!seance) return;
+
+    const date = formatDate(seance.date);
+    const filename = `presences-${safeFilenamePart(seance.date)}-${safeFilenamePart(seanceModuleName)}.csv`;
+
+    downloadCsv(
+      filename,
+      [
+        'Séance',
+        'Date',
+        'Horaire',
+        'Module',
+        'Promotion',
+        'Matricule',
+        'Stagiaire',
+        'Statut',
+        'Note / justification',
+        'État',
+      ],
+      eligibleStagiaires.map((stagiaire) => {
+        const draft = drafts[stagiaire.id];
+        return [
+          seance.title ?? seanceModuleName,
+          date,
+          seanceTime,
+          seanceModuleName,
+          seancePromotion?.code ?? '—',
+          stagiaire.matricule,
+          fullName(stagiaire),
+          optionLabel(PRESENCE_OPTIONS, draft?.status),
+          draft?.note.trim() || '—',
+          draft?.id ? 'Enregistré' : 'À enregistrer',
+        ];
+      }),
+    );
+  }
+
+  function handlePrint() {
+    if (!seance) return;
+    window.print();
+  }
 
   function setAll(status: PresenceStatus) {
     setDrafts((current) => {
@@ -203,14 +265,32 @@ export default function PresencesPage() {
         title="Feuille de présences"
         description="Sélectionnez une séance, marquez les présences puis enregistrez la feuille complète."
         actions={
-          <Button
-            onClick={() => void handleSave()}
-            loading={saving}
-            disabled={!seanceId || eligibleStagiaires.length === 0}
-            icon={<FiSave className="h-4 w-4" />}
-          >
-            Enregistrer la feuille
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={!seance || eligibleStagiaires.length === 0}
+              icon={<FiDownload className="h-4 w-4" />}
+            >
+              Exporter CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePrint}
+              disabled={!seance || eligibleStagiaires.length === 0}
+              icon={<FiPrinter className="h-4 w-4" />}
+            >
+              Imprimer la fiche
+            </Button>
+            <Button
+              onClick={() => void handleSave()}
+              loading={saving}
+              disabled={!seanceId || eligibleStagiaires.length === 0}
+              icon={<FiSave className="h-4 w-4" />}
+            >
+              Enregistrer la feuille
+            </Button>
+          </div>
         }
       />
 
@@ -257,7 +337,7 @@ export default function PresencesPage() {
         </div>
       </div>
 
-      {seanceId && (
+      {seance && (
         <>
           <div className="mb-3 flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={() => setAll('present')}>
@@ -286,6 +366,115 @@ export default function PresencesPage() {
               : 'Aucune présence enregistrée pour cette séance.'}{' '}
             Statuts : {PRESENCE_OPTIONS.map((option) => optionLabel(PRESENCE_OPTIONS, option.value)).join(', ')}.
           </p>
+
+          <div className="mt-6">
+            <div className="mb-3">
+              <h2 className="text-sm font-bold text-black dark:text-white">Fiche de présence imprimable</h2>
+              <p className="mt-1 text-xs text-body dark:text-body-dark">
+                Le document reprend les statuts affichés ci-dessus. Imprimez-le pour signature.
+              </p>
+            </div>
+
+            <div
+              id="print-area"
+              className="border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-8"
+            >
+              <div className="flex flex-col gap-3 border-b-2 border-black pb-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xl font-extrabold tracking-tight">StageBuild</p>
+                  <p className="text-xs">Gestion et suivi des stagiaires</p>
+                  <p className="mt-1 text-xs">Plateforme pédagogique centralisée</p>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-base font-bold uppercase tracking-wide sm:text-lg">
+                    Fiche de présence
+                  </p>
+                  <p className="text-xs">Année académique {new Date().getFullYear()}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-2 break-words text-sm sm:grid-cols-2">
+                <p>
+                  <strong>Séance :</strong> {seance.title ?? seanceModuleName}
+                </p>
+                <p>
+                  <strong>Date :</strong> {formatDate(seance.date)}
+                </p>
+                <p>
+                  <strong>Horaire :</strong> {seanceTime}
+                </p>
+                <p>
+                  <strong>Module :</strong> {seanceModuleName}
+                </p>
+                <p>
+                  <strong>Promotion :</strong> {seancePromotion?.code ?? '—'}
+                </p>
+                <p>
+                  <strong>Formateur :</strong> {seanceFormateur ? fullName(seanceFormateur) : '—'}
+                </p>
+                <p>
+                  <strong>Salle :</strong> {seance.room ?? '—'}
+                </p>
+                <p>
+                  <strong>Effectif :</strong> {eligibleStagiaires.length}
+                </p>
+              </div>
+
+              <table className="mt-6 w-full break-words border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b-2 border-black text-left">
+                    <th className="py-2 pr-2">N°</th>
+                    <th className="py-2 pr-2">Matricule</th>
+                    <th className="py-2 pr-2">Stagiaire</th>
+                    <th className="py-2 pr-2">Statut</th>
+                    <th className="py-2 pr-2">Observation</th>
+                    <th className="py-2 text-center">Signature</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eligibleStagiaires.map((stagiaire, index) => {
+                    const draft = drafts[stagiaire.id];
+                    return (
+                      <tr
+                        key={stagiaire.id}
+                        className="break-inside-avoid border-b border-slate-300 align-top"
+                      >
+                        <td className="py-2 pr-2">{index + 1}</td>
+                        <td className="py-2 pr-2">{stagiaire.matricule}</td>
+                        <td className="py-2 pr-2 font-semibold">{fullName(stagiaire)}</td>
+                        <td className="py-2 pr-2">
+                          {optionLabel(PRESENCE_OPTIONS, draft?.status)}
+                        </td>
+                        <td className="py-2 pr-2">{draft?.note.trim() || '—'}</td>
+                        <td className="h-8 py-2" />
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <div className="mt-4 flex flex-wrap gap-4 text-xs">
+                <span>Effectif : {stats.total}</span>
+                <span>Présents : {stats.present}</span>
+                <span>Absents : {stats.absent}</span>
+                <span>Taux : {stats.rate}%</span>
+              </div>
+
+              <div className="mt-10 flex flex-col gap-6 text-xs sm:flex-row sm:justify-between">
+                <p>Fait le {formatDate(new Date().toISOString())}</p>
+                <div className="flex gap-12">
+                  <div className="text-center">
+                    <p>Le formateur</p>
+                    <p className="mt-10 border-t border-black pt-2">Signature</p>
+                  </div>
+                  <div className="text-center">
+                    <p>La Direction</p>
+                    <p className="mt-10 border-t border-black pt-2">Signature et cachet</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </>
       )}
     </div>
