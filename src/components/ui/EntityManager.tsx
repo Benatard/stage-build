@@ -63,6 +63,7 @@ type EntityManagerProps<T extends { id: string }> = {
   toolbar?: ReactNode;
   filterRow?: (row: T) => boolean;
   transform?: (values: Record<string, string | boolean>) => Record<string, unknown>;
+  onCreateOverride?: (values: Record<string, string | boolean>) => Promise<T | null>;
   onChanged?: () => void;
 };
 
@@ -130,6 +131,7 @@ export function EntityManager<T extends { id: string }>({
   toolbar,
   filterRow,
   transform,
+  onCreateOverride,
   onChanged,
 }: EntityManagerProps<T>) {
   const { rows, loading, error, reload } = useForgeTable<T>(table, { order, limit });
@@ -145,6 +147,7 @@ export function EntityManager<T extends { id: string }>({
   const [editing, setEditing] = useState<T | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [creatingOverride, setCreatingOverride] = useState(false);
 
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -187,9 +190,20 @@ export function EntityManager<T extends { id: string }>({
       : buildEntityPayload(fields, values);
 
     try {
-      const result = editing
-        ? await update<T>(editing.id, payload)
-        : await create<T>(payload);
+      let result: T | null;
+
+      if (editing) {
+        result = await update<T>(editing.id, payload);
+      } else if (onCreateOverride) {
+        setCreatingOverride(true);
+        try {
+          result = await onCreateOverride(values);
+        } finally {
+          setCreatingOverride(false);
+        }
+      } else {
+        result = await create<T>(payload);
+      }
 
       if (!result) {
         setFormError('Enregistrement impossible. Vérifiez les champs et réessayez.');
@@ -334,7 +348,7 @@ export function EntityManager<T extends { id: string }>({
             <Button
               type="submit"
               form="entity-form"
-              loading={saving}
+              loading={saving || creatingOverride}
               icon={<FiPlus className="h-4 w-4" />}
             >
               {editing ? 'Enregistrer' : 'Créer'}

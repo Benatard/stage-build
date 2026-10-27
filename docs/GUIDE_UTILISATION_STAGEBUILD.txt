@@ -678,6 +678,19 @@ Elle relie un stagiaire à une formation et, si besoin, à une promotion.
 Pour une inscription directe, choisir directement « Validée » si le dossier est
 complet.
 
+À la création de l'inscription, l'application prépare aussi le compte stagiaire :
+
+- si aucun compte n'existe pour l'email du stagiaire, un compte est créé avec un
+  mot de passe temporaire ;
+- si un compte stagiaire existe déjà pour cet email, il est réutilisé et aucun
+  nouveau mot de passe n'est affiché ;
+- une fenêtre affiche l'email de connexion, le mot de passe temporaire, le lien
+  de connexion et des boutons pour copier les identifiants ou ouvrir un email
+  prérempli dans la messagerie de l'administrateur.
+
+Le bouton « Envoyer par email » ouvre la messagerie locale avec le message
+prérempli. Vérifiez le destinataire avant l'envoi.
+
 8.3 Modifier une inscription
 
 1. Cliquer sur le crayon.
@@ -700,7 +713,8 @@ occupées pour les réservations.
   inscription pour le même stagiaire, la même formation et la même promotion.
 - La capacité de la promotion n'est pas contrôlée lors d'une inscription
   manuelle.
-- Une inscription ne crée pas de compte utilisateur.
+- L'email du stagiaire est obligatoire pour créer son compte.
+- Un dossier stagiaire archivé ne peut pas recevoir de nouveau compte.
 - Une inscription ne crée pas d'affectation.
 
 --------------------------------------------------------------------------------
