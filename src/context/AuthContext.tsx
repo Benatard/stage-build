@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { hasPermission } from '@/config/permissions';
 import { authService } from '@/services/auth.service';
+import { clearRememberedPasswords } from '@/services/password-vault';
 import type { AuthUser } from '@/types/domain';
 
 type AuthContextValue = {
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (!active) return;
+        clearRememberedPasswords();
         setUser(null);
         setStatus('anonymous');
       });
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     authService.logout();
+    clearRememberedPasswords();
     setUser(null);
     setError(null);
     setStatus('anonymous');
@@ -83,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(profile);
       setStatus(profile ? 'authenticated' : 'anonymous');
     } catch {
+      clearRememberedPasswords();
       setUser(null);
       setStatus('anonymous');
     }

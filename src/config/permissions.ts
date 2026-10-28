@@ -18,6 +18,28 @@ export const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => 
   label,
 }));
 
+export type WorkspaceInfo = {
+  label: string;
+  path: string;
+};
+
+export const ROLE_WORKSPACES: Record<Role, WorkspaceInfo> = {
+  admin: { label: 'Espace Administrateur système', path: '/app' },
+  direction: { label: 'Espace Direction', path: '/app' },
+  responsable_formation: { label: 'Espace Responsable de formation', path: '/app' },
+  responsable_pedagogique: { label: 'Espace Responsable pédagogique', path: '/app' },
+  formateur: { label: 'Espace Formateur', path: '/app' },
+  maitre_stage: { label: 'Espace Maître de stage', path: '/app' },
+  administration: { label: 'Espace Service administratif', path: '/app' },
+  stagiaire: { label: 'Mon espace stagiaire', path: '/app/mon-espace' },
+  rh: { label: 'Espace Ressources humaines', path: '/app' },
+  auditeur: { label: 'Espace Auditeur / Superviseur', path: '/app' },
+};
+
+export function workspaceForRole(role: Role): WorkspaceInfo {
+  return ROLE_WORKSPACES[role] ?? ROLE_WORKSPACES.stagiaire;
+}
+
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {
   admin: ['*'],
   direction: [

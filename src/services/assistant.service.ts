@@ -83,6 +83,24 @@ const SYNONYMS: Record<string, string[]> = {
   appel: ['presence', 'presences', 'feuille'],
   mot: ['motdepasse'],
   passe: ['motdepasse'],
+  planning: ['seance', 'seances', 'emploi', 'temps', 'calendrier'],
+  calendrier: ['seance', 'seances', 'planning', 'emploi', 'temps'],
+  liste: ['rechercher', 'recherche', 'filtrer', 'filtre'],
+  rechercher: ['recherche', 'liste', 'filtrer', 'filtre'],
+  pdf: ['exporter', 'export', 'imprimer', 'document'],
+  email: ['mail', 'courriel', 'notification', 'envoyer'],
+  mail: ['email', 'courriel', 'notification', 'envoyer'],
+  courriel: ['email', 'mail', 'notification', 'envoyer'],
+  telephone: ['tel', 'portable', 'contact', 'profil'],
+  photo: ['image', 'avatar', 'profil'],
+  profil: ['compte', 'information', 'telephone', 'photo', 'adresse'],
+  securite: ['motdepasse', 'connexion', 'acces', 'role', 'permission'],
+  sauvegarde: ['archivage', 'archive', 'restaurer', 'export'],
+  restaurer: ['archivage', 'archive', 'restauration'],
+  rapport: ['export', 'statistique', 'statistiques', 'csv', 'pdf'],
+  statistique: ['rapport', 'statistiques', 'export', 'tableau'],
+  bouton: ['menu', 'action', 'cliquer', 'onglet'],
+  menu: ['navigation', 'onglet', 'bouton'],
 };
 
 function normalize(value: string): string {
@@ -123,11 +141,14 @@ function tokenize(value: string): string[] {
 const SYNONYM_TOKENS = new Map<string, Set<string>>();
 
 Object.entries(SYNONYMS).forEach(([key, aliases]) => {
-  const normalizedKey = stem(normalize(key));
-  const tokens = SYNONYM_TOKENS.get(normalizedKey) ?? new Set<string>();
-  tokens.add(normalizedKey);
+  const tokens = new Set<string>([stem(normalize(key))]);
   aliases.forEach((alias) => tokenize(alias).forEach((token) => tokens.add(token)));
-  SYNONYM_TOKENS.set(normalizedKey, tokens);
+
+  tokens.forEach((token) => {
+    const cluster = SYNONYM_TOKENS.get(token) ?? new Set<string>();
+    tokens.forEach((value) => cluster.add(value));
+    SYNONYM_TOKENS.set(token, cluster);
+  });
 });
 
 function expandQueryTokens(value: string): string[] {
@@ -141,10 +162,41 @@ function expandQueryTokens(value: string): string[] {
   return Array.from(expanded);
 }
 
+function editDistance(left: string, right: string): number {
+  if (left === right) return 0;
+  if (Math.abs(left.length - right.length) > 2) return 3;
+
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let row = 1; row <= left.length; row += 1) {
+    const current = [row];
+
+    for (let col = 1; col <= right.length; col += 1) {
+      const cost = left[row - 1] === right[col - 1] ? 0 : 1;
+      current[col] = Math.min(
+        previous[col] + 1,
+        current[col - 1] + 1,
+        previous[col - 1] + cost,
+      );
+    }
+
+    previous = current;
+  }
+
+  return previous[right.length];
+}
+
 function tokensMatch(left: string, right: string): boolean {
   if (left === right) return true;
-  if (left.length < 5 || right.length < 5) return false;
-  return left.startsWith(right) || right.startsWith(left);
+
+  const shortest = Math.min(left.length, right.length);
+  if (shortest < 5) return false;
+  if (left.startsWith(right) || right.startsWith(left)) return true;
+
+  if (shortest < 6 || Math.abs(left.length - right.length) > 2) return false;
+  if (left.slice(0, 2) !== right.slice(0, 2)) return false;
+
+  return editDistance(left, right) <= (shortest >= 9 ? 2 : 1);
 }
 
 function cleanSubheading(value?: string): string | undefined {
@@ -355,6 +407,7 @@ function matchScore(question: string, role: Role | undefined, previousSection?: 
   const queryTokens = expandQueryTokens(question);
   const normalizedQuestion = normalize(question).trim();
   const sectionMatch = normalizedQuestion.match(/\bsection\s+(\d+)\b/);
+  const pathMatch = normalizedQuestion.match(/\/app\/[a-z0-9/_-]+/);
 
   if (queryTokens.length === 0) return [];
 
@@ -382,6 +435,18 @@ function matchScore(question: string, role: Role | undefined, previousSection?: 
 
       if (sectionMatch && block.section === Number(sectionMatch[1])) {
         score += 24;
+      }
+
+      if (pathMatch && block.path) {
+        const blockPath = block.path.toLowerCase();
+        const queryPath = pathMatch[0].replace(/\/+$/, '');
+        if (
+          blockPath === queryPath ||
+          blockPath.startsWith(`${queryPath}/`) ||
+          queryPath.startsWith(`${blockPath}/`)
+        ) {
+          score += 20;
+        }
       }
 
       if (score === 0) return { block, score: 0 };
@@ -453,6 +518,43 @@ function fallbackReply(role?: Role): AssistantReply {
   };
 }
 
+function buildLead(question: string): string {
+  const normalized = normalize(question);
+
+  if (
+    /\b(erreur|probleme|panne|impossible|bloque|echec|bug|fonctionne pas|marche pas)\b/.test(
+      normalized,
+    )
+  ) {
+    return 'Voici les points à vérifier et la procédure de référence.\n\n';
+  }
+
+  if (
+    /^(ou|a quel endroit)\b/.test(normalized) ||
+    /\bou (se trouve|trouver|est)\b/.test(normalized)
+  ) {
+    return 'Voici où trouver cette fonction dans l’application.\n\n';
+  }
+
+  if (/\b(comment|procedure|etapes|etape|faire)\b/.test(normalized)) {
+    return 'Voici la procédure à suivre.\n\n';
+  }
+
+  if (/^pourquoi\b/.test(normalized)) {
+    return 'Voici l’explication et les règles associées.\n\n';
+  }
+
+  if (/^quand\b/.test(normalized)) {
+    return 'Voici quand et dans quel cas utiliser cette fonction.\n\n';
+  }
+
+  if (/\b(qui|role|permission|droit|acces)\b/.test(normalized)) {
+    return 'Voici les règles et le rôle concernés.\n\n';
+  }
+
+  return '';
+}
+
 export function askAssistant(
   question: string,
   options: { role?: Role; previousSection?: number } = {},
@@ -506,9 +608,10 @@ export function askAssistant(
     topResults[1] && topResults[1].block.id !== top.block.id
       ? `\n\nVoir aussi : ${cleanSubheading(topResults[1].block.subheading) ?? topResults[1].block.sectionTitle}.`
       : '';
+  const lead = buildLead(trimmed);
 
   return {
-    answer: `${confidenceNote}${heading}\n\n${buildExcerpt(top.block.content)}${related}`,
+    answer: `${heading}\n\n${confidenceNote}${lead}${buildExcerpt(top.block.content)}${related}`,
     sources: topResults.map((result) => sourceFromBlock(result.block)),
     suggestions: relatedSuggestions(topResults, options.role),
   };

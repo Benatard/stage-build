@@ -13,6 +13,7 @@ import {
   updateStagiairePassword,
   type StagiaireAccount,
 } from '@/services/inscription.service';
+import { getRememberedPassword, rememberPassword } from '@/services/password-vault';
 import type { Inscription, Stagiaire, User } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/alerts';
 import { formatDate, fullName, getErrorMessage } from '@/utils/format';
@@ -48,8 +49,6 @@ type CredentialsMessageInput = {
   existingAccount?: boolean;
   loginUrl: string;
 };
-
-const recentPasswords = new Map<string, string>();
 
 function buildCredentialsMessage({
   stagiaire,
@@ -113,7 +112,7 @@ export default function InscriptionsPage() {
       account,
       formation,
       promotion,
-      temporaryPassword: recentPasswords.get(account.id),
+      temporaryPassword: getRememberedPassword(user?.id, account.id),
     });
     setPasswordDraft('');
     setPasswordConfirm('');
@@ -183,10 +182,13 @@ export default function InscriptionsPage() {
 
     try {
       const generated = generateTemporaryPassword();
-      await updateStagiairePassword(accountView.account.id, generated);
-      recentPasswords.set(accountView.account.id, generated);
+      const targetUserId = accountView.account.id;
+      await updateStagiairePassword(targetUserId, generated);
+      rememberPassword(user?.id, targetUserId, generated);
       setAccountView((current) =>
-        current ? { ...current, temporaryPassword: generated } : current,
+        current && current.account.id === targetUserId
+          ? { ...current, temporaryPassword: generated }
+          : current,
       );
       setPasswordDraft(generated);
       setPasswordConfirm(generated);
@@ -219,10 +221,13 @@ export default function InscriptionsPage() {
     setPasswordError(null);
 
     try {
-      await updateStagiairePassword(accountView.account.id, password);
-      recentPasswords.set(accountView.account.id, password);
+      const targetUserId = accountView.account.id;
+      await updateStagiairePassword(targetUserId, password);
+      rememberPassword(user?.id, targetUserId, password);
       setAccountView((current) =>
-        current ? { ...current, temporaryPassword: password } : current,
+        current && current.account.id === targetUserId
+          ? { ...current, temporaryPassword: password }
+          : current,
       );
       setPasswordFormOpen(false);
       setPasswordDraft('');
@@ -266,7 +271,7 @@ export default function InscriptionsPage() {
     });
 
     if (result.account.temporaryPassword) {
-      recentPasswords.set(result.account.userId, result.account.temporaryPassword);
+      rememberPassword(user?.id, result.account.userId, result.account.temporaryPassword);
     }
 
     setCredentials({
@@ -581,6 +586,8 @@ export default function InscriptionsPage() {
                       size="sm"
                       onClick={() => {
                         setPasswordFormOpen(false);
+                        setPasswordDraft('');
+                        setPasswordConfirm('');
                         setPasswordError(null);
                       }}
                     >

@@ -49,6 +49,7 @@ function welcomeMessage(initialRole?: Parameters<typeof assistantWelcome>[0]): C
 }
 
 function MessageBody({ text }: { text: string }) {
+  if (!text) return null;
   const [headline, ...rest] = text.split('\n');
   const body = rest.join('\n').trim();
 
@@ -57,6 +58,25 @@ function MessageBody({ text }: { text: string }) {
       <p className="font-semibold">{headline}</p>
       {body && <p className="mt-2 whitespace-pre-wrap leading-relaxed">{body}</p>}
     </>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="flex items-center gap-1" aria-hidden="true">
+        {[0, 1, 2].map((index) => (
+          <span
+            key={index}
+            className="assistant-dot h-2 w-2 rounded-full bg-primary"
+            style={{ animationDelay: `${index * 0.15}s` }}
+          />
+        ))}
+      </span>
+      <span className="text-xs font-medium text-body dark:text-body-dark">
+        Analyse du guide…
+      </span>
+    </div>
   );
 }
 
@@ -89,33 +109,45 @@ export default function AssistantPage() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>(() => [welcomeMessage(user?.role)]);
   const [input, setInput] = useState('');
+  const [thinking, setThinking] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(0);
+  const thinkingRef = useRef(false);
+  const replyTimeout = useRef<number | null>(null);
   const guideInfo = useMemo(() => assistantGuideInfo(), []);
 
   useEffect(() => {
     const container = messagesRef.current;
     if (container) container.scrollTop = container.scrollHeight;
-  }, [messages]);
+  }, [messages, thinking]);
+
+  useEffect(
+    () => () => {
+      if (replyTimeout.current !== null) window.clearTimeout(replyTimeout.current);
+    },
+    [],
+  );
 
   function createId(prefix: string): string {
     nextId.current += 1;
     return `${prefix}-${nextId.current}`;
   }
 
+  function clearReplyTimeout() {
+    if (replyTimeout.current !== null) {
+      window.clearTimeout(replyTimeout.current);
+      replyTimeout.current = null;
+    }
+  }
+
   function handleAsk(question: string) {
     const trimmed = question.trim();
-    if (!trimmed) return;
+    if (!trimmed || thinkingRef.current) return;
 
     const previousSection = [...messages]
       .reverse()
       .find((message) => message.role === 'assistant' && message.sources?.length)
       ?.sources?.[0]?.section;
-
-    const reply = askAssistant(trimmed, {
-      role: user?.role,
-      previousSection,
-    });
 
     const userMessage: ChatMessage = {
       id: createId('user'),
@@ -123,17 +155,43 @@ export default function AssistantPage() {
       text: trimmed,
       time: clock(),
     };
-    const assistantMessage: ChatMessage = {
-      id: createId('assistant'),
-      role: 'assistant',
-      text: reply.answer,
-      time: clock(),
-      sources: reply.sources,
-      suggestions: reply.suggestions,
-    };
 
-    setMessages((current) => [...current, userMessage, assistantMessage]);
+    setMessages((current) => [...current, userMessage]);
     setInput('');
+    setThinking(true);
+    thinkingRef.current = true;
+
+    clearReplyTimeout();
+
+    const startedAt = performance.now();
+
+    replyTimeout.current = window.setTimeout(() => {
+      const reply = askAssistant(trimmed, {
+        role: user?.role,
+        previousSection,
+      });
+      const elapsed = performance.now() - startedAt;
+      const reflection = Math.min(
+        1800,
+        Math.max(800, 650 + reply.answer.length * 1.2 + Math.random() * 350),
+      );
+
+      replyTimeout.current = window.setTimeout(() => {
+        const assistantMessage: ChatMessage = {
+          id: createId('assistant'),
+          role: 'assistant',
+          text: reply.answer,
+          time: clock(),
+          sources: reply.sources,
+          suggestions: reply.suggestions,
+        };
+
+        setMessages((current) => [...current, assistantMessage]);
+        setThinking(false);
+        thinkingRef.current = false;
+        replyTimeout.current = null;
+      }, Math.max(0, reflection - elapsed));
+    }, 40);
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -149,6 +207,9 @@ export default function AssistantPage() {
   }
 
   function resetConversation() {
+    clearReplyTimeout();
+    thinkingRef.current = false;
+    setThinking(false);
     setMessages([welcomeMessage(user?.role)]);
     setInput('');
   }
@@ -174,17 +235,33 @@ export default function AssistantPage() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_310px]">
         <div className="card-root flex min-h-[560px] flex-col border border-stroke dark:border-white/10">
           <div className="flex items-start gap-3 border-b border-stroke px-4 py-4 dark:border-white/10 sm:px-5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
-              <FiCpu className="h-5 w-5" />
+            <span
+              className={
+                thinking
+                  ? 'assistant-avatar-thinking flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary'
+                  : 'flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary'
+              }
+            >
+              <FiCpu className={thinking ? 'h-5 w-5 animate-pulse' : 'h-5 w-5'} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-black dark:text-white">Assistant du guide</p>
               <p className="mt-0.5 text-xs text-body dark:text-body-dark">
-                {user ? `${fullName(user)} · ${ROLE_LABELS[user.role]}` : 'Utilisateur StageBuild'}
+                {thinking
+                  ? 'Analyse de votre question…'
+                  : user
+                    ? `${fullName(user)} · ${ROLE_LABELS[user.role]}`
+                    : 'Utilisateur StageBuild'}
               </p>
             </div>
-            <span className="hidden border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 sm:block">
-              Disponible
+            <span
+              className={
+                thinking
+                  ? 'hidden border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary sm:block'
+                  : 'hidden border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 sm:block'
+              }
+            >
+              {thinking ? 'Réflexion' : 'Disponible'}
             </span>
           </div>
 
@@ -192,6 +269,8 @@ export default function AssistantPage() {
             ref={messagesRef}
             className="min-h-[360px] flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-5"
             style={{ maxHeight: 'min(58vh, 640px)' }}
+            aria-live="polite"
+            aria-busy={thinking}
           >
             {messages.map((message, index) => {
               const isAssistant = message.role === 'assistant';
@@ -200,7 +279,11 @@ export default function AssistantPage() {
               return (
                 <div
                   key={message.id}
-                  className={isAssistant ? 'flex gap-3' : 'flex flex-row-reverse gap-3'}
+                  className={
+                    isAssistant
+                      ? 'assistant-message-in flex gap-3'
+                      : 'assistant-message-in flex flex-row-reverse gap-3'
+                  }
                 >
                   <span
                     className={
@@ -261,6 +344,19 @@ export default function AssistantPage() {
                 </div>
               );
             })}
+
+            {thinking && (
+              <div className="assistant-message-in flex gap-3" aria-label="L’assistant réfléchit">
+                <span className="assistant-avatar-thinking flex h-8 w-8 shrink-0 items-center justify-center bg-primary/10 text-primary">
+                  <FiCpu className="h-4 w-4 animate-pulse" />
+                </span>
+                <div className="min-w-0 max-w-[94%]">
+                  <div className="border border-stroke bg-gray2/70 px-4 py-3 text-sm text-black dark:border-white/10 dark:bg-white/5 dark:text-white">
+                    <ThinkingDots />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <form
@@ -280,15 +376,16 @@ export default function AssistantPage() {
               <Button
                 type="submit"
                 disabled={!input.trim()}
+                loading={thinking}
                 icon={<FiSend className="h-4 w-4" />}
                 className="shrink-0"
               >
-                Envoyer
+                {thinking ? 'Réflexion...' : 'Envoyer'}
               </Button>
             </div>
             <p className="mt-2 text-[10px] text-body dark:text-body-dark">
-              Entrée pour envoyer, Maj+Entrée pour aller à la ligne. Réponses indicatives basées sur
-              le guide.
+              Entrée pour envoyer, Maj+Entrée pour aller à la ligne. L’assistant analyse le guide
+              avant de répondre.
             </p>
           </form>
         </div>
