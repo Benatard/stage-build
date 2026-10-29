@@ -40,6 +40,18 @@ type ScoredBlock = {
   score: number;
 };
 
+type SocialIntent =
+  | 'greeting'
+  | 'thanks'
+  | 'positive'
+  | 'acknowledgement'
+  | 'farewell'
+  | 'wellbeing'
+  | 'apology'
+  | 'distress'
+  | 'identity'
+  | 'help';
+
 const STOP_WORDS = new Set([
   'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'd', 'l', 'a', 'au', 'aux',
   'et', 'ou', 'en', 'dans', 'pour', 'par', 'sur', 'avec', 'sans', 'ce', 'cette',
@@ -48,7 +60,11 @@ const STOP_WORDS = new Set([
   'quand', 'quel', 'quelle', 'quels', 'quelles', 'est', 'sont', 'etre', 'avoir',
   'fait', 'faire', 'faut', 'ne', 'pas', 'plus', 'que', 'qui', 'quoi', 'dont',
   'si', 'comme', 'application', 'stagebuild', 'page', 'guide', 'systeme', 'svp',
-  'stp', 'merci', 'bonjour', 'salut', 'bonsoir', 'hello',
+  'stp', 'merci', 'bonjour', 'salut', 'bonsoir', 'hello', 'coucou', 'hey',
+  'bjr', 'slt', 'bsr', 'cc', 'mrc', 'ouais', 'yep', 'voila',
+  'cool', 'super', 'genial', 'genialissime', 'parfait', 'nickel', 'top', 'bravo',
+  'excellent', 'impeccable', 'formidable', 'tres', 'bien', 'ok', 'okay', 'daccord',
+  'pardon', 'desole', 'desolee', 'excuse', 'excuses',
 ]);
 
 const SYNONYMS: Record<string, string[]> = {
@@ -109,6 +125,14 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[’']/g, ' ');
+}
+
+function socialKey(value: string): string {
+  return normalize(value)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/(.)\1{2,}/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function stem(word: string): string {
@@ -481,15 +505,342 @@ function relatedSuggestions(results: ScoredBlock[], role?: Role): string[] {
   return Array.from(suggestions).slice(0, 4);
 }
 
-function greetingReply(role?: Role): AssistantReply {
+const SOCIAL_FILLERS = new Set([
+  'a', 'au', 'aux', 'avec', 'avoir', 'ai', 'as', 'avons', 'avez', 'ont', 'etre',
+  'beaucoup', 'c', 'ca', 'ce', 'cela', 'ceci', 'cet', 'cette', 'ces', 'comment',
+  'd', 'dans', 'de', 'des', 'dire', 'du', 'elle', 'en', 'es', 'est', 'et', 'etes',
+  'eux', 'fin', 'franchement', 'honnetement', 'il', 'j', 'je', 'juste', 'l', 'la',
+  'le', 'les', 'leur', 'leurs', 'lui', 'm', 'ma', 'mais', 'me', 'mes', 'moi',
+  'mon', 'n', 'ne', 'nos', 'notre', 'nous', 'on', 'ou', 'par', 'pas', 'plus',
+  'pour', 'pourquoi', 'qu', 'que', 'qui', 'quoi', 's', 'se', 'serai', 'serais',
+  'serait', 'simplement', 'sincerement', 'sommes', 'sont', 'suis', 'sur', 't',
+  'ta', 'te', 'tes', 'toi', 'ton', 'tous', 'tout', 'toute', 'toutes', 'tres',
+  'trop', 'tu', 'un', 'une', 'votre', 'vos', 'vraiment', 'vous', 'y', 'peux',
+  'peut', 'pouvez', 'puis', 'veux', 'veut', 'voulez', 'voudrais', 'aimerais',
+  'souhaite', 'souhaitez', 'trouve', 'trouves', 'trouvez', 'pense', 'penses',
+  'pensez', 'crois', 'croit', 'croyez', 'application', 'stagebuild', 'page',
+  'guide', 'systeme', 'app', 'logiciel', 'reponse', 'reponses', 'retour',
+  'information', 'informations', 'explication', 'explications', 'temps',
+  'patience', 'avance', 'repondu', 'idee', 'idees', 'monde', 'mea', 'tellement',
+]);
+
+const SOCIAL_WORD_INTENTS: Record<string, SocialIntent> = {
+  bonjour: 'greeting',
+  salut: 'greeting',
+  bonsoir: 'greeting',
+  hello: 'greeting',
+  coucou: 'greeting',
+  hey: 'greeting',
+  salutations: 'greeting',
+  bjr: 'greeting',
+  slt: 'greeting',
+  bsr: 'greeting',
+  cc: 'greeting',
+  merci: 'thanks',
+  mercis: 'thanks',
+  thanks: 'thanks',
+  remercie: 'thanks',
+  infiniment: 'thanks',
+  encore: 'thanks',
+  mrc: 'thanks',
+  cool: 'positive',
+  super: 'positive',
+  genial: 'positive',
+  genialissime: 'positive',
+  parfait: 'positive',
+  nickel: 'positive',
+  top: 'positive',
+  bravo: 'positive',
+  excellent: 'positive',
+  impeccable: 'positive',
+  formidable: 'positive',
+  bon: 'positive',
+  bonne: 'positive',
+  content: 'positive',
+  contente: 'positive',
+  satisfait: 'positive',
+  satisfaite: 'positive',
+  gentil: 'positive',
+  gentille: 'positive',
+  gentils: 'positive',
+  gentilles: 'positive',
+  plait: 'positive',
+  plaisent: 'positive',
+  fallait: 'positive',
+  joue: 'positive',
+  ok: 'acknowledgement',
+  okay: 'acknowledgement',
+  daccord: 'acknowledgement',
+  accord: 'acknowledgement',
+  entendu: 'acknowledgement',
+  compris: 'acknowledgement',
+  recu: 'acknowledgement',
+  oui: 'acknowledgement',
+  ouais: 'acknowledgement',
+  yep: 'acknowledgement',
+  voila: 'acknowledgement',
+  exact: 'acknowledgement',
+  effectivement: 'acknowledgement',
+  bien: 'acknowledgement',
+  revoir: 'farewell',
+  bientot: 'farewell',
+  journee: 'farewell',
+  soiree: 'farewell',
+  nuit: 'farewell',
+  week: 'farewell',
+  end: 'farewell',
+  bye: 'farewell',
+  ciao: 'farewell',
+  prochaine: 'farewell',
+  continuation: 'farewell',
+  soin: 'farewell',
+  forme: 'wellbeing',
+  roule: 'wellbeing',
+  gaze: 'wellbeing',
+  pardon: 'apology',
+  desole: 'apology',
+  desolee: 'apology',
+  excuse: 'apology',
+  excusez: 'apology',
+  excuses: 'apology',
+  culpa: 'apology',
+  bloque: 'distress',
+  bloquee: 'distress',
+  coince: 'distress',
+  coincee: 'distress',
+  perdu: 'distress',
+  perdue: 'distress',
+  galere: 'distress',
+  bug: 'distress',
+  erreur: 'distress',
+  probleme: 'distress',
+  panne: 'distress',
+  secours: 'distress',
+  comprends: 'distress',
+  comprend: 'distress',
+  arrive: 'distress',
+  nul: 'distress',
+  bof: 'distress',
+  robot: 'identity',
+  ia: 'identity',
+  humain: 'identity',
+  humaine: 'identity',
+  intelligence: 'identity',
+  artificielle: 'identity',
+  aide: 'help',
+  aider: 'help',
+  aidez: 'help',
+  maider: 'help',
+  besoin: 'help',
+};
+
+const SOCIAL_PRIORITY: readonly SocialIntent[] = [
+  'distress',
+  'apology',
+  'identity',
+  'thanks',
+  'help',
+  'wellbeing',
+  'farewell',
+  'positive',
+  'acknowledgement',
+  'greeting',
+];
+
+const SOCIAL_PATTERNS: Array<{ intent: SocialIntent; pattern: RegExp }> = [
+  {
+    intent: 'greeting',
+    pattern:
+      /^(bonjour|salut|bonsoir|hello|coucou|hey|bonjour tout le monde|salut tout le monde|bonjour a tous|salut a tous|salutations)$/,
+  },
+  {
+    intent: 'thanks',
+    pattern:
+      /^(merci|merci beaucoup|merci infiniment|merci encore|encore merci|merci pour tout|merci pour votre aide|merci pour ton aide|mille mercis|merci a toi|merci a vous|merci a tous|thanks|thank you|ok merci|d accord merci|super merci|parfait merci|nickel merci|cool merci|genial merci|top merci)$/,
+  },
+  {
+    intent: 'positive',
+    pattern:
+      /^(cool|super|genial|genialissime|parfait|nickel|nickel chrome|top|bravo|excellent|impeccable|formidable|tres bien|bien joue|ca marche|ca a marche|trop bien|pas mal|pas mal du tout|c est cool|c est super|c est bon|c est nickel|c est parfait|c est top|c est genial|c est gentil|c est pas mal|tu es gentil|vous etes gentils|je suis content|je suis contente|ca me plait|c est ce qu il me fallait)$/,
+  },
+  {
+    intent: 'acknowledgement',
+    pattern:
+      /^(ok|okay|d accord|daccord|entendu|compris|compris merci|bien recu|recu|c est note|oui|exact|effectivement|bien)$/,
+  },
+  {
+    intent: 'farewell',
+    pattern:
+      /^(au revoir|a bientot|a plus|a plus tard|a demain|a tout a l heure|bonne journee|bonne soiree|bonne nuit|bon week end|bonne fin de journee|bonne journee a vous|bonne soiree a vous|bye|ciao|a la prochaine|bonne continuation|prends soin de toi|prenez soin de vous|portez vous bien)$/,
+  },
+  {
+    intent: 'wellbeing',
+    pattern:
+      /^(ca va|ca va bien|ca va toi|ca roule|ca gaze|je vais bien|comment ca va|comment vas tu|comment va tu|comment tu vas|tu vas bien|vous allez bien|comment allez vous|la forme|comment te sens tu|et toi|et vous|quoi de neuf)$/,
+  },
+  {
+    intent: 'apology',
+    pattern:
+      /^(pardon|desole|desolee|je suis desole|je suis desolee|excuse moi|excusez moi|toutes mes excuses|mea culpa)$/,
+  },
+  {
+    intent: 'distress',
+    pattern:
+      /^(je suis bloque|je suis bloquee|je n y arrive pas|je n arrive pas|j y arrive pas|j arrive pas|ca ne marche pas|ca marche pas|ca ne marche plus|ca ne fonctionne pas|ca bloque|ca bug|au secours|help|je ne comprends pas|je comprends pas|je ne comprends rien|je ne sais pas|je suis perdu|je suis perdue|je suis coince|je suis coincee|je galere|rien ne marche|bug|erreur|probleme|panne|c est nul|pas terrible|bof)$/,
+  },
+  {
+    intent: 'identity',
+    pattern:
+      /^(qui es tu|tu es qui|t es qui|tu es un robot|t es un robot|tu es une ia|t es une ia|tu es une intelligence artificielle|es tu humain|tu es humain|t es humain|es tu une ia)$/,
+  },
+  {
+    intent: 'help',
+    pattern:
+      /^(tu peux m aider|pouvez vous m aider|tu peux maider|aidez moi|aide moi|j ai besoin d aide|besoin d aide|un coup de main|besoin d un coup de main|peux tu m aider)$/,
+  },
+];
+
+function detectSocialIntent(value: string): SocialIntent | null {
+  const key = socialKey(value);
+  const direct = SOCIAL_PATTERNS.find((entry) => entry.pattern.test(key));
+  if (direct) return direct.intent;
+
+  const meaningful = key.split(' ').filter((word) => word && !SOCIAL_FILLERS.has(word));
+  if (meaningful.length === 0 || meaningful.length > 4) return null;
+
+  const intents = new Set<SocialIntent>();
+
+  for (const word of meaningful) {
+    const intent = SOCIAL_WORD_INTENTS[word];
+    if (!intent) return null;
+    intents.add(intent);
+  }
+
+  return SOCIAL_PRIORITY.find((intent) => intents.has(intent)) ?? null;
+}
+
+function pick<T>(values: readonly T[]): T {
+  return values[Math.floor(Math.random() * values.length)];
+}
+
+function socialReply(intent: SocialIntent, role?: Role): AssistantReply {
+  const suggestions = roleSuggestions(role);
+
+  if (intent === 'greeting') {
+    return {
+      answer: pick([
+        'Bonjour !\n\nRavi de vous retrouver sur StageBuild. Que puis-je faire pour vous aujourd’hui ?',
+        `Bonjour !\n\nJe suis l’assistant StageBuild. Je peux vous guider dans ${roleLabel(role)}. Posez-moi votre question.`,
+        'Bonjour !\n\nComment puis-je vous aider aujourd’hui ?',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'thanks') {
+    return {
+      answer: pick([
+        'Avec plaisir !\n\nContent que cela vous ait été utile. N’hésitez pas si vous avez une autre question.',
+        'Je vous en prie.\n\nC’est toujours un plaisir de vous aider. Je reste disponible si besoin.',
+        'Avec plaisir !\n\nSi vous avez besoin d’autre chose, je suis là.',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'positive') {
+    return {
+      answer: pick([
+        'Content de vous servir !\n\nMerci pour votre retour. Si vous voulez, je peux aussi vous guider sur une autre page ou une autre procédure.',
+        'Merci, ça me fait plaisir !\n\nQue puis-je faire pour vous ensuite ?',
+        'Super !\n\nJe suis content que cela vous aide. Une autre question ?',
+        'Ravi que cela vous convienne !\n\nOn continue ?',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'acknowledgement') {
+    return {
+      answer: pick([
+        'Parfait, c’est noté.\n\nSi vous avez besoin d’autre chose, je reste disponible.',
+        'Très bien.\n\nN’hésitez pas si une autre question vous vient.',
+        'Entendu !\n\nJe suis là si besoin.',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'farewell') {
+    return {
+      answer: pick([
+        'À bientôt !\n\nBonne continuation sur StageBuild. N’hésitez pas à revenir si vous avez besoin d’aide.',
+        'Au revoir !\n\nJe reste disponible pour vos prochaines questions.',
+        'Bonne journée !\n\nÀ très bientôt sur StageBuild.',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'wellbeing') {
+    return {
+      answer: pick([
+        'Je vais très bien, merci !\n\nC’est gentil de demander. Je suis prêt à vous aider sur StageBuild. Que puis-je faire pour vous ?',
+        'Tout va bien, merci !\n\nToujours prêt à vous guider. Comment puis-je vous aider aujourd’hui ?',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'apology') {
+    return {
+      answer: pick([
+        'Pas de souci !\n\nCela arrive à tout le monde. Dites-moi ce que vous cherchez et je vais vous aider.',
+        'Aucun problème !\n\nOn reprend quand vous voulez. Quelle est votre question ?',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'distress') {
+    return {
+      answer: pick([
+        'Je comprends.\n\nPour vous aider efficacement, décrivez-moi la page, l’action et le message affiché. Je vais vous guider pas à pas.',
+        'Pas de panique, on va trouver ensemble.\n\nDites-moi sur quelle page vous êtes et ce qui se passe.',
+      ]),
+      sources: [],
+      suggestions,
+    };
+  }
+
+  if (intent === 'identity') {
+    return {
+      answer:
+        'Je suis un assistant virtuel.\n\nJe ne suis pas une personne, mais je suis conçu pour vous répondre naturellement et vous guider dans StageBuild.',
+      sources: [],
+      suggestions,
+    };
+  }
+
   return {
-    answer:
-      `Bonjour. Je suis l’assistant StageBuild. Je réponds à partir du guide utilisateur, ` +
-      `avec des réponses adaptées à ${roleLabel(role)}.\n\n` +
-      'Posez-moi une question sur une page, une procédure, un rôle, une erreur ou un résultat.',
+    answer: pick([
+      'Bien sûr !\n\nJe suis là pour ça. Dites-moi ce que vous voulez faire (inscrire, noter, publier, imprimer…) ou la page qui vous pose problème.',
+      'Avec plaisir !\n\nExpliquez-moi votre besoin ou la page concernée, et je vous indique la procédure.',
+    ]),
     sources: [],
-    suggestions: roleSuggestions(role),
+    suggestions,
   };
+}
+
+function greetingReply(role?: Role): AssistantReply {
+  return socialReply('greeting', role);
 }
 
 function capabilityReply(role?: Role): AssistantReply {
@@ -501,6 +852,7 @@ function capabilityReply(role?: Role): AssistantReply {
       '- comprendre un statut, un rôle ou une permission ;\n' +
       '- diagnostiquer un problème courant ;\n' +
       '- retrouver les bons écrans pour les notes, présences, bulletins, documents, QCM et réservations.\n\n' +
+      'Et bien sûr, je réponds aussi aux messages simples comme « bonjour », « merci » ou « cool ».\n\n' +
       'Je ne modifie aucune donnée : je vous guide dans le système.',
     sources: [],
     suggestions: roleSuggestions(role),
@@ -522,11 +874,11 @@ function buildLead(question: string): string {
   const normalized = normalize(question);
 
   if (
-    /\b(erreur|probleme|panne|impossible|bloque|echec|bug|fonctionne pas|marche pas)\b/.test(
+    /\b(erreur|probleme|panne|impossible|bloque|echec|bug|fonctionne pas|marche pas|arrive pas|coince|perdu|galere)\b/.test(
       normalized,
     )
   ) {
-    return 'Voici les points à vérifier et la procédure de référence.\n\n';
+    return 'Je comprends. Voici les points à vérifier et la procédure de référence.\n\n';
   }
 
   if (
@@ -562,29 +914,34 @@ export function askAssistant(
   const trimmed = question.trim();
   if (!trimmed) return fallbackReply(options.role);
 
-  const normalizedQuestion = normalize(trimmed);
+  const socialIntent = detectSocialIntent(trimmed);
+  if (socialIntent) return socialReply(socialIntent, options.role);
 
-  if (/^(bonjour|salut|bonsoir|hello|coucou)\b/.test(normalizedQuestion)) {
-    return greetingReply(options.role);
+  let workingQuestion = trimmed;
+  const greetingPrefix = workingQuestion.match(
+    /^(bonjour|salut|bonsoir|hello|coucou|hey)\b[\s,!.;:?…-]*/i,
+  );
+
+  if (greetingPrefix) {
+    const rest = workingQuestion.slice(greetingPrefix[0].length).trim();
+    if (rest) {
+      const restIntent = detectSocialIntent(rest);
+      if (restIntent) return socialReply(restIntent, options.role);
+      workingQuestion = rest;
+    }
   }
 
-  if (/\b(merci|thanks)\b/.test(normalizedQuestion)) {
-    return {
-      answer: 'Avec plaisir. Posez une autre question si vous avez besoin d’aide sur StageBuild.',
-      sources: [],
-      suggestions: roleSuggestions(options.role),
-    };
-  }
+  const capabilityKey = socialKey(workingQuestion);
 
   if (
-    /\b(qui es-tu|que peux-tu|tu fais quoi|comment tu fonctionnes|tes capacites|ton role)\b/.test(
-      normalizedQuestion,
+    /\b(qui es tu|que peux tu|que sais tu faire|tu fais quoi|comment tu fonctionnes|tu fonctionnes comment|comment fonctionnes tu|tes capacites|tes fonctions|ton role|tu sers a quoi)\b/.test(
+      capabilityKey,
     )
   ) {
     return capabilityReply(options.role);
   }
 
-  const results = matchScore(trimmed, options.role, options.previousSection);
+  const results = matchScore(workingQuestion, options.role, options.previousSection);
 
   if (results.length === 0 || results[0].score < 5) {
     return fallbackReply(options.role);
@@ -608,7 +965,7 @@ export function askAssistant(
     topResults[1] && topResults[1].block.id !== top.block.id
       ? `\n\nVoir aussi : ${cleanSubheading(topResults[1].block.subheading) ?? topResults[1].block.sectionTitle}.`
       : '';
-  const lead = buildLead(trimmed);
+  const lead = buildLead(workingQuestion);
 
   return {
     answer: `${heading}\n\n${confidenceNote}${lead}${buildExcerpt(top.block.content)}${related}`,
