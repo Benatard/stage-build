@@ -11,3 +11,8 @@ export const forgeConfig = {
 } as const;
 
 export const isForgeConfigured = Boolean(forgeConfig.projectKey && forgeConfig.apiKey);
+
+export const saasConfig = {
+  multitenancyEnabled: env.VITE_SAAS_MULTITENANT !== 'false',
+  defaultInstitutionSlug: env.VITE_DEFAULT_INSTITUTION_SLUG?.trim() || 'institution-principale',
+} as const;

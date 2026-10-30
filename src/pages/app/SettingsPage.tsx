@@ -6,10 +6,12 @@ import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
+import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
 import { dataService } from '@/services/data.service';
-import type { GradingRule, Setting } from '@/types/domain';
+import type { GradingRule, Institution, Setting } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/alerts';
+import { getErrorMessage } from '@/utils/format';
 
 type RuleDraft = {
   category: string;
@@ -44,10 +46,62 @@ function normalizeSettingValue(value: unknown): unknown {
 }
 
 export default function SettingsPage() {
+  const { activeInstitution, activeInstitutionId, refresh } = useAuth();
   const { rows: settings, loading, error, reload } = useForgeTable<Setting>('settings', {
     order: 'key.asc',
   });
   const { rows: rules, reload: reloadRules } = useForgeTable<GradingRule>('grading_rules');
+
+  const [institutionDraft, setInstitutionDraft] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    country: '',
+    logo_url: '',
+    primary_color: '#2563eb',
+  });
+  const [savingInstitution, setSavingInstitution] = useState(false);
+
+  useEffect(() => {
+    if (!activeInstitution) return;
+    setInstitutionDraft({
+      name: activeInstitution.name,
+      email: activeInstitution.email ?? '',
+      phone: activeInstitution.phone ?? '',
+      address: activeInstitution.address ?? '',
+      city: activeInstitution.city ?? '',
+      country: activeInstitution.country ?? '',
+      logo_url: activeInstitution.logo_url ?? '',
+      primary_color: activeInstitution.primary_color ?? '#2563eb',
+    });
+  }, [activeInstitution]);
+
+  async function saveInstitution(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!activeInstitutionId) return;
+    setSavingInstitution(true);
+
+    try {
+      await dataService.updateRow<Institution>('institutions', activeInstitutionId, {
+        name: institutionDraft.name.trim(),
+        email: institutionDraft.email.trim() || null,
+        phone: institutionDraft.phone.trim() || null,
+        address: institutionDraft.address.trim() || null,
+        city: institutionDraft.city.trim() || null,
+        country: institutionDraft.country.trim() || null,
+        logo_url: institutionDraft.logo_url.trim() || null,
+        primary_color: institutionDraft.primary_color.trim() || null,
+      });
+      await refresh();
+      notifySuccess('Institution mise à jour');
+    } catch (institutionError) {
+      notifyError('Enregistrement impossible', getErrorMessage(institutionError));
+    } finally {
+      setSavingInstitution(false);
+    }
+  }
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -168,15 +222,117 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Administration"
-        title="Paramètres"
-        description="Configurez l’organisation, les seuils de présence, les pondérations et les règles de calcul."
+        eyebrow={activeInstitution ? 'Institution' : 'Administration'}
+        title={activeInstitution ? `Paramètres · ${activeInstitution.name}` : 'Paramètres'}
+        description="Configurez l’identité de l’institution, les seuils de présence, les pondérations et les règles de calcul."
         actions={
           <Button onClick={() => setNewSettingOpen(true)} icon={<FiPlus className="h-4 w-4" />}>
             Nouveau paramètre
           </Button>
         }
       />
+
+      {activeInstitutionId && (
+        <form
+          onSubmit={saveInstitution}
+          className="mb-6 card-root border border-stroke p-5 dark:border-white/10"
+        >
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-black dark:text-white">
+                Identité de l’institution
+              </h2>
+              <p className="text-xs text-body dark:text-body-dark">
+                Ces informations apparaissent sur les documents et dans l’espace des utilisateurs.
+              </p>
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              loading={savingInstitution}
+              icon={<FiSave className="h-3.5 w-3.5" />}
+            >
+              Enregistrer
+            </Button>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nom" required className="sm:col-span-2">
+              <Input
+                required
+                value={institutionDraft.name}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Email">
+              <Input
+                type="email"
+                value={institutionDraft.email}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, email: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Téléphone">
+              <Input
+                type="tel"
+                value={institutionDraft.phone}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, phone: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Ville">
+              <Input
+                value={institutionDraft.city}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, city: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Pays">
+              <Input
+                value={institutionDraft.country}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, country: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Adresse" className="sm:col-span-2">
+              <Input
+                value={institutionDraft.address}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, address: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Logo (URL)">
+              <Input
+                value={institutionDraft.logo_url}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({ ...current, logo_url: event.target.value }))
+                }
+                placeholder="https://…"
+              />
+            </Field>
+            <Field label="Couleur principale">
+              <Input
+                type="color"
+                value={institutionDraft.primary_color}
+                onChange={(event) =>
+                  setInstitutionDraft((current) => ({
+                    ...current,
+                    primary_color: event.target.value,
+                  }))
+                }
+                className="h-11 p-1"
+              />
+            </Field>
+          </div>
+        </form>
+      )}
 
       {error && (
         <div className="mb-4 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">

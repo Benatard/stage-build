@@ -46,6 +46,41 @@ export type AppNavGroup = {
   items: AppNavItem[];
 };
 
+export const platformNavigation: AppNavGroup[] = [
+  {
+    label: 'Plateforme',
+    items: [
+      {
+        label: 'Vue plateforme',
+        path: '/app/plateforme',
+        icon: FiGrid,
+        permission: 'platform_dashboard',
+        end: true,
+      },
+      {
+        label: 'Institutions',
+        path: '/app/plateforme/institutions',
+        icon: FiBriefcase,
+        permission: 'platform_institutions',
+      },
+      {
+        label: 'Plans & abonnements',
+        path: '/app/plateforme/plans',
+        icon: FiLayers,
+        permission: 'platform_plans',
+      },
+      {
+        label: 'Paramètres plateforme',
+        path: '/app/plateforme/parametres',
+        icon: FiSettings,
+        permission: 'platform_settings',
+      },
+    ],
+  },
+];
+
+
+
 export const stagiaireNavigation: AppNavGroup[] = [
   {
     label: 'Mon espace',
@@ -163,9 +198,21 @@ export const appNavigation: AppNavGroup[] = [
     label: 'Administration',
     items: [
       { label: 'Utilisateurs & rôles', path: '/app/utilisateurs', icon: FiLock, permission: 'users' },
+      { label: 'Services & départements', path: '/app/services', icon: FiBriefcase, permission: 'services' },
+      { label: 'Modèles de documents', path: '/app/modeles-documents', icon: FiFileText, permission: 'document_templates' },
       { label: 'Journal d’audit', path: '/app/audit', icon: FiDatabase, permission: 'audit' },
-      { label: 'Paramètres', path: '/app/parametres', icon: FiSettings, permission: 'settings' },
+      { label: 'Paramètres de l’institution', path: '/app/parametres', icon: FiSettings, permission: 'institution_settings' },
       { label: 'Archivage', path: '/app/archivage', icon: FiArchive, permission: 'archive' },
     ],
   },
 ];
+
+export function navigationForUser(input: {
+  isStagiaire: boolean;
+  isSupraAdmin: boolean;
+  isPlatformMode: boolean;
+}): AppNavGroup[] {
+  if (input.isStagiaire) return stagiaireNavigation;
+  if (input.isSupraAdmin && input.isPlatformMode) return platformNavigation;
+  return input.isSupraAdmin ? [...platformNavigation, ...appNavigation] : appNavigation;
+}

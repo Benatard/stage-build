@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { dataService } from '@/services/data.service';
 import type { ForgeListFilter } from '@/services/forge/types';
+import {
+  getTenantId,
+  isTenantColumnError,
+  markTenantColumnMissing,
+  withTenantScope,
+} from '@/services/tenant';
 import { getErrorMessage } from '@/utils/format';
 
 type SqlTuple = Array<string | number | boolean | null>;
@@ -53,8 +59,14 @@ export function useScopedRows<T extends { id: string }>(
   options: UseScopedRowsOptions,
 ) {
   const { scope, order, limit = 200, enabled = true } = options;
+  const tenantId = getTenantId();
   const scopeKey = useMemo(() => JSON.stringify(scope), [scope]);
-  const stableScope = useMemo(() => scope, [scopeKey]);
+  const stableScope = useMemo(
+    () => withTenantScope(table, scope),
+    // The tenant id is intentionally part of the key so the query re-runs
+    // when a platform administrator switches institution.
+    [table, scopeKey, tenantId],
+  );
   const entries = useMemo(() => activeScope(stableScope), [stableScope]);
   const usable = enabled && entries.length > 0;
   const [rows, setRows] = useState<T[]>([]);
@@ -73,13 +85,25 @@ export function useScopedRows<T extends { id: string }>(
     setLoading(true);
     setError(null);
 
-    const where = entries
-      .map(([column, value]) => `${column} = ${sqlLiteral(value)}`)
-      .join(' and ');
-    const query = ['select id from', table, 'where', where, 'limit', '200'].join(' ');
+    const buildWhere = (scopeEntries: typeof entries) =>
+      scopeEntries
+        .map(([column, value]) => `${column} = ${sqlLiteral(value)}`)
+        .join(' and ');
 
-    dataService
-      .sql<SqlTuple>(query)
+    const runQuery = (scopeEntries: typeof entries) => {
+      const where = buildWhere(scopeEntries);
+      const query = where
+        ? ['select id from', table, 'where', where, 'limit', '200'].join(' ')
+        : ['select id from', table, 'limit', '200'].join(' ');
+      return dataService.sql<SqlTuple>(query);
+    };
+
+    runQuery(entries)
+      .catch((requestError) => {
+        if (!isTenantColumnError(requestError)) throw requestError;
+        markTenantColumnMissing();
+        return runQuery(entries.filter(([column]) => column !== 'institution_id'));
+      })
       .then(async (response) => {
         const ids = (response.rows ?? [])
           .map((row) => String(row[0] ?? ''))

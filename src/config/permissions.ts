@@ -1,22 +1,52 @@
-import type { Role } from '@/types/domain';
+import type { Role, SaasRole } from '@/types/domain';
 
 export const ROLE_LABELS: Record<Role, string> = {
-  admin: 'Administrateur système',
-  direction: 'Direction',
+  supra_admin: 'Super administrateur plateforme',
+  directeur: 'Directeur d’institution',
+  admin_institution: 'Administrateur institutionnel',
   responsable_formation: 'Responsable de formation',
   responsable_pedagogique: 'Responsable pédagogique',
   formateur: 'Formateur',
-  maitre_stage: 'Maître de stage',
-  administration: 'Service administratif',
+  encadreur: 'Encadreur / Maître de stage',
+  service_administratif: 'Service administratif',
   stagiaire: 'Stagiaire',
   rh: 'Ressources humaines',
   auditeur: 'Auditeur / Superviseur',
+  admin: 'Administrateur système (hérité)',
+  direction: 'Direction (hérité)',
+  administration: 'Administration (hérité)',
+  maitre_stage: 'Maître de stage (hérité)',
 };
 
-export const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({
-  value: value as Role,
-  label,
+export const SAAS_ROLES: SaasRole[] = [
+  'supra_admin',
+  'directeur',
+  'admin_institution',
+  'responsable_formation',
+  'responsable_pedagogique',
+  'formateur',
+  'encadreur',
+  'service_administratif',
+  'stagiaire',
+  'rh',
+  'auditeur',
+];
+
+export const ROLE_OPTIONS = SAAS_ROLES.map((value) => ({
+  value,
+  label: ROLE_LABELS[value],
 }));
+
+export const LEGACY_ROLE_OPTIONS = (Object.keys(ROLE_LABELS) as Role[])
+  .filter((role) => !SAAS_ROLES.includes(role as SaasRole))
+  .map((value) => ({ value, label: ROLE_LABELS[value] }));
+
+export function roleOptionsFor(actorRole?: Role | null) {
+  if (actorRole === 'supra_admin' || actorRole === 'admin') return ROLE_OPTIONS;
+  return ROLE_OPTIONS.filter(
+    (option) => option.value !== 'supra_admin' && option.value !== 'directeur',
+  );
+}
 
 export type WorkspaceInfo = {
   label: string;
@@ -24,62 +54,71 @@ export type WorkspaceInfo = {
 };
 
 export const ROLE_WORKSPACES: Record<Role, WorkspaceInfo> = {
-  admin: { label: 'Espace Administrateur système', path: '/app' },
-  direction: { label: 'Espace Direction', path: '/app' },
+  supra_admin: { label: 'Console plateforme', path: '/app/plateforme' },
+  directeur: { label: 'Espace Direction', path: '/app' },
+  admin_institution: { label: 'Espace Administrateur institutionnel', path: '/app' },
   responsable_formation: { label: 'Espace Responsable de formation', path: '/app' },
   responsable_pedagogique: { label: 'Espace Responsable pédagogique', path: '/app' },
   formateur: { label: 'Espace Formateur', path: '/app' },
-  maitre_stage: { label: 'Espace Maître de stage', path: '/app' },
-  administration: { label: 'Espace Service administratif', path: '/app' },
+  encadreur: { label: 'Espace Encadreur', path: '/app' },
+  service_administratif: { label: 'Espace Service administratif', path: '/app' },
   stagiaire: { label: 'Mon espace stagiaire', path: '/app/mon-espace' },
   rh: { label: 'Espace Ressources humaines', path: '/app' },
   auditeur: { label: 'Espace Auditeur / Superviseur', path: '/app' },
+  admin: { label: 'Console plateforme (hérité)', path: '/app/plateforme' },
+  direction: { label: 'Espace Direction (hérité)', path: '/app' },
+  administration: { label: 'Espace Administration (hérité)', path: '/app' },
+  maitre_stage: { label: 'Espace Maître de stage (hérité)', path: '/app' },
 };
 
 export function workspaceForRole(role: Role): WorkspaceInfo {
   return ROLE_WORKSPACES[role] ?? ROLE_WORKSPACES.stagiaire;
 }
 
+const INSTITUTION_ADMIN_PERMISSIONS = [
+  'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
+  'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
+  'travaux', 'competences', 'implication', 'comportement', 'observations',
+  'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
+  'final', 'bulletins', 'documents', 'reports', 'archive', 'notifications',
+  'search', 'grade_validate', 'bulletin_publish',
+  'users', 'settings', 'audit',
+  'institution_settings', 'institution_users', 'institution_branding',
+  'services', 'document_templates',
+];
+
+const PEDAGOGY_PERMISSIONS = [
+  'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
+  'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
+  'travaux', 'competences', 'implication', 'comportement', 'observations',
+  'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
+  'final', 'bulletins', 'documents', 'reports', 'notifications', 'search',
+  'grade_validate', 'bulletin_publish',
+  'services', 'document_templates',
+];
+
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {
-  admin: ['*'],
-  direction: [
-    'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
-    'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
-    'travaux', 'competences', 'implication', 'comportement', 'observations',
-    'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
-    'final', 'bulletins', 'documents', 'reports', 'archive', 'notifications',
-    'search', 'grade_validate', 'bulletin_publish',
-  ],
-  responsable_formation: [
-    'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
-    'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
-    'travaux', 'competences', 'implication', 'comportement', 'observations',
-    'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
-    'final', 'bulletins', 'documents', 'reports', 'notifications', 'search',
-    'grade_validate', 'bulletin_publish',
-  ],
-  responsable_pedagogique: [
-    'dashboard', 'stagiaires', 'formations', 'promotions', 'inscriptions',
-    'reservations', 'affectations', 'seances', 'presences', 'evaluations', 'notes', 'qcm',
-    'travaux', 'competences', 'implication', 'comportement', 'observations',
-    'progression', 'plans', 'intermediate', 'journal', 'objectives', 'project',
-    'final', 'bulletins', 'documents', 'reports', 'notifications', 'search',
-    'grade_validate',
-  ],
+  supra_admin: ['*'],
+  directeur: INSTITUTION_ADMIN_PERMISSIONS,
+  admin_institution: INSTITUTION_ADMIN_PERMISSIONS,
+  responsable_formation: PEDAGOGY_PERMISSIONS,
+  responsable_pedagogique: PEDAGOGY_PERMISSIONS.filter(
+    (permission) => permission !== 'bulletin_publish',
+  ),
   formateur: [
     'dashboard', 'stagiaires', 'formations', 'promotions', 'seances',
     'presences', 'evaluations', 'notes', 'qcm', 'travaux', 'competences',
     'implication', 'comportement', 'observations', 'progression', 'plans',
     'journal', 'objectives', 'project', 'notifications', 'search',
   ],
-  maitre_stage: [
+  encadreur: [
     'dashboard', 'stagiaires', 'objectives', 'journal', 'competences',
     'implication', 'comportement', 'observations', 'project', 'notifications',
     'search',
   ],
-  administration: [
+  service_administratif: [
     'dashboard', 'stagiaires', 'inscriptions', 'reservations', 'affectations', 'documents',
-    'notifications', 'search', 'archive',
+    'notifications', 'search', 'archive', 'services', 'document_templates',
   ],
   stagiaire: [
     'dashboard',
@@ -92,6 +131,18 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
   ],
   rh: ['dashboard', 'stagiaires', 'reports', 'documents', 'notifications', 'search'],
   auditeur: ['dashboard', 'stagiaires', 'reports', 'audit', 'notifications', 'search'],
+
+  admin: ['*'],
+  direction: INSTITUTION_ADMIN_PERMISSIONS,
+  administration: [
+    'dashboard', 'stagiaires', 'inscriptions', 'reservations', 'affectations', 'documents',
+    'notifications', 'search', 'archive', 'services', 'document_templates',
+  ],
+  maitre_stage: [
+    'dashboard', 'stagiaires', 'objectives', 'journal', 'competences',
+    'implication', 'comportement', 'observations', 'project', 'notifications',
+    'search',
+  ],
 };
 
 export function permissionsForRoles(roles: Role[]): string[] {
@@ -104,4 +155,8 @@ export function permissionsForRoles(roles: Role[]): string[] {
 
 export function hasPermission(permissions: string[], permission: string): boolean {
   return permissions.includes('*') || permissions.includes(permission);
+}
+
+export function isPlatformRole(role?: Role | null): boolean {
+  return role === 'supra_admin' || role === 'admin';
 }

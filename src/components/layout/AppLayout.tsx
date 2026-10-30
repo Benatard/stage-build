@@ -12,17 +12,27 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { BrandLogo } from '@/components/ui/BrandLogo';
-import { appNavigation, stagiaireNavigation } from '@/config/appNavigation';
+import { navigationForUser } from '@/config/appNavigation';
 import { isForgeConfigured } from '@/config/env';
 import { ROLE_LABELS } from '@/config/permissions';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useForgeTable } from '@/hooks/useForgeTable';
 import { useScopedRows } from '@/hooks/useScopedRows';
 import { cn, fullName, initials } from '@/utils/format';
-import type { AppNotification } from '@/types/domain';
+import type { AppNotification, Institution } from '@/types/domain';
 
 export default function AppLayout() {
-  const { user, logout, can } = useAuth();
+  const {
+    user,
+    logout,
+    can,
+    activeInstitutionId,
+    activeInstitution,
+    isSupraAdmin,
+    isPlatformMode,
+    setActiveInstitution,
+  } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,9 +41,33 @@ export default function AppLayout() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const isStagiaire = user?.role === 'stagiaire';
-  const navigation = isStagiaire ? stagiaireNavigation : appNavigation;
-  const homePath = isStagiaire ? '/app/mon-espace' : '/app';
+  const institutionMissing = Boolean(user && !isSupraAdmin && !activeInstitutionId);
+  const onPlatformRoute =
+    location.pathname === '/app/plateforme' ||
+    location.pathname.startsWith('/app/plateforme/');
+  const navigation = navigationForUser({ isStagiaire, isSupraAdmin, isPlatformMode });
+  const homePath = isStagiaire
+    ? '/app/mon-espace'
+    : isPlatformMode
+      ? '/app/plateforme'
+      : '/app';
   const notificationsPath = isStagiaire ? '/app/mon-espace/notifications' : '/app/notifications';
+
+  const { rows: institutions } = useForgeTable<Institution>('institutions', {
+    order: 'name.asc',
+    limit: 500,
+    enabled: isSupraAdmin && isForgeConfigured,
+  });
+
+  function handleInstitutionChange(value: string) {
+    const nextId = value || null;
+    setActiveInstitution(nextId);
+    if (!nextId) {
+      navigate('/app/plateforme');
+    } else if (isPlatformMode) {
+      navigate('/app');
+    }
+  }
 
   const { rows: accountNotifications } = useScopedRows<AppNotification>('notifications', {
     scope: { user_id: user?.id ?? '' },
@@ -91,12 +125,20 @@ export default function AppLayout() {
     if (activeGroup) setOpenGroup(activeGroup);
   }, [activeGroup]);
 
+  useEffect(() => {
+    if (isSupraAdmin && onPlatformRoute && activeInstitutionId) {
+      setActiveInstitution(null);
+    }
+  }, [isSupraAdmin, onPlatformRoute, activeInstitutionId, setActiveInstitution]);
+
   function handleLogout() {
     logout();
     navigate('/login', { replace: true });
   }
 
   const displayName = fullName(user);
+  const waitingForPlatformContext =
+    isSupraAdmin && onPlatformRoute && Boolean(activeInstitutionId);
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] dark:bg-[#0F141F]">
@@ -236,6 +278,36 @@ export default function AppLayout() {
             </h2>
           </div>
 
+          {isSupraAdmin ? (
+            <label className="hidden items-center gap-2 md:flex">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">
+                Institution
+              </span>
+              <select
+                value={activeInstitutionId ?? ''}
+                onChange={(event) => handleInstitutionChange(event.target.value)}
+                className="h-9 max-w-[220px] border border-stroke bg-white px-2 text-xs font-semibold text-dark outline-none focus:border-primary dark:border-white/10 dark:bg-[#151B28] dark:text-white"
+                aria-label="Institution active"
+              >
+                <option value="">Mode plateforme (toutes)</option>
+                {institutions.map((institution) => (
+                  <option key={institution.id} value={institution.id}>
+                    {institution.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : activeInstitution ? (
+            <div className="hidden min-w-0 text-right md:block">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">
+                Institution
+              </p>
+              <p className="max-w-[220px] truncate text-xs font-semibold text-dark dark:text-white">
+                {activeInstitution.name}
+              </p>
+            </div>
+          ) : null}
+
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to={notificationsPath}
@@ -337,8 +409,39 @@ export default function AppLayout() {
           </div>
         )}
 
+        {!isSupraAdmin && !activeInstitutionId && (
+          <div className="border-b border-rose-300 bg-rose-50 px-4 py-2.5 text-xs text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 sm:px-6">
+            Ce compte n’est rattaché à aucune institution. Contactez le super administrateur
+            de la plateforme pour finaliser votre affectation.
+          </div>
+        )}
+
         <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <Outlet />
+          {institutionMissing ? (
+            <div className="mx-auto max-w-xl border border-rose-200 bg-white p-8 text-center dark:border-rose-500/30 dark:bg-[#151B28]">
+              <h2 className="text-lg font-bold text-black dark:text-white">
+                Compte non rattaché
+              </h2>
+              <p className="mt-2 text-sm text-body dark:text-body-dark">
+                Votre compte n’est associé à aucune institution. Pour des raisons de
+                confidentialité, l’accès aux données est bloqué tant qu’un super administrateur
+                ne vous a pas affecté à une institution.
+              </p>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mt-5 bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+              >
+                Se déconnecter
+              </button>
+            </div>
+          ) : waitingForPlatformContext ? (
+            <p className="py-10 text-center text-sm text-body dark:text-body-dark">
+              Ouverture de la console plateforme…
+            </p>
+          ) : (
+            <Outlet key={activeInstitutionId ?? (isPlatformMode ? 'platform' : 'none')} />
+          )}
         </main>
       </div>
     </div>

@@ -1,6 +1,15 @@
 import { isForgeConfigured } from '@/config/env';
 import { forgeRepository } from '@/services/forge';
 import type { ForgeListParams, ForgeSqlResponse } from '@/services/forge/types';
+import {
+  assertRowInTenant,
+  getTenantId,
+  isTenantColumnError,
+  markTenantColumnMissing,
+  shouldScopeTable,
+  withTenantFilter,
+  withTenantPayload,
+} from '@/services/tenant';
 
 const PAGE_SIZE = 200;
 const MAX_PAGES = 20;
@@ -39,8 +48,19 @@ async function listRows<T extends { id: string }>(
   params: ForgeListParams = {},
 ): Promise<T[]> {
   ensureForgeConfigured();
-  const result = await forgeRepository.list<T>(table, params);
-  return result.rows;
+  const scopedParams = withTenantFilter(table, params);
+
+  try {
+    const result = await forgeRepository.list<T>(table, scopedParams);
+    return result.rows;
+  } catch (error) {
+    if (scopedParams !== params && isTenantColumnError(error)) {
+      markTenantColumnMissing();
+      const fallback = await forgeRepository.list<T>(table, params);
+      return fallback.rows;
+    }
+    throw error;
+  }
 }
 
 async function listAll<T extends { id: string }>(
@@ -67,7 +87,9 @@ async function listAll<T extends { id: string }>(
 async function findRow<T extends { id: string }>(table: string, id: string): Promise<T> {
   ensureForgeConfigured();
   const payload = await forgeRepository.find<Record<string, unknown>>(table, id);
-  return unwrapRow<T>(payload);
+  const row = unwrapRow<T>(payload);
+  assertRowInTenant(table, row as unknown as Record<string, unknown>);
+  return row;
 }
 
 async function createRow<T extends { id: string }>(
@@ -75,8 +97,19 @@ async function createRow<T extends { id: string }>(
   data: Record<string, unknown>,
 ): Promise<T> {
   ensureForgeConfigured();
-  const payload = await forgeRepository.create<Record<string, unknown>>(table, data);
-  return unwrapRow<T>(payload);
+  const scopedData = withTenantPayload(table, data);
+
+  try {
+    const payload = await forgeRepository.create<Record<string, unknown>>(table, scopedData);
+    return unwrapRow<T>(payload);
+  } catch (error) {
+    if (scopedData !== data && isTenantColumnError(error)) {
+      markTenantColumnMissing();
+      const payload = await forgeRepository.create<Record<string, unknown>>(table, data);
+      return unwrapRow<T>(payload);
+    }
+    throw error;
+  }
 }
 
 async function updateRow<T extends { id: string }>(
@@ -85,12 +118,34 @@ async function updateRow<T extends { id: string }>(
   data: Record<string, unknown>,
 ): Promise<T> {
   ensureForgeConfigured();
-  const payload = await forgeRepository.update<Record<string, unknown>>(table, id, data);
+
+  if ('institution_id' in data && shouldScopeTable(table)) {
+    const tenantId = getTenantId();
+    if (data.institution_id && data.institution_id !== tenantId) {
+      throw new Error(
+        'Le rattachement à une institution ne peut pas être modifié depuis le client.',
+      );
+    }
+  }
+
+  const current = await findRow<T>(table, id);
+  assertRowInTenant(table, current as unknown as Record<string, unknown>);
+
+  const payloadData = { ...data };
+  delete payloadData.institution_id;
+
+  const payload = await forgeRepository.update<Record<string, unknown>>(
+    table,
+    id,
+    payloadData,
+  );
   return unwrapRow<T>(payload);
 }
 
 async function deleteRow(table: string, id: string): Promise<void> {
   ensureForgeConfigured();
+  const current = await findRow<{ id: string }>(table, id);
+  assertRowInTenant(table, current as unknown as Record<string, unknown>);
   await forgeRepository.remove(table, id);
 }
 

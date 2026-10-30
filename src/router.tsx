@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
+﻿import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PermissionRoute } from '@/components/auth/PermissionRoute';
 import AppLayout from '@/components/layout/AppLayout';
@@ -13,6 +13,7 @@ import BulletinsPage from '@/pages/app/BulletinsPage';
 import CompetencesPage from '@/pages/app/CompetencesPage';
 import ComportementPage from '@/pages/app/ComportementPage';
 import DocumentsPage from '@/pages/app/DocumentsPage';
+import DocumentTemplatesPage from '@/pages/app/DocumentTemplatesPage';
 import EvaluationFinalePage from '@/pages/app/EvaluationFinalePage';
 import EvaluationsIntermediairesPage from '@/pages/app/EvaluationsIntermediairesPage';
 import EvaluationsPage from '@/pages/app/EvaluationsPage';
@@ -36,12 +37,17 @@ import QcmPassationPage from '@/pages/app/QcmPassationPage';
 import RapportsPage from '@/pages/app/RapportsPage';
 import SearchPage from '@/pages/app/SearchPage';
 import SeancesPage from '@/pages/app/SeancesPage';
+import ServicesPage from '@/pages/app/ServicesPage';
 import SettingsPage from '@/pages/app/SettingsPage';
 import StagiaireDetailPage from '@/pages/app/StagiaireDetailPage';
 import StagiairesPage from '@/pages/app/StagiairesPage';
 import TravauxPage from '@/pages/app/TravauxPage';
 import UsersPage from '@/pages/app/UsersPage';
 import LoginPage from '@/pages/auth/LoginPage';
+import InstitutionsPage from '@/pages/app/platform/InstitutionsPage';
+import PlatformPlansPage from '@/pages/app/platform/PlatformPlansPage';
+import PlatformDashboardPage from '@/pages/app/platform/PlatformDashboardPage';
+import PlatformSettingsPage from '@/pages/app/platform/PlatformSettingsPage';
 import ForgeStatusPage from '@/pages/ForgeStatusPage';
 import HomePage from '@/pages/HomePage';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -84,6 +90,54 @@ const publicRoutes: RouteObject[] = [
 
 const appRoutes: RouteObject[] = [
   { index: true, element: <AppHomePage /> },
+  {
+    path: 'plateforme',
+    element: (
+      <PermissionRoute permission="platform_dashboard">
+        <PlatformDashboardPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'plateforme/institutions',
+    element: (
+      <PermissionRoute permission="platform_institutions">
+        <InstitutionsPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'plateforme/plans',
+    element: (
+      <PermissionRoute permission="platform_plans">
+        <PlatformPlansPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'plateforme/parametres',
+    element: (
+      <PermissionRoute permission="platform_settings">
+        <PlatformSettingsPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'services',
+    element: (
+      <PermissionRoute permission="services">
+        <ServicesPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'modeles-documents',
+    element: (
+      <PermissionRoute permission="document_templates">
+        <DocumentTemplatesPage />
+      </PermissionRoute>
+    ),
+  },
   {
     path: 'mon-espace',
     children: [
@@ -516,7 +570,7 @@ const appRoutes: RouteObject[] = [
   {
     path: 'parametres',
     element: (
-      <PermissionRoute permission="settings">
+      <PermissionRoute permission="institution_settings">
         <SettingsPage />
       </PermissionRoute>
     ),
@@ -578,3 +632,4 @@ const router = createBrowserRouter([
 export default function AppRouter() {
   return <RouterProvider router={router} />;
 }
+

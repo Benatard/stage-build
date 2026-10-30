@@ -6,6 +6,7 @@ import type {
   Evaluation,
   Formation,
   Inscription,
+  Institution,
   Module,
   Promotion,
   Seance,
@@ -23,6 +24,7 @@ export type ReferenceData = {
   evaluations: Evaluation[];
   inscriptions: Inscription[];
   seances: Seance[];
+  institutions: Institution[];
 };
 
 const emptyData: ReferenceData = {
@@ -35,11 +37,13 @@ const emptyData: ReferenceData = {
   evaluations: [],
   inscriptions: [],
   seances: [],
+  institutions: [],
 };
 
 let cache: ReferenceData | null = null;
 let cacheTimestamp = 0;
 let inflight: Promise<ReferenceData> | null = null;
+let generation = 0;
 const CACHE_TTL = 60_000;
 
 async function safeList<T extends { id: string }>(request: Promise<T[]>): Promise<T[]> {
@@ -61,6 +65,7 @@ async function fetchAll(): Promise<ReferenceData> {
     evaluations,
     inscriptions,
     seances,
+    institutions,
   ] = await Promise.all([
     safeList(dataService.listAll<Stagiaire>('stagiaires', { order: 'nom.asc' })),
     safeList(dataService.listAll<Formation>('formations', { order: 'name.asc' })),
@@ -71,6 +76,7 @@ async function fetchAll(): Promise<ReferenceData> {
     safeList(dataService.listAll<Evaluation>('evaluations', { order: 'date.desc' })),
     safeList(dataService.listAll<Inscription>('inscriptions', { order: 'created_at.desc' })),
     safeList(dataService.listAll<Seance>('seances', { order: 'date.desc' })),
+    safeList(dataService.listAll<Institution>('institutions', { order: 'name.asc' })),
   ]);
 
   return {
@@ -83,6 +89,7 @@ async function fetchAll(): Promise<ReferenceData> {
     evaluations,
     inscriptions,
     seances,
+    institutions,
   };
 }
 
@@ -92,22 +99,30 @@ export async function loadReferenceData(force = false): Promise<ReferenceData> {
   if (!force && cache && fresh) return cache;
   if (inflight) return inflight;
 
+  const requestGeneration = generation;
+
   inflight = fetchAll()
     .then((data) => {
-      cache = data;
-      cacheTimestamp = Date.now();
+      if (requestGeneration === generation) {
+        cache = data;
+        cacheTimestamp = Date.now();
+      }
       return data;
     })
     .finally(() => {
-      inflight = null;
+      if (requestGeneration === generation) {
+        inflight = null;
+      }
     });
 
   return inflight;
 }
 
 export function invalidateReferenceData(): void {
+  generation += 1;
   cache = null;
   cacheTimestamp = 0;
+  inflight = null;
 }
 
 export function useReferenceData() {

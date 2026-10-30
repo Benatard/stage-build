@@ -23,6 +23,35 @@ export const USER_STATUS_OPTIONS: SelectOption[] = [
   { value: 'blocked', label: 'Bloqué' },
 ];
 
+export const INSTITUTION_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'centre_formation', label: 'Centre de formation' },
+  { value: 'ecole', label: 'École' },
+  { value: 'universite', label: 'Université' },
+  { value: 'entreprise', label: 'Entreprise' },
+  { value: 'organisme_public', label: 'Organisme public' },
+  { value: 'autre', label: 'Autre' },
+];
+
+export const INSTITUTION_STATUS_OPTIONS: SelectOption[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'essai', label: 'Période d’essai' },
+  { value: 'suspendue', label: 'Suspendue' },
+  { value: 'archivee', label: 'Archivée' },
+];
+
+export const SUBSCRIPTION_STATUS_OPTIONS: SelectOption[] = [
+  { value: 'trialing', label: 'Essai' },
+  { value: 'active', label: 'Active' },
+  { value: 'past_due', label: 'En retard' },
+  { value: 'canceled', label: 'Résiliée' },
+  { value: 'expired', label: 'Expirée' },
+];
+
+export const BILLING_CYCLE_OPTIONS: SelectOption[] = [
+  { value: 'monthly', label: 'Mensuel' },
+  { value: 'yearly', label: 'Annuel' },
+];
+
 export const RESERVATION_STATUS_OPTIONS: SelectOption[] = [
   { value: 'en_attente', label: 'En attente' },
   { value: 'confirmee', label: 'Confirmée' },

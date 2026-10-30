@@ -18,7 +18,7 @@ import { PageHeader, StatCard } from '@/components/ui/Feedback';
 import { Field, Input, Select } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { SearchInput } from '@/components/ui/SearchInput';
-import { ROLE_LABELS, ROLE_OPTIONS, workspaceForRole } from '@/config/permissions';
+import { ROLE_LABELS, roleOptionsFor, workspaceForRole } from '@/config/permissions';
 import { USER_STATUS_OPTIONS, optionLabel } from '@/config/options';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
@@ -114,7 +114,7 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export default function UsersPage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, activeInstitutionId } = useAuth();
   const { data } = useReferenceData();
   const { rows: users, loading, error, reload } = useForgeTable<User>('users', {
     order: 'last_name.asc',
@@ -143,6 +143,11 @@ export default function UsersPage() {
     [data.stagiaires],
   );
 
+  const roleOptions = useMemo(
+    () => roleOptionsFor(currentUser?.role),
+    [currentUser?.role],
+  );
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return users;
@@ -166,7 +171,9 @@ export default function UsersPage() {
   const formateurCount = users.filter((user) => user.role === 'formateur').length;
   const stagiaireCount = users.filter((user) => user.role === 'stagiaire').length;
   const activeAdminCount = users.filter(
-    (user) => user.role === 'admin' && user.statut === 'active',
+    (user) =>
+      ['supra_admin', 'admin_institution', 'admin'].includes(user.role) &&
+      user.statut === 'active',
   ).length;
 
   const loginUrl = `${window.location.origin}/login`;
@@ -251,6 +258,7 @@ export default function UsersPage() {
           role: draft.role,
           statut: draft.statut,
           stagiaire_id: draft.stagiaire_id || null,
+          is_supra_admin: draft.role === 'supra_admin',
         });
         notifySuccess('Utilisateur mis à jour');
         setAccountView((current) =>
@@ -267,6 +275,15 @@ export default function UsersPage() {
           return;
         }
 
+        if (draft.role !== 'supra_admin' && !activeInstitutionId) {
+          notifyError(
+            'Institution requise',
+            'Sélectionnez d’abord une institution dans l’en-tête avant de créer un utilisateur.',
+          );
+          setSaving(false);
+          return;
+        }
+
         const created = await authService.createAccount({
           email: draft.email,
           password,
@@ -276,6 +293,9 @@ export default function UsersPage() {
           role: draft.role,
           statut: draft.statut,
           stagiaire_id: draft.stagiaire_id || undefined,
+          institution_id: draft.role === 'supra_admin' ? null : activeInstitutionId,
+          is_supra_admin: draft.role === 'supra_admin',
+          must_change_password: true,
         });
         const createdId = created?.id ? String(created.id) : '';
 
@@ -323,7 +343,11 @@ export default function UsersPage() {
       return;
     }
 
-    if (user.role === 'admin' && user.statut === 'active' && activeAdminCount <= 1) {
+    if (
+      ['supra_admin', 'admin_institution', 'admin'].includes(user.role) &&
+      user.statut === 'active' &&
+      activeAdminCount <= 1
+    ) {
       notifyError('Action impossible', 'Impossible de supprimer le dernier administrateur actif.');
       return;
     }
@@ -436,6 +460,17 @@ export default function UsersPage() {
       key: 'role',
       header: 'Rôle',
       render: (row) => <Badge tone="primary">{ROLE_LABELS[row.role]}</Badge>,
+    },
+    {
+      key: 'institution',
+      header: 'Institution',
+      hideBelow: 'md',
+      render: (row) => (
+        <span className="text-xs text-body dark:text-body-dark">
+          {data.institutions.find((institution) => institution.id === row.institution_id)?.name ??
+            (row.is_supra_admin ? 'Plateforme' : '—')}
+        </span>
+      ),
     },
     {
       key: 'workspace',
@@ -631,7 +666,7 @@ export default function UsersPage() {
           <Field label="Rôle" required>
             <Select
               value={draft.role}
-              options={ROLE_OPTIONS}
+              options={roleOptions}
               onChange={(event) =>
                 setDraft((current) => ({ ...current, role: event.target.value as Role }))
               }
@@ -773,6 +808,12 @@ export default function UsersPage() {
               </div>
 
               <Detail label="Rôle">{ROLE_LABELS[accountView.user.role]}</Detail>
+              <Detail label="Institution">
+                {data.institutions.find(
+                  (institution) => institution.id === accountView.user.institution_id,
+                )?.name ??
+                  (accountView.user.is_supra_admin ? 'Plateforme (global)' : '—')}
+              </Detail>
               <Detail label="Espace de travail">{workspace?.label ?? '—'}</Detail>
               <Detail label="Statut">
                 {optionLabel(USER_STATUS_OPTIONS, accountView.user.statut)}

@@ -2,21 +2,31 @@ export type ID = string;
 
 export type BaseRow = {
   id: ID;
+  institution_id?: string | null;
   created_at?: string;
   updated_at?: string;
 };
 
-export type Role =
+export type LegacyRole =
   | 'admin'
   | 'direction'
-  | 'responsable_formation'
-  | 'responsable_pedagogique'
-  | 'formateur'
-  | 'maitre_stage'
   | 'administration'
+  | 'maitre_stage';
+
+export type SaasRole =
+  | 'supra_admin'
+  | 'directeur'
+  | 'admin_institution'
+  | 'responsable_pedagogique'
+  | 'responsable_formation'
+  | 'formateur'
+  | 'encadreur'
+  | 'service_administratif'
   | 'stagiaire'
   | 'rh'
   | 'auditeur';
+
+export type Role = SaasRole | LegacyRole;
 
 export type UserStatus = 'active' | 'inactive' | 'blocked';
 
@@ -26,15 +36,133 @@ export type User = BaseRow & {
   last_name: string;
   phone?: string | null;
   role: Role;
+  roles?: Role[];
   statut: UserStatus;
   last_login_at?: string | null;
   avatar_url?: string | null;
   stagiaire_id?: string | null;
+  is_supra_admin?: boolean;
+  must_change_password?: boolean;
 };
 
 export type AuthUser = User & {
   roles: Role[];
   permissions: string[];
+  institution?: Institution | null;
+  is_supra_admin: boolean;
+};
+
+export type InstitutionType =
+  | 'ecole'
+  | 'centre_formation'
+  | 'entreprise'
+  | 'universite'
+  | 'organisme_public'
+  | 'autre';
+
+export type InstitutionStatus = 'active' | 'essai' | 'suspendue' | 'archivee';
+
+export type Institution = BaseRow & {
+  name: string;
+  slug: string;
+  code: string;
+  type: InstitutionType;
+  status: InstitutionStatus;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  logo_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  timezone?: string | null;
+  currency?: string | null;
+  locale?: string | null;
+  owner_user_id?: string | null;
+  settings?: Record<string, unknown>;
+  trial_ends_at?: string | null;
+};
+
+export type SaasPlan = BaseRow & {
+  code: string;
+  name: string;
+  description?: string | null;
+  price_monthly: number;
+  price_yearly: number;
+  currency: string;
+  max_users?: number | null;
+  max_stagiaires?: number | null;
+  max_formations?: number | null;
+  features: string[];
+  is_active: boolean;
+  sort_order: number;
+};
+
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+
+export type InstitutionSubscription = BaseRow & {
+  institution_id: string;
+  plan_id: string;
+  status: SubscriptionStatus;
+  billing_cycle: 'monthly' | 'yearly';
+  starts_at: string;
+  ends_at?: string | null;
+  trial_ends_at?: string | null;
+  seats?: number | null;
+  amount: number;
+  currency: string;
+  notes?: string | null;
+};
+
+export type MembershipStatus = 'active' | 'invited' | 'suspended' | 'removed';
+
+export type InstitutionMembership = BaseRow & {
+  institution_id: string;
+  user_id: string;
+  status: MembershipStatus;
+  is_primary: boolean;
+  joined_at?: string | null;
+};
+
+export type MembershipRole = BaseRow & {
+  membership_id: string;
+  role: SaasRole;
+};
+
+export type Service = BaseRow & {
+  name: string;
+  code: string;
+  description?: string | null;
+  manager_id?: string | null;
+  status: 'active' | 'inactive';
+};
+
+export type DocumentTemplate = BaseRow & {
+  name: string;
+  type: DocumentType;
+  content: Record<string, unknown>;
+  file_url?: string | null;
+  is_default: boolean;
+  status: 'active' | 'inactive';
+};
+
+export type PlatformSetting = BaseRow & {
+  key: string;
+  value: Record<string, unknown>;
+  description?: string | null;
+  updated_by?: string | null;
+};
+
+export type InstitutionInvitation = BaseRow & {
+  email: string;
+  role: SaasRole;
+  token: string;
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
+  invited_by?: string | null;
+  expires_at: string;
+  accepted_at?: string | null;
 };
 
 export type RoleDefinition = BaseRow & {
