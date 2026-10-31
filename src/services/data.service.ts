@@ -84,6 +84,37 @@ async function listAll<T extends { id: string }>(
   return rows;
 }
 
+async function listAllUnscoped<T extends { id: string }>(
+  table: string,
+  params: Omit<ForgeListParams, 'limit' | 'offset'> = {},
+): Promise<T[]> {
+  ensureForgeConfigured();
+  const rows: T[] = [];
+
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const batch = await forgeRepository.list<T>(table, {
+      ...params,
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    });
+
+    rows.push(...batch.rows);
+
+    if (batch.rows.length < PAGE_SIZE) break;
+  }
+
+  return rows;
+}
+
+async function createRowUnscoped<T extends { id: string }>(
+  table: string,
+  data: Record<string, unknown>,
+): Promise<T> {
+  ensureForgeConfigured();
+  const payload = await forgeRepository.create<Record<string, unknown>>(table, data);
+  return unwrapRow<T>(payload);
+}
+
 async function findRow<T extends { id: string }>(table: string, id: string): Promise<T> {
   ensureForgeConfigured();
   const payload = await forgeRepository.find<Record<string, unknown>>(table, id);
@@ -157,8 +188,10 @@ async function sql<T = Record<string, unknown>>(query: string): Promise<ForgeSql
 export const dataService = {
   listRows,
   listAll,
+  listAllUnscoped,
   findRow,
   createRow,
+  createRowUnscoped,
   updateRow,
   deleteRow,
   sql,

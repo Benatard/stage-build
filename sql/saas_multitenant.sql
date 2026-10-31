@@ -49,6 +49,7 @@ create table if not exists institutions (
                     'organisme_public', 'autre')),
   status text not null default 'active'
     check (status in ('active', 'essai', 'suspendue', 'archivee')),
+  is_public boolean not null default true,
   email text,
   phone text,
   website text,
@@ -71,6 +72,16 @@ create table if not exists institutions (
 
 create index if not exists institutions_status_idx on institutions(status);
 create index if not exists institutions_type_idx on institutions(type);
+
+-- Visibilite sur la page publique de reservation.
+alter table institutions add column if not exists is_public boolean;
+update institutions
+set is_public = false
+where is_public is null
+  and (slug = 'institution-principale' or code = 'INST-DEFAULT');
+update institutions set is_public = true where is_public is null;
+alter table institutions alter column is_public set default true;
+alter table institutions alter column is_public set not null;
 
 -- Répare les institutions créées par une version antérieure du schéma.
 update institutions
@@ -225,11 +236,11 @@ create table if not exists platform_settings (
 -- 4. DONNÉES DE DÉMARRAGE
 -- ---------------------------------------------------------------------
 insert into institutions (
-  name, slug, code, type, status, email, city, country, currency, locale
+  name, slug, code, type, status, is_public, email, city, country, currency, locale
 )
 values (
   'Institution principale', 'institution-principale', 'INST-DEFAULT',
-  'centre_formation', 'active', null, null, 'RDC', 'CDF', 'fr'
+  'centre_formation', 'active', false, null, null, 'RDC', 'CDF', 'fr'
 )
 on conflict (slug) do nothing;
 

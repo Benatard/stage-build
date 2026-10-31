@@ -5,6 +5,8 @@ import {
   FiCheckCircle,
   FiEdit2,
   FiExternalLink,
+  FiEye,
+  FiEyeOff,
   FiPauseCircle,
   FiPlus,
   FiUsers,
@@ -13,7 +15,7 @@ import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
-import { Field, Input, Select, Textarea } from '@/components/ui/Form';
+import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { INSTITUTION_STATUS_OPTIONS, INSTITUTION_TYPE_OPTIONS, optionLabel } from '@/config/options';
@@ -38,6 +40,7 @@ type InstitutionDraft = {
   code: string;
   type: InstitutionType;
   status: InstitutionStatus;
+  is_public: boolean;
   email: string;
   phone: string;
   website: string;
@@ -62,6 +65,7 @@ const emptyDraft: InstitutionDraft = {
   code: '',
   type: 'centre_formation',
   status: 'active',
+  is_public: true,
   email: '',
   phone: '',
   website: '',
@@ -135,6 +139,7 @@ export default function InstitutionsPage() {
       code: institution.code ?? '',
       type: institution.type ?? 'centre_formation',
       status: institution.status ?? 'active',
+      is_public: institution.is_public !== false,
       email: institution.email ?? '',
       phone: institution.phone ?? '',
       website: institution.website ?? '',
@@ -158,6 +163,7 @@ export default function InstitutionsPage() {
       code: draft.code.trim().toUpperCase(),
       type: draft.type,
       status: draft.status,
+      is_public: draft.is_public,
       email: draft.email.trim() || null,
       phone: draft.phone.trim() || null,
       website: draft.website.trim() || null,
@@ -254,6 +260,25 @@ export default function InstitutionsPage() {
     }
   }
 
+  async function togglePublic(institution: Institution) {
+    const nextVisible = institution.is_public === false;
+    setActionId(institution.id);
+    try {
+      await dataService.updateRow<Institution>('institutions', institution.id, {
+        is_public: nextVisible,
+      });
+      notifySuccess(
+        nextVisible ? 'Institution affichée sur /reservation' : 'Institution masquée de /reservation',
+        institution.name,
+      );
+      reload();
+    } catch (toggleError) {
+      notifyError('Mise à jour impossible', getErrorMessage(toggleError));
+    } finally {
+      setActionId(null);
+    }
+  }
+
   async function archive(institution: Institution) {
     const confirmed = await confirmAction({
       title: 'Archiver cette institution ?',
@@ -317,6 +342,16 @@ export default function InstitutionsPage() {
       render: (row) => [row.city, row.country].filter(Boolean).join(', ') || '—',
     },
     {
+      key: 'public',
+      header: 'Réservation',
+      hideBelow: 'md',
+      render: (row) => (
+        <Badge tone={row.is_public === false ? 'neutral' : 'success'}>
+          {row.is_public === false ? 'Masquée' : 'Visible'}
+        </Badge>
+      ),
+    },
+    {
       key: 'status',
       header: 'Statut',
       render: (row) => (
@@ -354,6 +389,28 @@ export default function InstitutionsPage() {
             aria-label="Modifier l’institution"
           >
             <FiEdit2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            disabled={actionId === row.id}
+            onClick={() => void togglePublic(row)}
+            className="flex h-8 w-8 items-center justify-center text-body hover:bg-primary/10 hover:text-primary disabled:opacity-50 dark:text-body-dark"
+            title={
+              row.is_public === false
+                ? 'Afficher sur la page /reservation'
+                : 'Masquer de la page /reservation'
+            }
+            aria-label={
+              row.is_public === false
+                ? 'Afficher sur la page reservation'
+                : 'Masquer de la page reservation'
+            }
+          >
+            {row.is_public === false ? (
+              <FiEye className="h-4 w-4" />
+            ) : (
+              <FiEyeOff className="h-4 w-4" />
+            )}
           </button>
           {row.status !== 'active' ? (
             <button
@@ -515,12 +572,27 @@ export default function InstitutionsPage() {
                   status: event.target.value as InstitutionStatus,
                 }))
               }
-            />
-          </Field>
-          <Field label="Email">
-            <Input
-              type="email"
-              value={draft.email}
+                />
+              </Field>
+              <div className="sm:col-span-2 border border-stroke p-4 dark:border-white/10">
+                <Checkbox
+                  label="Afficher sur la page publique /reservation"
+                  checked={draft.is_public}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      is_public: event.target.checked,
+                    }))
+                  }
+                />
+                <p className="mt-1 text-xs text-body dark:text-body-dark">
+                  Décochez pour masquer cette institution du formulaire public de réservation.
+                </p>
+              </div>
+              <Field label="Email">
+                <Input
+                  type="email"
+                  value={draft.email}
               onChange={(event) =>
                 setDraft((current) => ({ ...current, email: event.target.value }))
               }

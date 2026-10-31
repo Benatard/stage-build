@@ -68,6 +68,7 @@ export type Institution = BaseRow & {
   code: string;
   type: InstitutionType;
   status: InstitutionStatus;
+  is_public?: boolean;
   email?: string | null;
   phone?: string | null;
   website?: string | null;

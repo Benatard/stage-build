@@ -21,6 +21,8 @@ import {
   createReservation,
   isReservationsTableMissing,
   loadAvailability,
+  loadPublicInstitutions,
+  type PublicInstitution,
   type ReservationAvailability,
 } from '@/services/reservation.service';
 import type { Reservation } from '@/types/domain';
@@ -34,6 +36,7 @@ type Draft = {
   date_naissance: string;
   telephone: string;
   email: string;
+  institution_id: string;
   formation_id: string;
   promotion_id: string;
 };
@@ -46,11 +49,16 @@ const emptyDraft: Draft = {
   date_naissance: '',
   telephone: '',
   email: '',
+  institution_id: '',
   formation_id: '',
   promotion_id: '',
 };
 
 export default function ReservationPage() {
+  const [institutions, setInstitutions] = useState<PublicInstitution[]>([]);
+  const [legacyInstitutions, setLegacyInstitutions] = useState(false);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [institutionsError, setInstitutionsError] = useState<string | null>(null);
   const [availability, setAvailability] = useState<ReservationAvailability[]>([]);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [loading, setLoading] = useState(true);
@@ -59,24 +67,30 @@ export default function ReservationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [created, setCreated] = useState<Reservation | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (institutionId?: string) => {
     setLoading(true);
     setLoadError(null);
 
     try {
-      const items = await loadAvailability();
+      const items = await loadAvailability(institutionId);
       setAvailability(items);
 
       setDraft((current) => {
-        if (current.formation_id && current.promotion_id) return current;
+        const sameInstitution = (current.institution_id || '') === (institutionId || '');
+        const currentSeat = items.find(
+          (item) =>
+            item.formation.id === current.formation_id &&
+            item.promotion.id === current.promotion_id,
+        );
+
+        if (sameInstitution && currentSeat) return current;
 
         const first = items.find((item) => item.isOpen);
-        if (!first) return current;
-
         return {
           ...current,
-          formation_id: first.formation.id,
-          promotion_id: first.promotion.id,
+          institution_id: institutionId ?? '',
+          formation_id: first?.formation.id ?? '',
+          promotion_id: first?.promotion.id ?? '',
         };
       });
     } catch (error) {
@@ -92,8 +106,72 @@ export default function ReservationPage() {
   }, []);
 
   useEffect(() => {
-    void load();
+    let active = true;
+
+    void (async () => {
+      setInstitutionsLoading(true);
+
+      try {
+        const catalog = await loadPublicInstitutions();
+        if (!active) return;
+
+        setInstitutions(catalog.institutions);
+        setLegacyInstitutions(catalog.legacy);
+        setInstitutionsError(null);
+
+        if (catalog.legacy) {
+          await load();
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        if (!active) return;
+        setInstitutionsError(
+          getErrorMessage(error, 'Impossible de charger la liste des institutions.'),
+        );
+        setLoading(false);
+      } finally {
+        if (active) setInstitutionsLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, [load]);
+
+  function handleInstitutionChange(institutionId: string) {
+    setAvailability([]);
+    setFormError(null);
+    setDraft((current) => ({
+      ...current,
+      institution_id: institutionId,
+      formation_id: '',
+      promotion_id: '',
+    }));
+
+    if (institutionId) {
+      void load(institutionId);
+    } else {
+      setLoadError(null);
+      setLoading(false);
+    }
+  }
+
+  const institutionOptions = useMemo(
+    () =>
+      institutions.map((institution) => ({
+        value: institution.id,
+        label: [institution.name, institution.city].filter(Boolean).join(' — '),
+      })),
+    [institutions],
+  );
+
+  const selectedInstitution = institutions.find(
+    (institution) => institution.id === draft.institution_id,
+  );
+  const noPublicInstitutions = !legacyInstitutions && institutions.length === 0;
+  const needsInstitution = institutions.length > 0 && !draft.institution_id;
 
   const formations = useMemo(() => {
     const map = new Map<string, ReservationAvailability['formation']>();
@@ -143,6 +221,7 @@ export default function ReservationPage() {
   const canSubmit =
     !submitting &&
     !loadError &&
+    !needsInstitution &&
     Boolean(draft.formation_id) &&
     Boolean(draft.promotion_id) &&
     Boolean(selectedSeat?.isOpen);
@@ -160,12 +239,18 @@ export default function ReservationPage() {
     event.preventDefault();
     setFormError(null);
 
+    if (needsInstitution) {
+      setFormError('Choisissez d’abord l’institution dans laquelle vous souhaitez réserver.');
+      return;
+    }
+
     if (!selectedSeat?.isOpen) {
       setFormError('Sélectionnez une promotion qui dispose encore de places.');
       return;
     }
 
     setSubmitting(true);
+    const institutionId = draft.institution_id;
 
     try {
       const reservation = await createReservation({
@@ -176,13 +261,14 @@ export default function ReservationPage() {
         date_naissance: draft.date_naissance || undefined,
         telephone: draft.telephone,
         email: draft.email,
+        institution_id: institutionId || undefined,
         formation_id: draft.formation_id,
         promotion_id: draft.promotion_id,
       });
 
       setCreated(reservation);
-      setDraft(emptyDraft);
-      setAvailability(await loadAvailability());
+      setDraft({ ...emptyDraft, institution_id: institutionId });
+      setAvailability(await loadAvailability(institutionId || undefined));
     } catch (error) {
       setFormError(getErrorMessage(error));
     } finally {
@@ -220,6 +306,12 @@ export default function ReservationPage() {
               <p className="mt-2 font-mono text-2xl font-extrabold tracking-wide text-primary">
                 {created.reference}
               </p>
+              {created.institution_id && (
+                <p className="mt-3 text-xs font-semibold text-body dark:text-body-dark">
+                  {institutions.find((institution) => institution.id === created.institution_id)
+                    ?.name ?? 'Institution sélectionnée'}
+                </p>
+              )}
             </div>
 
             <div className="mt-7 flex flex-wrap justify-center gap-3">
@@ -256,7 +348,7 @@ export default function ReservationPage() {
           <PageHeader
             eyebrow="Inscriptions"
             title="Réservez votre place en ligne"
-            description="Choisissez une formation et une promotion, puis laissez vos coordonnées. Votre réservation reste en attente jusqu’à sa confirmation par l’administration."
+            description="Choisissez l’institution, puis une formation et une promotion, et laissez vos coordonnées. Votre réservation reste en attente jusqu’à sa confirmation par l’administration."
           />
         </div>
       </section>
@@ -276,7 +368,31 @@ export default function ReservationPage() {
               </div>
             </div>
 
-            {loading ? (
+            {institutionsError && (
+              <div className="mt-6 border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                {institutionsError}
+              </div>
+            )}
+
+            {institutions.length > 0 && (
+              <div className="mt-6">
+                <Field
+                  label="Institution"
+                  required
+                  hint="Choisissez l’établissement dans lequel vous souhaitez réserver une place."
+                >
+                  <Select
+                    required
+                    value={draft.institution_id}
+                    placeholder="Choisir une institution"
+                    options={institutionOptions}
+                    onChange={(event) => handleInstitutionChange(event.target.value)}
+                  />
+                </Field>
+              </div>
+            )}
+
+            {institutionsLoading || loading ? (
               <div className="py-16 text-center text-sm text-body dark:text-body-dark">
                 Chargement des promotions…
               </div>
@@ -286,17 +402,42 @@ export default function ReservationPage() {
                   title="Réservations indisponibles"
                   description={loadError}
                   action={
-                    <Button variant="outline" size="sm" onClick={() => void load()}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void load(draft.institution_id || undefined)}
+                    >
                       Réessayer
                     </Button>
                   }
+                />
+              </div>
+            ) : institutionsError ? null : noPublicInstitutions ? (
+              <div className="mt-6">
+                <EmptyState
+                  title="Aucune institution disponible"
+                  description="Les réservations en ligne ne sont pas ouvertes pour le moment. Contactez l’administration pour connaître les prochaines ouvertures."
+                  action={
+                    <Link to="/" className="btn-outline-root">
+                      Retour à l’accueil
+                    </Link>
+                  }
+                />
+              </div>
+            ) : needsInstitution ? (
+              <div className="mt-6">
+                <EmptyState
+                  title="Choisissez une institution"
+                  description="Sélectionnez d’abord l’institution dans laquelle vous souhaitez réserver. Les formations et promotions affichées dépendent de cette institution."
                 />
               </div>
             ) : !hasOpenPromotions ? (
               <div className="mt-6">
                 <EmptyState
                   title="Aucune promotion ouverte"
-                  description="Aucune place n’est actuellement proposée en ligne. Contactez l’administration pour connaître les prochaines ouvertures."
+                  description={`Aucune place n’est actuellement proposée en ligne${
+                    selectedInstitution ? ` par ${selectedInstitution.name}` : ''
+                  }. Contactez l’administration pour connaître les prochaines ouvertures.`}
                   action={
                     <Link to="/" className="btn-outline-root">
                       Retour à l’accueil
@@ -483,9 +624,20 @@ export default function ReservationPage() {
                 </Badge>
               </div>
 
+              {selectedInstitution && (
+                <p className="mt-2 text-xs font-semibold text-body dark:text-body-dark">
+                  {selectedInstitution.name}
+                  {selectedInstitution.city ? ` · ${selectedInstitution.city}` : ''}
+                </p>
+              )}
+
               {selectedPromotions.length === 0 ? (
                 <p className="mt-4 text-sm text-body dark:text-body-dark">
-                  Sélectionnez une formation pour voir les promotions ouvertes.
+                  {noPublicInstitutions
+                    ? 'Aucune institution n’est ouverte aux réservations en ligne.'
+                    : needsInstitution
+                      ? 'Choisissez une institution pour voir les formations et promotions ouvertes.'
+                      : 'Sélectionnez une formation pour voir les promotions ouvertes.'}
                 </p>
               ) : (
                 <div className="mt-4 space-y-3">

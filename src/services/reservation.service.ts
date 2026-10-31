@@ -1,5 +1,7 @@
+import { saasConfig } from '@/config/env';
 import { dataService } from '@/services/data.service';
 import { authService } from '@/services/auth.service';
+import { isTenantColumnError } from '@/services/tenant';
 import type {
   Formation,
   Inscription,
@@ -17,7 +19,16 @@ type SeatRow = {
   status: string;
 };
 
+export type PublicInstitution = {
+  id: string;
+  name: string;
+  code?: string | null;
+  city?: string | null;
+  country?: string | null;
+};
+
 export type ReservationAvailability = {
+  institution_id: string | null;
   formation: Formation;
   promotion: Promotion;
   capacity: number | null;
@@ -35,6 +46,7 @@ export type PublicReservationInput = {
   date_naissance?: string;
   telephone: string;
   email: string;
+  institution_id?: string;
   formation_id: string;
   promotion_id: string;
 };
@@ -93,14 +105,140 @@ async function countWhere(table: string, column: string, value: string): Promise
   return Number(rows[0]?.[0] ?? 0);
 }
 
-async function readSeatRows(table: 'reservations' | 'inscriptions'): Promise<SeatRow[]> {
-  const rows = await sqlRows(`select promotion_id, status from ${table}`);
+async function sqlRowsWithTenantFallback(
+  primary: string,
+  fallback: string,
+): Promise<SqlTuple[]> {
+  try {
+    return await sqlRows(primary);
+  } catch (error) {
+    if (!isTenantColumnError(error)) throw error;
+    return sqlRows(fallback);
+  }
+}
+
+function rowInstitutionMatches(value: unknown, institutionId?: string | null): boolean {
+  if (!institutionId) return true;
+  if (typeof value !== 'string') return true;
+  return value === institutionId;
+}
+
+export type PublicInstitutionCatalog = {
+  institutions: PublicInstitution[];
+  legacy: boolean;
+};
+
+const HIDDEN_INSTITUTION_CODE = 'INST-DEFAULT';
+
+function isPublicInstitutionValue(value: unknown): boolean {
+  if (value === false || value === 0) return false;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized !== 'false' && normalized !== 'f' && normalized !== '0';
+  }
+  return true;
+}
+
+export async function loadPublicInstitutions(): Promise<PublicInstitutionCatalog> {
+  const queries: Array<{ sql: string; hasPublicColumn: boolean }> = [
+    {
+      sql: 'select id, name, code, city, country, status, slug, is_public from institutions',
+      hasPublicColumn: true,
+    },
+    {
+      sql: 'select id, name, code, city, country, slug, is_public from institutions',
+      hasPublicColumn: true,
+    },
+    {
+      sql: 'select id, name, code, city, country, is_public from institutions',
+      hasPublicColumn: true,
+    },
+    {
+      sql: 'select id, name, code, city, country, status, slug from institutions',
+      hasPublicColumn: false,
+    },
+    {
+      sql: 'select id, name, code, city, country, slug from institutions',
+      hasPublicColumn: false,
+    },
+    {
+      sql: 'select id, name, code, city, country from institutions',
+      hasPublicColumn: false,
+    },
+  ];
+
+  let rows: SqlTuple[] | null = null;
+  let hasPublicColumn = false;
+  let lastError: unknown = null;
+
+  for (const query of queries) {
+    try {
+      rows = await sqlRows(query.sql);
+      hasPublicColumn = query.hasPublicColumn;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (isInstitutionsTableMissing(error)) {
+        return { institutions: [], legacy: true };
+      }
+    }
+  }
+
+  if (!rows) throw lastError ?? new Error('Impossible de charger les institutions.');
+
+  const hiddenSlug = saasConfig.defaultInstitutionSlug.trim().toLowerCase();
+
+  const institutions = rows
+    .map(([id, name, code, city, country, status, slug, isPublic]) => ({
+      id: typeof id === 'string' ? id : '',
+      name: typeof name === 'string' ? name : '',
+      code: typeof code === 'string' ? code : null,
+      city: typeof city === 'string' ? city : null,
+      country: typeof country === 'string' ? country : null,
+      status: typeof status === 'string' ? status : 'active',
+      slug: typeof slug === 'string' ? slug : null,
+      isPublic: hasPublicColumn ? isPublicInstitutionValue(isPublic) : null,
+    }))
+    .filter(
+      (institution) =>
+        institution.id &&
+        institution.name &&
+        (institution.status === 'active' || institution.status === 'essai'),
+    )
+    .filter((institution) =>
+      institution.isPublic === null
+        ? institution.code !== HIDDEN_INSTITUTION_CODE &&
+          (!institution.slug || institution.slug.toLowerCase() !== hiddenSlug)
+        : institution.isPublic,
+    )
+    .sort((left, right) => left.name.localeCompare(right.name, 'fr'))
+    .map(({ status: _status, slug: _slug, isPublic: _isPublic, ...institution }) => institution);
+
+  return { institutions, legacy: false };
+}
+
+async function readSeatRows(
+  table: 'reservations' | 'inscriptions',
+  institutionId?: string,
+): Promise<SeatRow[]> {
+  const rows = await sqlRowsWithTenantFallback(
+    `select promotion_id, status, institution_id from ${table}`,
+    `select promotion_id, status from ${table}`,
+  );
+
   return rows
-    .map(([promotionId, status]) => ({
+    .map(([promotionId, status, rowInstitution]) => ({
       promotion_id: typeof promotionId === 'string' ? promotionId : '',
       status: typeof status === 'string' ? status : '',
+      institution_id: typeof rowInstitution === 'string' ? rowInstitution : null,
     }))
-    .filter((row) => row.promotion_id && row.status);
+    .filter(
+      (row) =>
+        row.promotion_id &&
+        row.status &&
+        rowInstitutionMatches(row.institution_id, institutionId),
+    )
+    .map(({ institution_id: _institutionId, ...row }) => row);
 }
 
 function computeAvailability(
@@ -138,6 +276,7 @@ function computeAvailability(
       const available = capacity === null ? null : Math.max(capacity - used - pending, 0);
 
       return {
+        institution_id: formation.institution_id ?? promotion.institution_id ?? null,
         formation,
         promotion,
         capacity,
@@ -150,8 +289,8 @@ function computeAvailability(
     .filter((item): item is ReservationAvailability => item !== null)
     .sort(
       (left, right) =>
-        left.formation.name.localeCompare(right.formation.name, 'fr') ||
-        left.promotion.code.localeCompare(right.promotion.code, 'fr'),
+        (left.formation.name ?? '').localeCompare(right.formation.name ?? '', 'fr') ||
+        (left.promotion.code ?? '').localeCompare(right.promotion.code ?? '', 'fr'),
     );
 }
 
@@ -175,12 +314,15 @@ export function buildAvailability(
   );
 }
 
-export async function loadAvailability(): Promise<ReservationAvailability[]> {
+export async function loadAvailability(
+  institutionId?: string,
+): Promise<ReservationAvailability[]> {
+  const filters = institutionId ? { institution_id: institutionId } : undefined;
   const [formations, promotions, reservationSeats, inscriptionSeats] = await Promise.all([
-    dataService.listAll<Formation>('formations', { order: 'name.asc' }),
-    dataService.listAll<Promotion>('promotions', { order: 'start_date.desc' }),
-    readSeatRows('reservations'),
-    readSeatRows('inscriptions'),
+    dataService.listAllUnscoped<Formation>('formations', { order: 'name.asc', filters }),
+    dataService.listAllUnscoped<Promotion>('promotions', { order: 'start_date.desc', filters }),
+    readSeatRows('reservations', institutionId),
+    readSeatRows('inscriptions', institutionId),
   ]);
 
   return computeAvailability(formations, promotions, inscriptionSeats, reservationSeats);
@@ -222,10 +364,12 @@ export async function createReservation(input: PublicReservationInput): Promise<
     throw new Error('Le sexe sélectionné n’est pas valide.');
   }
 
-  const availability = await loadAvailability();
+  const availability = await loadAvailability(input.institution_id);
   const seat = availability.find(
     (item) =>
-      item.formation.id === input.formation_id && item.promotion.id === input.promotion_id,
+      item.formation.id === input.formation_id &&
+      item.promotion.id === input.promotion_id &&
+      (!input.institution_id || item.institution_id === input.institution_id),
   );
 
   if (!seat) {
@@ -236,14 +380,16 @@ export async function createReservation(input: PublicReservationInput): Promise<
     throw new Error('Cette promotion est complète. Choisissez une autre promotion.');
   }
 
-  const duplicateRows = await sqlRows(
+  const duplicateRows = await sqlRowsWithTenantFallback(
+    `select formation_id, promotion_id, status, institution_id from reservations where email = ${sqlLiteral(email)}`,
     `select formation_id, promotion_id, status from reservations where email = ${sqlLiteral(email)}`,
   );
   const duplicate = duplicateRows.some(
-    ([formationId, promotionId, status]) =>
+    ([formationId, promotionId, status, rowInstitution]) =>
       formationId === input.formation_id &&
       promotionId === input.promotion_id &&
-      (status === 'en_attente' || status === 'confirmee'),
+      (status === 'en_attente' || status === 'confirmee') &&
+      rowInstitutionMatches(rowInstitution, input.institution_id),
   );
 
   if (duplicate) {
@@ -263,7 +409,8 @@ export async function createReservation(input: PublicReservationInput): Promise<
 
   const reference = await nextReference();
 
-  const reservation = await dataService.createRow<Reservation>('reservations', {
+  const institutionId = input.institution_id ?? seat.institution_id ?? null;
+  const reservation = await dataService.createRowUnscoped<Reservation>('reservations', {
     reference,
     nom,
     postnom: input.postnom?.trim() || null,
@@ -272,6 +419,7 @@ export async function createReservation(input: PublicReservationInput): Promise<
     date_naissance: input.date_naissance || null,
     telephone,
     email,
+    ...(institutionId ? { institution_id: institutionId } : {}),
     formation_id: input.formation_id,
     promotion_id: input.promotion_id,
     status: 'en_attente',
@@ -312,11 +460,15 @@ async function nextMatricule(): Promise<string> {
 
 async function findStagiaireByEmail(
   email: string,
+  institutionId?: string | null,
 ): Promise<{ id: string; statut: string } | null> {
-  const rows = await sqlRows(
+  const rows = await sqlRowsWithTenantFallback(
+    `select id, statut, institution_id from stagiaires where email = ${sqlLiteral(email)}`,
     `select id, statut from stagiaires where email = ${sqlLiteral(email)}`,
   );
-  const row = rows[0];
+  const row = rows.find((candidate) =>
+    rowInstitutionMatches(candidate[2], institutionId),
+  );
 
   if (!row?.[0]) return null;
 
@@ -412,7 +564,10 @@ export async function confirmReservation(
 
   try {
     if (!stagiaireId) {
-      const existingStagiaire = await findStagiaireByEmail(currentReservation.email);
+      const existingStagiaire = await findStagiaireByEmail(
+        currentReservation.email,
+        currentReservation.institution_id,
+      );
 
       if (existingStagiaire) {
         if (existingStagiaire.statut === 'archive') {
@@ -422,6 +577,9 @@ export async function confirmReservation(
       } else {
         const matricule = await nextMatricule();
         const stagiaire = await dataService.createRow<Stagiaire>('stagiaires', {
+          ...(currentReservation.institution_id
+            ? { institution_id: currentReservation.institution_id }
+            : {}),
           matricule,
           nom: currentReservation.nom,
           postnom: currentReservation.postnom ?? null,
@@ -455,6 +613,9 @@ export async function confirmReservation(
         inscriptionId = existingInscription.id;
       } else {
         const inscription = await dataService.createRow<Inscription>('inscriptions', {
+          ...(currentReservation.institution_id
+            ? { institution_id: currentReservation.institution_id }
+            : {}),
           stagiaire_id: stagiaireId,
           formation_id: currentReservation.formation_id,
           promotion_id: currentReservation.promotion_id,
@@ -496,6 +657,7 @@ export async function confirmReservation(
           role: 'stagiaire',
           statut: 'active',
           stagiaire_id: stagiaireId,
+          institution_id: currentReservation.institution_id ?? null,
         });
         const createdId = account?.id ? String(account.id) : '';
 
@@ -561,6 +723,19 @@ export async function confirmReservation(
 
     throw error;
   }
+}
+
+function isInstitutionsTableMissing(error: unknown): boolean {
+  const message = getErrorMessage(error).toLowerCase();
+  return (
+    message.includes('institutions') &&
+    (message.includes('does not exist') ||
+      message.includes('n’existe pas') ||
+      message.includes("n'existe pas") ||
+      message.includes('not found') ||
+      message.includes('introuvable') ||
+      message.includes('relation'))
+  );
 }
 
 export function isReservationsTableMissing(error: unknown): boolean {
