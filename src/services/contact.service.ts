@@ -13,5 +13,6 @@ export async function sendContactMessage(input: ContactMessageInput): Promise<vo
     nom: input.nom.trim(),
     email: input.email.trim(),
     message: input.message.trim(),
+    status: 'nouveau',
   });
 }

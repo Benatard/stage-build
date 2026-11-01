@@ -45,6 +45,7 @@ import TravauxPage from '@/pages/app/TravauxPage';
 import UsersPage from '@/pages/app/UsersPage';
 import LoginPage from '@/pages/auth/LoginPage';
 import InstitutionsPage from '@/pages/app/platform/InstitutionsPage';
+import ContactMessagesPage from '@/pages/app/platform/ContactMessagesPage';
 import PlatformPlansPage from '@/pages/app/platform/PlatformPlansPage';
 import PlatformDashboardPage from '@/pages/app/platform/PlatformDashboardPage';
 import PlatformSettingsPage from '@/pages/app/platform/PlatformSettingsPage';
@@ -103,6 +104,14 @@ const appRoutes: RouteObject[] = [
     element: (
       <PermissionRoute permission="platform_institutions">
         <InstitutionsPage />
+      </PermissionRoute>
+    ),
+  },
+  {
+    path: 'plateforme/messages',
+    element: (
+      <PermissionRoute permission="platform_messages">
+        <ContactMessagesPage />
       </PermissionRoute>
     ),
   },

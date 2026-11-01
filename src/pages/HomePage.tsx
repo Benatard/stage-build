@@ -155,7 +155,7 @@ export default function HomePage() {
               <Link to="/login" className="btn-primary-root">
                 Accéder à la plateforme <FiLock className="h-4 w-4" />
               </Link>
-              <a href={contactHref} className="btn-outline-root">
+              <a href="#contact" className="btn-outline-root">
                 Nous contacter <FiMail className="h-4 w-4" />
               </a>
               <a href="#modules" className="btn-outline-root">
@@ -351,19 +351,19 @@ export default function HomePage() {
           </div>
 
           <Reveal delay={180}>
-            <div className="mt-8 overflow-hidden border border-stroke bg-white shadow-card dark:border-white/10 dark:bg-[#1E232E]">
+            <div id="contact" className="mt-8 overflow-hidden border border-stroke bg-white shadow-card dark:border-white/10 dark:bg-[#1E232E]">
               <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
                 <div className="p-7 md:p-10">
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
                     Contact
                   </p>
                   <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-black dark:text-white md:text-3xl">
-                    Parlez-nous de votre projet.
+                    Parlez-nous de votre organisations.
                   </h3>
-                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-body dark:text-body-dark">
+                  {/* <p className="mt-2 max-w-xl text-sm leading-relaxed text-body dark:text-body-dark">
                     Vous lancez un projet ou améliorez un produit existant ? Partagez votre idée,
                     votre défi ou vos délais pour en discuter ensemble.
-                  </p>
+                  </p> */}
 
                   <form onSubmit={handleContactSubmit} className="mt-7 space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">

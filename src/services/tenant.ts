@@ -49,6 +49,7 @@ const GLOBAL_TABLES = new Set<string>([
   'institution_subscriptions',
   'membership_roles',
   'platform_settings',
+  'contact_messages',
 ]);
 
 let currentInstitutionId: string | null = null;

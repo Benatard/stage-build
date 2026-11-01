@@ -86,6 +86,17 @@ export type Institution = BaseRow & {
   trial_ends_at?: string | null;
 };
 
+export type ContactMessageStatus = 'nouveau' | 'lu' | 'traite' | 'archive';
+
+export type ContactMessage = BaseRow & {
+  nom: string;
+  email: string;
+  message: string;
+  status?: ContactMessageStatus;
+  handled_at?: string | null;
+  handled_by?: string | null;
+};
+
 export type SaasPlan = BaseRow & {
   code: string;
   name: string;

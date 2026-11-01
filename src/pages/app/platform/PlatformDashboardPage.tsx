@@ -6,6 +6,7 @@ import {
   FiBriefcase,
   FiCheckCircle,
   FiCreditCard,
+  FiInbox,
   FiLayers,
   FiSettings,
   FiTrendingUp,
@@ -126,6 +127,7 @@ export default function PlatformDashboardPage() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {[
               { label: 'Institutions', path: '/app/plateforme/institutions', icon: FiBriefcase },
+              { label: 'Messages de contact', path: '/app/plateforme/messages', icon: FiInbox },
               { label: 'Plans & abonnements', path: '/app/plateforme/plans', icon: FiCreditCard },
               { label: 'Paramètres plateforme', path: '/app/plateforme/parametres', icon: FiSettings },
               { label: 'Utilisateurs globaux', path: '/app/utilisateurs', icon: FiUsers },

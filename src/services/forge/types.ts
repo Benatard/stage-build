@@ -5,6 +5,7 @@ export type ForgeListFilter = string | number | boolean;
 export type ForgeListParams = {
   limit?: number;
   offset?: number;
+  page?: number;
   order?: string;
   filters?: Record<string, ForgeListFilter | null | undefined>;
 };
@@ -12,6 +13,9 @@ export type ForgeListParams = {
 export type ForgeListResult<T> = {
   rows: T[];
   total?: number;
+  page?: number;
+  totalPages?: number;
+  hasMore?: boolean;
 };
 
 export type ForgeCredentials = {

@@ -15,6 +15,7 @@ function cleanListParams(params: ForgeListParams = {}): Record<string, string | 
   const output: Record<string, string | number | boolean> = {};
 
   if (params.limit !== undefined) output.limit = Math.min(Math.max(params.limit, 1), LIST_PAGE_SIZE);
+  if (params.page !== undefined) output.page = Math.max(params.page, 1);
   if (params.offset !== undefined) output.offset = params.offset;
   if (params.order !== undefined) output.order = params.order;
 
@@ -77,11 +78,17 @@ function normalizeList<T>(payload: unknown): ForgeListResult<T> {
   const pagination = asRecord(record.pagination);
   const totalValue = pagination?.total ?? record.total ?? record.count;
   const total = typeof totalValue === 'number' ? totalValue : undefined;
+  const pageValue = pagination?.page ?? record.page;
+  const page = typeof pageValue === 'number' ? pageValue : undefined;
+  const totalPagesValue = pagination?.totalPages ?? record.totalPages;
+  const totalPages = typeof totalPagesValue === 'number' ? totalPagesValue : undefined;
+  const hasMoreValue = pagination?.hasMore ?? record.hasMore;
+  const hasMore = typeof hasMoreValue === 'boolean' ? hasMoreValue : undefined;
 
   for (const key of ['data', 'rows', 'items', 'results']) {
     const candidate = record[key];
     if (Array.isArray(candidate)) {
-      return { rows: flattenForgeRows(candidate) as T[], total };
+      return { rows: flattenForgeRows(candidate) as T[], total, page, totalPages, hasMore };
     }
 
     const nested = asRecord(candidate);
@@ -89,13 +96,19 @@ function normalizeList<T>(payload: unknown): ForgeListResult<T> {
       for (const nestedKey of ['rows', 'items', 'results']) {
         const nestedCandidate = nested[nestedKey];
         if (Array.isArray(nestedCandidate)) {
-          return { rows: flattenForgeRows(nestedCandidate) as T[], total };
+          return {
+            rows: flattenForgeRows(nestedCandidate) as T[],
+            total,
+            page,
+            totalPages,
+            hasMore,
+          };
         }
       }
     }
   }
 
-  return { rows: [], total };
+  return { rows: [], total, page, totalPages, hasMore };
 }
 
 async function list<T extends object>(
@@ -116,10 +129,16 @@ async function list<T extends object>(
   );
   const offset = Math.max(params.offset ?? 0, 0);
   const limit = params.limit !== undefined ? Math.min(Math.max(params.limit, 1), LIST_PAGE_SIZE) : undefined;
+  const page = params.page !== undefined ? Math.max(params.page, 1) : Math.floor(offset / (limit ?? LIST_PAGE_SIZE)) + 1;
+  const totalPages =
+    limit !== undefined ? Math.max(Math.ceil(rows.length / limit), 1) : undefined;
 
   return {
     rows: limit === undefined ? rows.slice(offset) : rows.slice(offset, offset + limit),
     total: rows.length,
+    page,
+    totalPages,
+    hasMore: limit !== undefined ? offset + limit < rows.length : false,
   };
 }
 

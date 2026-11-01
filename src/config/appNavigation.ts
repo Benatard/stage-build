@@ -64,6 +64,12 @@ export const platformNavigation: AppNavGroup[] = [
         permission: 'platform_institutions',
       },
       {
+        label: 'Messages de contact',
+        path: '/app/plateforme/messages',
+        icon: FiInbox,
+        permission: 'platform_messages',
+      },
+      {
         label: 'Plans & abonnements',
         path: '/app/plateforme/plans',
         icon: FiLayers,

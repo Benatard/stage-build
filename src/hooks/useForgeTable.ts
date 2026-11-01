@@ -8,13 +8,14 @@ type UseForgeTableOptions = {
   order?: string;
   limit?: number;
   enabled?: boolean;
+  all?: boolean;
 };
 
 export function useForgeTable<T extends { id: string }>(
   table: string,
   options: UseForgeTableOptions = {},
 ) {
-  const { filters, order, limit = 200, enabled = true } = options;
+  const { filters, order, limit = 200, enabled = true, all = false } = options;
   const filterKey = useMemo(() => JSON.stringify(filters ?? {}), [filters]);
   const stableFilters = useMemo(() => filters ?? {}, [filterKey]);
   const [rows, setRows] = useState<T[]>([]);
@@ -39,8 +40,11 @@ export function useForgeTable<T extends { id: string }>(
       filters: stableFilters,
     };
 
-    dataService
-      .listRows<T>(table, params)
+    const request = all
+      ? dataService.listAll<T>(table, { order, filters: stableFilters })
+      : dataService.listRows<T>(table, params);
+
+    request
       .then((result) => {
         if (!active) return;
         setRows(result);
@@ -58,7 +62,7 @@ export function useForgeTable<T extends { id: string }>(
     return () => {
       active = false;
     };
-  }, [table, limit, order, filterKey, enabled, revision, stableFilters]);
+  }, [table, limit, order, filterKey, enabled, all, revision, stableFilters]);
 
   const reload = useCallback(() => setRevision((value) => value + 1), []);
 
