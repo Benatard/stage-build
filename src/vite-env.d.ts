@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_FORGE_API_URL?: string;
   readonly VITE_FORGE_PROJECT_KEY?: string;
   readonly VITE_FORGE_API_KEY?: string;
+  readonly VITE_FORGE_CONTACT_TABLE?: string;
 }
 
 interface ImportMeta {

@@ -25,6 +25,7 @@ import {
   FiList,
   FiLock,
   FiMessageSquare,
+  FiPlus,
   FiSearch,
   FiShield,
   FiTarget,
@@ -56,6 +57,11 @@ export type RoleProfile = {
   icon: IconType;
   role: string;
   description: string;
+};
+
+export type OrganisationProfile = {
+  icon: IconType;
+  label: string;
 };
 
 export type ModuleItem = {
@@ -181,6 +187,20 @@ export const roleProfiles: RoleProfile[] = [
     role: 'Stagiaire',
     description: 'Consulte sa progression, ses évaluations, ses documents et son bulletin final.',
   },
+];
+
+export const organisations: OrganisationProfile[] = [
+  { icon: FiBriefcase, label: 'Entreprises' },
+  { icon: FiActivity, label: 'Hôpitaux' },
+  { icon: FiBookOpen, label: 'Centres de formation' },
+  { icon: FiBook, label: 'Écoles' },
+  { icon: FiAward, label: 'Universités' },
+  { icon: FiHeart, label: 'ONG' },
+  { icon: FiShield, label: 'Institutions publiques' },
+  { icon: FiLayers, label: 'Cabinets' },
+  { icon: FiUsers, label: 'Associations' },
+  { icon: FiTarget, label: 'Organisations professionnelles' },
+  { icon: FiPlus, label: 'Autres structures accueillant ou encadrant des stagiaires' },
 ];
 
 export const moduleGroups: ModuleGroup[] = [

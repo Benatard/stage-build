@@ -14,6 +14,7 @@ export const publicRoutes: NavItem[] = [
 ];
 
 export const publicAnchors: AnchorItem[] = [
+  { href: '/#organisations', label: 'Organisations' },
   { href: '/#modules', label: 'Modules' },
   { href: '/#parcours', label: 'Parcours' },
   { href: '/#profils', label: 'Profils' },

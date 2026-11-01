@@ -6,6 +6,18 @@ export const company = {
     "Plateforme de gestion et de suivi des stagiaires : dossier centralisé, formations, présences, évaluations, compétences, bulletins et pilotage pédagogique.",
 } as const;
 
+export const contact = {
+  email: 'contact@stagebuild.app',
+  whatsapp: {
+    label: '+90 548 840 22 04',
+    href: 'https://wa.me/905488402204',
+  },
+  phone: {
+    label: '+243 817 12 20 86',
+    href: 'tel:+243817122086',
+  },
+} as const;
+
 export const siteMeta = {
   title: 'StageBuild — Gestion et suivi des stagiaires',
   description:

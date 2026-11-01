@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FiArrowRight,
@@ -7,22 +7,30 @@ import {
   FiClipboard,
   FiFolder,
   FiLock,
+  FiMail,
+  FiMessageCircle,
+  FiPhone,
   FiShield,
   FiTrendingUp,
   FiUsers,
   FiX,
 } from 'react-icons/fi';
+import { Button } from '@/components/ui/Button';
+import { Field, Input, Textarea } from '@/components/ui/Form';
 import { PageMeta } from '@/components/ui/PageMeta';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionTitle } from '@/components/ui/SectionTitle';
+import { contact } from '@/config/site';
+import { sendContactMessage } from '@/services/contact.service';
 import {
   landingStats,
   lifecycleSteps,
   moduleGroups,
+  organisations,
   pillars,
   roleProfiles,
 } from '@/data/landing';
-import { cn } from '@/utils/format';
+import { cn, getErrorMessage } from '@/utils/format';
 
 const problems = [
   'Feuilles de présence dispersées',
@@ -38,15 +46,68 @@ const outcomes = [
   'Un historique complet et traçable',
 ];
 
+const contactHref = `mailto:${contact.email}?subject=${encodeURIComponent(
+  'Création de mon espace de travail StageBuild',
+)}&body=${encodeURIComponent(
+  [
+    'Bonjour,',
+    '',
+    'Nous souhaitons créer un espace de travail pour notre organisation.',
+    '',
+    'Organisation :',
+    'Type de structure :',
+    'Nom du contact :',
+    'Téléphone :',
+    '',
+    'Merci.',
+  ].join('\n'),
+)}`;
+
+type ContactDraft = {
+  nom: string;
+  email: string;
+  message: string;
+};
+
+const emptyContactDraft: ContactDraft = {
+  nom: '',
+  email: '',
+  message: '',
+};
+
 export default function HomePage() {
   const [activeGroupId, setActiveGroupId] = useState(moduleGroups[0].id);
   const activeGroup = moduleGroups.find((group) => group.id === activeGroupId) ?? moduleGroups[0];
+  const [contactDraft, setContactDraft] = useState<ContactDraft>(emptyContactDraft);
+  const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>(
+    'idle',
+  );
+  const [contactError, setContactError] = useState<string | null>(null);
+
+  async function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (contactStatus === 'sending') return;
+
+    setContactError(null);
+    setContactStatus('sending');
+
+    try {
+      await sendContactMessage(contactDraft);
+      setContactDraft(emptyContactDraft);
+      setContactStatus('sent');
+    } catch (error) {
+      setContactStatus('error');
+      setContactError(
+        getErrorMessage(error, 'Impossible d’envoyer le message pour le moment.'),
+      );
+    }
+  }
 
   return (
     <div>
       <PageMeta
         title="Gestion et suivi des stagiaires"
-        description="StageBuild centralise le dossier stagiaire, les formations, les présences, les évaluations, les compétences, les bulletins et le pilotage pédagogique."
+        description="StageBuild permet aux organisations indépendantes de réunir le dossier stagiaire, les formations, les présences, les évaluations, les compétences, les bulletins et le pilotage pédagogique."
       />
 
       <section className="relative overflow-hidden bg-white dark:bg-gray-dark">
@@ -84,21 +145,22 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-[600px] text-base leading-relaxed text-body dark:text-body-dark md:text-lg">
-              StageBuild réunit dans une seule plateforme le dossier du stagiaire, les formations,
-              les présences, les évaluations, les compétences, les bulletins et le pilotage
-              pédagogique. Chaque information devient consultable, validable et traçable.
+              La plateforme permet aux organisations indépendantes de réunir le dossier du
+              stagiaire, les formations, les présences, les évaluations, les compétences, les
+              bulletins et le pilotage pédagogique. Chaque information devient consultable,
+              validable et traçable.
             </p>
 
             <div className="mt-9 flex flex-wrap gap-4">
               <Link to="/login" className="btn-primary-root">
                 Accéder à la plateforme <FiLock className="h-4 w-4" />
               </Link>
+              <a href={contactHref} className="btn-outline-root">
+                Nous contacter <FiMail className="h-4 w-4" />
+              </a>
               <a href="#modules" className="btn-outline-root">
                 Découvrir les modules <FiArrowRight className="h-4 w-4" />
               </a>
-              <Link to="/reservation" className="btn-outline-root">
-                Réserver une place <FiArrowRight className="h-4 w-4" />
-              </Link>
             </div>
 
             <ul className="mt-9 grid gap-3 text-sm text-body dark:text-body-dark sm:grid-cols-3">
@@ -261,6 +323,180 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section
+        id="organisations"
+        className="scroll-mt-24 border-b border-stroke bg-gray-50 dark:border-white/10 dark:bg-[#161B24]"
+      >
+        <div className="page-container py-16 md:py-24">
+          <SectionTitle
+            eyebrow="Pour qui ?"
+            title="Un espace de travail pour chaque organisation indépendante"
+            sub="La plateforme permet aux organisations indépendantes de réunir le dossier du stagiaire, les formations, les présences, les évaluations, les compétences, les bulletins et le pilotage pédagogique. Chaque information devient consultable, validable et traçable."
+          />
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {organisations.map(({ icon: Icon, label }, index) => (
+              <Reveal key={label} delay={(index % 3) * 60}>
+                <div className="flex h-full items-center gap-3 border border-stroke bg-white px-5 py-4 dark:border-white/10 dark:bg-[#1E232E]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-semibold text-black dark:text-white">{label}</span>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={180}>
+            <div className="mt-8 overflow-hidden border border-stroke bg-white shadow-card dark:border-white/10 dark:bg-[#1E232E]">
+              <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                <div className="p-7 md:p-10">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                    Contact
+                  </p>
+                  <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-black dark:text-white md:text-3xl">
+                    Parlez-nous de votre projet.
+                  </h3>
+                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-body dark:text-body-dark">
+                    Vous lancez un projet ou améliorez un produit existant ? Partagez votre idée,
+                    votre défi ou vos délais pour en discuter ensemble.
+                  </p>
+
+                  <form onSubmit={handleContactSubmit} className="mt-7 space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Votre nom" required>
+                        <Input
+                          value={contactDraft.nom}
+                          onChange={(event) =>
+                            setContactDraft((current) => ({
+                              ...current,
+                              nom: event.target.value,
+                            }))
+                          }
+                          placeholder="Votre nom complet"
+                          autoComplete="name"
+                          required
+                        />
+                      </Field>
+                      <Field label="Votre email" required>
+                        <Input
+                          type="email"
+                          value={contactDraft.email}
+                          onChange={(event) =>
+                            setContactDraft((current) => ({
+                              ...current,
+                              email: event.target.value,
+                            }))
+                          }
+                          placeholder="vous@organisation.com"
+                          autoComplete="email"
+                          required
+                        />
+                      </Field>
+                    </div>
+
+                    <Field label="Message" required>
+                      <Textarea
+                        rows={5}
+                        value={contactDraft.message}
+                        onChange={(event) =>
+                          setContactDraft((current) => ({
+                            ...current,
+                            message: event.target.value,
+                          }))
+                        }
+                        placeholder="Décrivez votre projet, votre besoin ou vos délais."
+                        required
+                      />
+                    </Field>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <Button type="submit" loading={contactStatus === 'sending'}>
+                        Envoyer le message <FiArrowRight className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-body dark:text-body-dark">
+                        Nous répondons généralement sous 24 h.
+                      </span>
+                    </div>
+
+                    {contactStatus === 'sent' && (
+                      <div className="flex items-start gap-2 border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                        <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                        Votre message a bien été envoyé. Nous vous répondons sous 24 h.
+                      </div>
+                    )}
+
+                    {contactStatus === 'error' && (
+                      <div className="border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+                        <p className="font-semibold">L’envoi automatique a échoué.</p>
+                        <p className="mt-1">{contactError}</p>
+                        <a
+                          href={contactHref}
+                          className="mt-2 inline-flex items-center gap-1.5 font-bold underline"
+                        >
+                          Nous écrire directement <FiMail className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    )}
+                  </form>
+                </div>
+
+                <div className="border-t border-stroke bg-gray-50 p-7 dark:border-white/10 dark:bg-[#161B24] md:p-10 lg:border-l lg:border-t-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-body dark:text-body-dark">
+                    Nous joindre
+                  </p>
+
+                  <div className="mt-4 space-y-3">
+                    <a
+                      href={contact.whatsapp.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group flex items-center gap-3 border border-stroke bg-white px-4 py-4 transition-colors hover:border-primary/40 dark:border-white/10 dark:bg-[#1E232E]"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+                        <FiMessageCircle className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[10px] font-bold uppercase tracking-wide text-body dark:text-body-dark">
+                          WhatsApp
+                        </span>
+                        <span className="mt-0.5 block text-sm font-bold text-black dark:text-white">
+                          {contact.whatsapp.label}
+                        </span>
+                      </span>
+                      <FiArrowRight className="h-4 w-4 text-primary" />
+                    </a>
+
+                    <a
+                      href={contact.phone.href}
+                      className="group flex items-center gap-3 border border-stroke bg-white px-4 py-4 transition-colors hover:border-primary/40 dark:border-white/10 dark:bg-[#1E232E]"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
+                        <FiPhone className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[10px] font-bold uppercase tracking-wide text-body dark:text-body-dark">
+                          Appel
+                        </span>
+                        <span className="mt-0.5 block text-sm font-bold text-black dark:text-white">
+                          {contact.phone.label}
+                        </span>
+                      </span>
+                      <FiArrowRight className="h-4 w-4 text-primary" />
+                    </a>
+                  </div>
+
+                  <div className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-body dark:text-body-dark">
+                    <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                    Nous répondons généralement sous 24 h.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
