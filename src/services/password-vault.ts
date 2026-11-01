@@ -26,6 +26,14 @@ export function getRememberedPassword(
   return recentPasswords.get(userId);
 }
 
+export function hasRememberedPassword(
+  owner: string | null | undefined,
+  userId: string,
+): boolean {
+  ensureOwner(owner);
+  return recentPasswords.has(userId);
+}
+
 export function forgetRememberedPassword(
   owner: string | null | undefined,
   userId: string,

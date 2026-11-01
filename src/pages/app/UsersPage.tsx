@@ -28,6 +28,7 @@ import { dataService } from '@/services/data.service';
 import {
   forgetRememberedPassword,
   getRememberedPassword,
+  hasRememberedPassword,
   rememberPassword,
 } from '@/services/password-vault';
 import { generateTemporaryPassword, updateUserPassword } from '@/services/user.service';
@@ -114,7 +115,12 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export default function UsersPage() {
-  const { user: currentUser, activeInstitutionId } = useAuth();
+  const {
+    user: currentUser,
+    activeInstitutionId,
+    activeInstitution,
+    isSupraAdmin,
+  } = useAuth();
   const { data } = useReferenceData();
   const { rows: users, loading, error, reload } = useForgeTable<User>('users', {
     order: 'last_name.asc',
@@ -131,8 +137,51 @@ export default function UsersPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordFormOpen, setPasswordFormOpen] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [draftPasswordVisible, setDraftPasswordVisible] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const accountViewUserIdRef = useRef<string | null>(null);
+
+  const institutionScopeId = isSupraAdmin
+    ? activeInstitutionId
+    : currentUser?.institution_id ?? activeInstitutionId;
+  const hasInstitutionColumn = useMemo(
+    () => users.some((user) => 'institution_id' in user),
+    [users],
+  );
+
+  const visibleUsers = useMemo(() => {
+    if (!currentUser) return [];
+    if (!hasInstitutionColumn) {
+      return users.filter((user) => !user.is_supra_admin);
+    }
+    if (isSupraAdmin) {
+      if (!activeInstitutionId) return users;
+      return users.filter((user) => user.institution_id === activeInstitutionId);
+    }
+    if (!institutionScopeId) return [];
+    return users.filter(
+      (user) => !user.is_supra_admin && user.institution_id === institutionScopeId,
+    );
+  }, [
+    users,
+    currentUser,
+    hasInstitutionColumn,
+    isSupraAdmin,
+    activeInstitutionId,
+    institutionScopeId,
+  ]);
+
+  function isUserInScope(user: User): boolean {
+    if (!hasInstitutionColumn) return !user.is_supra_admin;
+    if (isSupraAdmin) {
+      return !activeInstitutionId || user.institution_id === activeInstitutionId;
+    }
+    return Boolean(
+      institutionScopeId &&
+        !user.is_supra_admin &&
+        user.institution_id === institutionScopeId,
+    );
+  }
 
   const stagiaireOptions = useMemo(
     () =>
@@ -150,8 +199,8 @@ export default function UsersPage() {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return users;
-    return users.filter((user) =>
+    if (!term) return visibleUsers;
+    return visibleUsers.filter((user) =>
       [
         fullName(user),
         user.email,
@@ -165,12 +214,12 @@ export default function UsersPage() {
         .toLowerCase()
         .includes(term),
     );
-  }, [users, search]);
+  }, [visibleUsers, search]);
 
-  const activeCount = users.filter((user) => user.statut === 'active').length;
-  const formateurCount = users.filter((user) => user.role === 'formateur').length;
-  const stagiaireCount = users.filter((user) => user.role === 'stagiaire').length;
-  const activeAdminCount = users.filter(
+  const activeCount = visibleUsers.filter((user) => user.statut === 'active').length;
+  const formateurCount = visibleUsers.filter((user) => user.role === 'formateur').length;
+  const stagiaireCount = visibleUsers.filter((user) => user.role === 'stagiaire').length;
+  const activeAdminCount = visibleUsers.filter(
     (user) =>
       ['supra_admin', 'admin_institution', 'admin'].includes(user.role) &&
       user.statut === 'active',
@@ -209,6 +258,23 @@ export default function UsersPage() {
     setPasswordVisible(false);
   }
 
+  function openAccount(user: User) {
+    if (!isUserInScope(user)) {
+      notifyError('Accès refusé', 'Ce compte n’appartient pas à votre institution.');
+      return;
+    }
+    showAccount(user);
+  }
+
+  function openPasswordManager(user: User) {
+    if (!isUserInScope(user)) {
+      notifyError('Accès refusé', 'Ce compte n’appartient pas à votre institution.');
+      return;
+    }
+    showAccount(user);
+    setPasswordFormOpen(true);
+  }
+
   function closeAccountView() {
     accountViewUserIdRef.current = null;
     setAccountView(null);
@@ -217,10 +283,15 @@ export default function UsersPage() {
   function openCreate() {
     setEditing(null);
     setDraft(emptyDraft);
+    setDraftPasswordVisible(false);
     setModalOpen(true);
   }
 
   function openEdit(user: User) {
+    if (!isUserInScope(user)) {
+      notifyError('Accès refusé', 'Ce compte n’appartient pas à votre institution.');
+      return;
+    }
     setEditing(user);
     setDraft({
       email: user.email,
@@ -233,6 +304,12 @@ export default function UsersPage() {
       stagiaire_id: user.stagiaire_id ?? '',
     });
     setModalOpen(true);
+  }
+
+  function generateDraftPassword() {
+    const generated = generateTemporaryPassword();
+    setDraft((current) => ({ ...current, password: generated }));
+    setDraftPasswordVisible(true);
   }
 
   async function copyText(label: string, value: string) {
@@ -250,6 +327,12 @@ export default function UsersPage() {
 
     try {
       if (editing) {
+        if (!isUserInScope(editing)) {
+          notifyError('Accès refusé', 'Ce compte n’appartient pas à votre institution.');
+          setSaving(false);
+          return;
+        }
+
         const updated = await dataService.updateRow<User>('users', editing.id, {
           email: draft.email.trim().toLowerCase(),
           first_name: draft.first_name.trim(),
@@ -275,10 +358,15 @@ export default function UsersPage() {
           return;
         }
 
-        if (draft.role !== 'supra_admin' && !activeInstitutionId) {
+        const targetInstitutionId =
+          draft.role === 'supra_admin' ? null : institutionScopeId;
+
+        if (draft.role !== 'supra_admin' && !targetInstitutionId) {
           notifyError(
             'Institution requise',
-            'Sélectionnez d’abord une institution dans l’en-tête avant de créer un utilisateur.',
+            isSupraAdmin
+              ? 'Sélectionnez d’abord une institution dans l’en-tête avant de créer un utilisateur.'
+              : 'Votre compte n’est rattaché à aucune institution. Contactez la plateforme.',
           );
           setSaving(false);
           return;
@@ -293,7 +381,7 @@ export default function UsersPage() {
           role: draft.role,
           statut: draft.statut,
           stagiaire_id: draft.stagiaire_id || undefined,
-          institution_id: draft.role === 'supra_admin' ? null : activeInstitutionId,
+          institution_id: targetInstitutionId,
           is_supra_admin: draft.role === 'supra_admin',
           must_change_password: true,
         });
@@ -338,6 +426,11 @@ export default function UsersPage() {
   }
 
   async function handleDelete(user: User) {
+    if (!isUserInScope(user)) {
+      notifyError('Accès refusé', 'Ce compte n’appartient pas à votre institution.');
+      return;
+    }
+
     if (currentUser?.id === user.id) {
       notifyError('Action impossible', 'Vous ne pouvez pas supprimer votre propre compte.');
       return;
@@ -502,6 +595,26 @@ export default function UsersPage() {
       ),
     },
     {
+      key: 'password',
+      header: 'Mot de passe',
+      hideBelow: 'md',
+      render: (row) => {
+        const available = currentUser
+          ? hasRememberedPassword(currentUser.id, row.id)
+          : false;
+        return available ? (
+          <Badge tone="success">Affichable</Badge>
+        ) : (
+          <span
+            className="text-xs text-body dark:text-body-dark"
+            title="Le mot de passe est stocké de façon sécurisée. Réinitialisez-le pour en obtenir un nouveau."
+          >
+            Sécurisé
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       header: 'Actions',
       align: 'right',
@@ -509,12 +622,21 @@ export default function UsersPage() {
         <div className="flex justify-end gap-1">
           <button
             type="button"
-            onClick={() => showAccount(row)}
+            onClick={() => openAccount(row)}
             className="flex h-8 w-8 items-center justify-center text-body hover:bg-primary/10 hover:text-primary dark:text-body-dark"
             title="Voir le compte et les identifiants"
             aria-label="Voir le compte et les identifiants"
           >
             <FiEye className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => openPasswordManager(row)}
+            className="flex h-8 w-8 items-center justify-center text-body hover:bg-primary/10 hover:text-primary dark:text-body-dark"
+            title="Voir ou modifier le mot de passe"
+            aria-label="Voir ou modifier le mot de passe"
+          >
+            <FiKey className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -544,7 +666,11 @@ export default function UsersPage() {
       <PageHeader
         eyebrow="Administration"
         title="Utilisateurs & rôles"
-        description="Gérez les comptes, les rôles, les statuts, les mots de passe et les informations de connexion aux espaces de travail."
+        description={
+          isSupraAdmin
+            ? 'Gérez les comptes, les rôles, les statuts, les mots de passe et les informations de connexion aux espaces de travail.'
+            : 'Créez et gérez les comptes de votre institution, leurs rôles et leurs mots de passe.'
+        }
         actions={
           <Button onClick={openCreate} icon={<FiUserPlus className="h-4 w-4" />}>
             Nouvel utilisateur
@@ -552,8 +678,19 @@ export default function UsersPage() {
         }
       />
 
+      {!isSupraAdmin && (
+        <div className="mb-5 border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-body dark:border-primary/30 dark:bg-primary/10 dark:text-body-dark">
+          Vous consultez uniquement les comptes de{' '}
+          <strong className="text-dark dark:text-white">
+            {activeInstitution?.name ?? 'votre institution'}
+          </strong>
+          . Les mots de passe sont stockés de façon sécurisée : seuls ceux créés ou réinitialisés
+          pendant cette session peuvent être affichés.
+        </div>
+      )}
+
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Comptes" value={users.length} tone="primary" />
+        <StatCard label="Comptes" value={visibleUsers.length} tone="primary" />
         <StatCard label="Actifs" value={activeCount} tone="success" />
         <StatCard label="Formateurs" value={formateurCount} tone="purple" />
         <StatCard label="Stagiaires" value={stagiaireCount} tone="warning" />
@@ -592,7 +729,9 @@ export default function UsersPage() {
         description={
           editing
             ? 'Les informations du compte peuvent être modifiées ici. Le mot de passe se gère depuis la fiche du compte.'
-            : 'Un compte Forge Console sera créé avec ces identifiants.'
+            : isSupraAdmin
+              ? 'Un compte sera créé dans l’institution sélectionnée avec ces identifiants.'
+              : `Un compte sera créé pour ${activeInstitution?.name ?? 'votre institution'} avec ces identifiants.`
         }
         size="lg"
         footer={
@@ -645,23 +784,50 @@ export default function UsersPage() {
             />
           </Field>
           {!editing && (
-            <Field
-              label="Mot de passe"
-              required
-              hint="6 caractères minimum. Il sera visible dans la fiche du compte pendant cette session."
-              className="sm:col-span-2"
-            >
-              <Input
-                type="password"
+            <div className="sm:col-span-2">
+              <Field
+                label="Mot de passe"
                 required
-                minLength={6}
-                autoComplete="new-password"
-                value={draft.password}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, password: event.target.value }))
-                }
-              />
-            </Field>
+                hint="6 caractères minimum. Il sera visible dans la fiche du compte pendant cette session."
+              >
+                <Input
+                  type={draftPasswordVisible ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={draft.password}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, password: event.target.value }))
+                  }
+                />
+              </Field>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  icon={
+                    draftPasswordVisible ? (
+                      <FiEyeOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <FiEye className="h-3.5 w-3.5" />
+                    )
+                  }
+                  onClick={() => setDraftPasswordVisible((current) => !current)}
+                >
+                  {draftPasswordVisible ? 'Masquer' : 'Afficher'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  icon={<FiRefreshCw className="h-3.5 w-3.5" />}
+                  onClick={generateDraftPassword}
+                >
+                  Générer un mot de passe
+                </Button>
+              </div>
+            </div>
           )}
           <Field label="Rôle" required>
             <Select
