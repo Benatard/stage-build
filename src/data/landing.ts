@@ -195,11 +195,6 @@ export const organisations: OrganisationProfile[] = [
   { icon: FiBookOpen, label: 'Centres de formation' },
   { icon: FiBook, label: 'Écoles' },
   { icon: FiAward, label: 'Universités' },
-  { icon: FiHeart, label: 'ONG' },
-  { icon: FiShield, label: 'Institutions publiques' },
-  { icon: FiLayers, label: 'Cabinets' },
-  { icon: FiUsers, label: 'Associations' },
-  { icon: FiTarget, label: 'Organisations professionnelles' },
   { icon: FiPlus, label: 'Autres structures accueillant ou encadrant des stagiaires' },
 ];
 
