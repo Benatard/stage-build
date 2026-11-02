@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { dataService } from '@/services/data.service';
-import type { ForgeListFilter } from '@/services/forge/types';
+import type { ForgeListFilter, ForgeSqlResponse } from '@/services/forge/types';
+import { loadScopedRows, peekScopedRows } from '@/services/scoped-cache';
 import {
   getTenantId,
   isTenantColumnError,
@@ -9,7 +10,8 @@ import {
 } from '@/services/tenant';
 import { getErrorMessage } from '@/utils/format';
 
-type SqlTuple = Array<string | number | boolean | null>;
+type SqlLiteralValue = string | number | boolean | null;
+type SqlRow = SqlLiteralValue[] | Record<string, unknown>;
 
 type UseScopedRowsOptions = {
   scope: Record<string, ForgeListFilter | null | undefined>;
@@ -29,6 +31,40 @@ function activeScope(scope: Record<string, ForgeListFilter | null | undefined>) 
     (entry): entry is [string, ForgeListFilter] =>
       entry[1] !== undefined && entry[1] !== null && entry[1] !== '',
   );
+}
+
+function buildWhere(scopeEntries: [string, ForgeListFilter][]): string {
+  return scopeEntries
+    .map(([column, value]) => `${column} = ${sqlLiteral(value)}`)
+    .join(' AND ');
+}
+
+function buildQuery(table: string, scopeEntries: [string, ForgeListFilter][]): string {
+  const where = buildWhere(scopeEntries);
+  return where
+    ? ['select * from', table, 'where', where, 'limit', '200'].join(' ')
+    : ['select * from', table, 'limit', '200'].join(' ');
+}
+
+function toRows<T>(response: ForgeSqlResponse<SqlRow>): T[] {
+  const columns = (response as { columns?: unknown }).columns;
+  const rows = Array.isArray(response.rows)
+    ? response.rows
+    : Array.isArray(response.data)
+      ? response.data
+      : [];
+
+  if (!Array.isArray(columns)) return rows as T[];
+
+  return rows.map((row) => {
+    if (!Array.isArray(row)) return row as T;
+
+    const record: Record<string, unknown> = {};
+    columns.forEach((column, index) => {
+      record[String(column)] = row[index];
+    });
+    return record as T;
+  });
 }
 
 function sortRows<T>(rows: T[], order?: string): T[] {
@@ -69,54 +105,82 @@ export function useScopedRows<T extends { id: string }>(
   );
   const entries = useMemo(() => activeScope(stableScope), [stableScope]);
   const usable = enabled && entries.length > 0;
-  const [rows, setRows] = useState<T[]>([]);
-  const [loading, setLoading] = useState(usable);
+  const query = useMemo(
+    () => (usable ? buildQuery(table, entries) : null),
+    [usable, table, entries],
+  );
+  const requestKey = useMemo(
+    () => (query ? `${query}|${order ?? ''}|${limit}` : null),
+    [query, order, limit],
+  );
+  const initialRows = useMemo(
+    () => (requestKey ? peekScopedRows<T>(requestKey) : null),
+    [requestKey],
+  );
+  const [rows, setRows] = useState<T[]>(initialRows ?? []);
+  const [loading, setLoading] = useState(Boolean(requestKey) && !initialRows);
   const [error, setError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
 
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  const queryRef = useRef<string | null>(null);
+  const loadedRevisionRef = useRef(revision);
+
   useEffect(() => {
-    if (!usable) {
+    if (!usable || !query || !requestKey) {
+      queryRef.current = null;
+      loadedRevisionRef.current = revision;
       setRows([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
     let active = true;
-    setLoading(true);
+    const keyChanged = queryRef.current !== requestKey;
+    queryRef.current = requestKey;
+
+    const cached = peekScopedRows<T>(requestKey);
+
+    if (keyChanged) {
+      setRows(cached ?? []);
+      setLoading(!cached);
+    } else if (!cached) {
+      setLoading(rowsRef.current.length === 0);
+    }
+
     setError(null);
 
-    const buildWhere = (scopeEntries: typeof entries) =>
-      scopeEntries
-        .map(([column, value]) => `${column} = ${sqlLiteral(value)}`)
-        .join(' AND ');
+    const force = loadedRevisionRef.current !== revision;
 
-    const runQuery = (scopeEntries: typeof entries) => {
-      const where = buildWhere(scopeEntries);
-      const query = where
-        ? ['select id from', table, 'where', where, 'limit', '200'].join(' ')
-        : ['select id from', table, 'limit', '200'].join(' ');
-      return dataService.sql<SqlTuple>(query);
+    const runQuery = (sql: string) =>
+      dataService.sql<SqlRow>(sql).then((response) => toRows<T>(response));
+
+    const fetchRows = async () => {
+      const result = await (async () => {
+        try {
+          return await runQuery(query);
+        } catch (requestError) {
+          if (!isTenantColumnError(requestError)) throw requestError;
+          markTenantColumnMissing();
+          return runQuery(
+            buildQuery(
+              table,
+              entries.filter(([column]) => column !== 'institution_id'),
+            ),
+          );
+        }
+      })();
+
+      return sortRows(result, order).slice(0, Math.min(Math.max(limit, 1), 200));
     };
 
-    runQuery(entries)
-      .catch((requestError) => {
-        if (!isTenantColumnError(requestError)) throw requestError;
-        markTenantColumnMissing();
-        return runQuery(entries.filter(([column]) => column !== 'institution_id'));
-      })
-      .then(async (response) => {
-        const ids = (response.rows ?? [])
-          .map((row) => String(row[0] ?? ''))
-          .filter(Boolean);
-
-        if (ids.length === 0) return [];
-
-        return Promise.all(ids.map((id) => dataService.findRow<T>(table, id)));
-      })
+    loadScopedRows<T>(requestKey, fetchRows, force)
       .then((result) => {
         if (!active) return;
-        const ordered = sortRows(result, order);
-        setRows(ordered.slice(0, Math.min(Math.max(limit, 1), 200)));
+        loadedRevisionRef.current = revision;
+        setRows(result);
       })
       .catch((requestError) => {
         if (!active) return;
@@ -131,7 +195,7 @@ export function useScopedRows<T extends { id: string }>(
     return () => {
       active = false;
     };
-  }, [table, entries, order, limit, usable, revision]);
+  }, [table, entries, order, limit, usable, query, requestKey, revision]);
 
   const reload = useCallback(() => setRevision((value) => value + 1), []);
 

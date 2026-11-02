@@ -1,5 +1,23 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ErrorState, LoadingState } from '@/components/ui/Feedback';
+
+const LOADING_LATCH_MS = 250;
+
+function useLatchedLoading(loading: boolean): boolean {
+  const [latched, setLatched] = useState(loading);
+
+  useEffect(() => {
+    if (loading) {
+      setLatched(true);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setLatched(false), LOADING_LATCH_MS);
+    return () => window.clearTimeout(timeout);
+  }, [loading]);
+
+  return latched;
+}
 
 export function SelfGate({
   loading,
@@ -12,7 +30,9 @@ export function SelfGate({
   onRetry?: () => void;
   children: ReactNode;
 }) {
-  if (loading) return <LoadingState label="Chargement de votre espace…" />;
+  const showSkeleton = useLatchedLoading(loading);
+
+  if (showSkeleton) return <LoadingState label="Chargement de votre espace…" />;
   if (error) return <ErrorState message={error} onRetry={onRetry} />;
   return <>{children}</>;
 }

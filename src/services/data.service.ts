@@ -1,6 +1,7 @@
 import { isForgeConfigured } from '@/config/env';
 import { forgeRepository } from '@/services/forge';
 import type { ForgeListParams, ForgeSqlResponse } from '@/services/forge/types';
+import { invalidateScopedRowsCache } from '@/services/scoped-cache';
 import {
   assertRowInTenant,
   getTenantId,
@@ -112,6 +113,7 @@ async function createRowUnscoped<T extends { id: string }>(
 ): Promise<T> {
   ensureForgeConfigured();
   const payload = await forgeRepository.create<Record<string, unknown>>(table, data);
+  invalidateScopedRowsCache();
   return unwrapRow<T>(payload);
 }
 
@@ -132,11 +134,13 @@ async function createRow<T extends { id: string }>(
 
   try {
     const payload = await forgeRepository.create<Record<string, unknown>>(table, scopedData);
+    invalidateScopedRowsCache();
     return unwrapRow<T>(payload);
   } catch (error) {
     if (scopedData !== data && isTenantColumnError(error)) {
       markTenantColumnMissing();
       const payload = await forgeRepository.create<Record<string, unknown>>(table, data);
+      invalidateScopedRowsCache();
       return unwrapRow<T>(payload);
     }
     throw error;
@@ -179,6 +183,7 @@ async function updateRow<T extends { id: string }>(
     id,
     payloadData,
   );
+  invalidateScopedRowsCache();
   return unwrapRow<T>(payload);
 }
 
@@ -187,6 +192,7 @@ async function deleteRow(table: string, id: string): Promise<void> {
   const current = await findRow<{ id: string }>(table, id);
   assertRowInTenant(table, current as unknown as Record<string, unknown>);
   await forgeRepository.remove(table, id);
+  invalidateScopedRowsCache();
 }
 
 async function sql<T = Record<string, unknown>>(query: string): Promise<ForgeSqlResponse<T>> {

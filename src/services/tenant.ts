@@ -1,5 +1,6 @@
 import { saasConfig } from '@/config/env';
 import type { ForgeListFilter, ForgeListParams } from '@/services/forge/types';
+import { invalidateScopedRowsCache } from '@/services/scoped-cache';
 import { getErrorMessage } from '@/utils/format';
 
 export const TENANT_TABLES = new Set<string>([
@@ -60,8 +61,15 @@ export function setTenantContext(input: {
   institutionId: string | null;
   platformMode?: boolean;
 }): void {
-  currentInstitutionId = input.institutionId || null;
-  platformMode = Boolean(input.platformMode);
+  const nextInstitutionId = input.institutionId || null;
+  const nextPlatformMode = Boolean(input.platformMode);
+
+  if (currentInstitutionId !== nextInstitutionId || platformMode !== nextPlatformMode) {
+    invalidateScopedRowsCache();
+  }
+
+  currentInstitutionId = nextInstitutionId;
+  platformMode = nextPlatformMode;
 }
 
 export function getTenantId(): string | null {
@@ -89,6 +97,9 @@ export function shouldScopeTable(table: string): boolean {
 }
 
 export function markTenantColumnMissing(): void {
+  if (!tenantColumnMissing) {
+    invalidateScopedRowsCache();
+  }
   tenantColumnMissing = true;
 }
 
