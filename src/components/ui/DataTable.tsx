@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { FiInbox } from 'react-icons/fi';
 import { cn } from '@/utils/format';
-import { EmptyState, ErrorState, LoadingState } from './Feedback';
+import { EmptyState, ErrorState } from './Feedback';
+import { TableSkeleton } from './Skeleton';
 
 export type TableColumn<T> = {
   key: string;
@@ -42,7 +43,7 @@ export function DataTable<T extends { id: string }>({
   onRowClick?: (row: T) => void;
   footer?: ReactNode;
 }) {
-  if (loading) return <LoadingState />;
+  if (loading) return <TableSkeleton columns={columns.length} />;
   if (error) return <ErrorState message={error} onRetry={onRetry} />;
   if (rows.length === 0) {
     return (

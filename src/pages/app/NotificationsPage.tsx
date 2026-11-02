@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Select, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
 import { useReferenceData } from '@/hooks/useReferenceData';
@@ -184,7 +185,7 @@ export default function NotificationsPage() {
       </div>
 
       {loading ? (
-        <p className="py-16 text-center text-sm text-body dark:text-body-dark">Chargement…</p>
+        <ListSkeleton rows={4} className="py-2" />
       ) : error ? (
         <p className="py-16 text-center text-sm text-rose-600">{error}</p>
       ) : visible.length === 0 ? (

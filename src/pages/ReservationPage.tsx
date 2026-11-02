@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState, PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Select } from '@/components/ui/Form';
 import { PageMeta } from '@/components/ui/PageMeta';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { GENDER_OPTIONS } from '@/config/options';
 import {
   createReservation,
@@ -393,9 +394,7 @@ export default function ReservationPage() {
             )}
 
             {institutionsLoading || loading ? (
-              <div className="py-16 text-center text-sm text-body dark:text-body-dark">
-                Chargement des promotions…
-              </div>
+              <ListSkeleton rows={3} />
             ) : loadError ? (
               <div className="mt-6">
                 <EmptyState

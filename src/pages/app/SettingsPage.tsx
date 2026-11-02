@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Textarea } from '@/components/ui/Form';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
@@ -341,11 +342,7 @@ export default function SettingsPage() {
       )}
 
       <div className="space-y-4">
-        {loading && (
-          <p className="py-10 text-center text-sm text-body dark:text-body-dark">
-            Chargement des paramètres…
-          </p>
-        )}
+        {loading && <ListSkeleton rows={3} />}
 
         {settings.map((setting) => (
           <div key={setting.id} className="card-root border border-stroke p-5 dark:border-white/10">

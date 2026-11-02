@@ -17,6 +17,7 @@ import {
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ROLE_LABELS } from '@/config/permissions';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
@@ -261,7 +262,10 @@ export default function DashboardPage() {
       />
 
       {referenceLoading && (
-        <p className="mb-4 text-xs text-body dark:text-body-dark">Synchronisation des référentiels…</p>
+        <div role="status" aria-live="polite" className="mb-4">
+          <span className="sr-only">Synchronisation des référentiels…</span>
+          <Skeleton className="h-3 w-48" />
+        </div>
       )}
 
       {isStagiaire ? (

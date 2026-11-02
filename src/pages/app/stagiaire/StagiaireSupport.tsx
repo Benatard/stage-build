@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { FiActivity, FiFlag, FiShield, FiTarget } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
+import { SkeletonText } from '@/components/ui/Skeleton';
 import { OBJECTIVE_STATUS_OPTIONS, PLAN_STATUS_OPTIONS, optionLabel } from '@/config/options';
 import { useScopedRows } from '@/hooks/useScopedRows';
 import type {
@@ -245,7 +246,11 @@ function PlanActions({ planId }: { planId: string }) {
   });
 
   if (loading) {
-    return <p className="px-5 py-3 text-xs text-body dark:text-body-dark">Chargement des actions…</p>;
+    return (
+      <div className="px-5 py-3">
+        <SkeletonText lines={2} />
+      </div>
+    );
   }
 
   if (rows.length === 0) {

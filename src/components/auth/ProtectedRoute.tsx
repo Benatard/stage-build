@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { FiLoader } from 'react-icons/fi';
+import { PageSkeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 
 export function ProtectedRoute() {
@@ -8,8 +8,10 @@ export function ProtectedRoute() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fcfcfc] text-body dark:bg-[#121723] dark:text-body-dark">
-        <FiLoader className="h-6 w-6 animate-spin text-primary" />
+      <div className="min-h-screen bg-[#fcfcfc] px-4 py-16 dark:bg-[#121723] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <PageSkeleton cards={6} />
+        </div>
       </div>
     );
   }

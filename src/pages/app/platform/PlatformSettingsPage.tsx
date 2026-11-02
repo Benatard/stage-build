@@ -3,6 +3,7 @@ import { FiPlus, FiSave } from 'react-icons/fi';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Textarea } from '@/components/ui/Form';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { useForgeTable } from '@/hooks/useForgeTable';
 import { dataService } from '@/services/data.service';
@@ -106,11 +107,7 @@ export default function PlatformSettingsPage() {
         </div>
       )}
 
-      {loading && (
-        <p className="py-10 text-center text-sm text-body dark:text-body-dark">
-          Chargement des paramètres plateforme…
-        </p>
-      )}
+      {loading && <ListSkeleton rows={3} />}
 
       <div className="space-y-4">
         {settings.map((setting) => (

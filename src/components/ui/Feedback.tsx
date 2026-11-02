@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { FiAlertCircle, FiInbox, FiLoader } from 'react-icons/fi';
+import { FiAlertCircle, FiInbox } from 'react-icons/fi';
 import { cn } from '@/utils/format';
 import { Button } from './Button';
+import { Skeleton, SkeletonText } from './Skeleton';
 
 export function PageHeader({
   eyebrow,
@@ -114,11 +115,23 @@ export function EmptyState({
   );
 }
 
-export function LoadingState({ label = 'Chargement des données…' }: { label?: string }) {
+export function LoadingState({
+  label = 'Chargement des données…',
+  rows = 4,
+}: {
+  label?: string;
+  rows?: number;
+}) {
   return (
-    <div className="flex items-center justify-center gap-3 px-6 py-20 text-sm text-body dark:text-body-dark">
-      <FiLoader className="h-5 w-5 animate-spin text-primary" />
-      {label}
+    <div role="status" aria-live="polite" className="space-y-4 px-6 py-10">
+      <span className="sr-only">{label}</span>
+      <Skeleton className="h-4 w-1/3" />
+      <SkeletonText lines={2} />
+      <div className="space-y-2 pt-2">
+        {Array.from({ length: rows }).map((_, index) => (
+          <Skeleton key={index} className="h-10 w-full" />
+        ))}
+      </div>
     </div>
   );
 }

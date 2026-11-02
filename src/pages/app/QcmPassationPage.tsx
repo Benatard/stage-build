@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Select } from '@/components/ui/Form';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
 import { useReferenceData } from '@/hooks/useReferenceData';
@@ -213,9 +214,7 @@ export default function QcmPassationPage() {
       </div>
 
       {loading ? (
-        <p className="py-16 text-center text-sm text-body dark:text-body-dark">
-          Chargement des questions…
-        </p>
+        <ListSkeleton rows={3} />
       ) : (
         <div className="space-y-4">
           {questions.map((question, index) => {

@@ -6,6 +6,7 @@ import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Select, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { PLAN_STATUS_OPTIONS, optionLabel } from '@/config/options';
 import { useForgeTable } from '@/hooks/useForgeTable';
 import { useReferenceData } from '@/hooks/useReferenceData';
@@ -463,7 +464,7 @@ export default function PlansPage() {
         </form>
 
         {actionsLoading ? (
-          <p className="py-8 text-center text-sm text-body dark:text-body-dark">Chargement…</p>
+          <ListSkeleton rows={2} className="py-2" />
         ) : actions.length === 0 ? (
           <p className="py-8 text-center text-sm text-body dark:text-body-dark">
             Aucune action définie pour ce plan.

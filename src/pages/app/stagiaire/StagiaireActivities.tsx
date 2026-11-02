@@ -15,6 +15,7 @@ import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
 import { Field, Input, Textarea } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useScopedRows } from '@/hooks/useScopedRows';
 import { dataService } from '@/services/data.service';
 import type {
@@ -302,9 +303,7 @@ export function StagiaireQcm() {
         }
       >
         {questionsLoading ? (
-          <p className="py-10 text-center text-sm text-body dark:text-body-dark">
-            Chargement des questions…
-          </p>
+          <ListSkeleton rows={3} />
         ) : questions.length === 0 ? (
           <p className="py-10 text-center text-sm text-body dark:text-body-dark">
             Aucune question dans ce QCM.
