@@ -88,7 +88,7 @@ export function useScopedRows<T extends { id: string }>(
     const buildWhere = (scopeEntries: typeof entries) =>
       scopeEntries
         .map(([column, value]) => `${column} = ${sqlLiteral(value)}`)
-        .join(' and ');
+        .join(' AND ');
 
     const runQuery = (scopeEntries: typeof entries) => {
       const where = buildWhere(scopeEntries);

@@ -116,12 +116,12 @@ export default function HomePage() {
           aria-hidden="true"
         >
           <img
-            src="https://rdc-monde.com/wp-content/uploads/2022/10/solution-internet.jpg"
+            src="https://i.pinimg.com/736x/e3/41/55/e3415572cb30659feed70c2f46c1c561.jpg"
             alt=""
             className="absolute right-0 top-0 h-full w-[72%] object-cover object-center opacity-[0.08] dark:opacity-[0.12]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/35 dark:from-gray-dark dark:via-gray-dark/9 dark:to-gray-dark/4" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/50 dark:from-gray-dark dark:via-transparent dark:to-gray-dark/5" />
+          <div className="absolute inset-0 bg-gradient-to-r via-white/90 to-white/35 dark:from-gray-dark dark:via-gray-dark/9 dark:to-gray-dark/4" />
+          <div className="absolute inset-0 bg-gradient-to-t dark:from-gray-dark dark:via-transparent dark:to-gray-dark/5" />
         </div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(74,108,247,0.12)_1px,transparent_0)] bg-[size:26px_26px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_72%)] pointer-events-none" />
         <div className="absolute -top-40 -right-32 h-[480px] w-[480px] rounded-full bg-primary/15 blur-3xl pointer-events-none" />
