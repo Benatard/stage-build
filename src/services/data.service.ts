@@ -150,8 +150,10 @@ async function updateRow<T extends { id: string }>(
 ): Promise<T> {
   ensureForgeConfigured();
 
-  if ('institution_id' in data && shouldScopeTable(table)) {
-    const tenantId = getTenantId();
+  const scoped = shouldScopeTable(table);
+  const tenantId = getTenantId();
+
+  if ('institution_id' in data && scoped) {
     if (data.institution_id && data.institution_id !== tenantId) {
       throw new Error(
         'Le rattachement à une institution ne peut pas être modifié depuis le client.',
@@ -163,7 +165,14 @@ async function updateRow<T extends { id: string }>(
   assertRowInTenant(table, current as unknown as Record<string, unknown>);
 
   const payloadData = { ...data };
-  delete payloadData.institution_id;
+
+  if ('institution_id' in payloadData) {
+    const target = payloadData.institution_id;
+    // Hors périmètre tenant ou tentative de détachement : on ignore la valeur.
+    if (!scoped || target === null || target === undefined) {
+      delete payloadData.institution_id;
+    }
+  }
 
   const payload = await forgeRepository.update<Record<string, unknown>>(
     table,

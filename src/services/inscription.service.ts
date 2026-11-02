@@ -1,5 +1,6 @@
 import { authService } from '@/services/auth.service';
 import { dataService } from '@/services/data.service';
+import { getTenantId } from '@/services/tenant';
 import { generateTemporaryPassword, updateUserPassword } from '@/services/user.service';
 import type { Inscription, InscriptionStatus, Stagiaire, User } from '@/types/domain';
 
@@ -33,7 +34,9 @@ export async function updateStagiairePassword(userId: string, password: string):
 }
 
 async function findUserByEmail(email: string): Promise<User | null> {
-  const users = await dataService.listAll<User>('users', { order: 'created_at.desc' });
+  // L'email est unique au niveau de la plateforme : on vérifie donc hors périmètre
+  // du tenant pour éviter les doublons entre institutions.
+  const users = await dataService.listAllUnscoped<User>('users', { order: 'created_at.desc' });
   return users.find((user) => user.email.trim().toLowerCase() === email) ?? null;
 }
 
@@ -48,6 +51,14 @@ export async function ensureStagiaireAccount(stagiaire: Stagiaire): Promise<Stag
     throw new Error('Renseignez une adresse email pour le stagiaire avant de créer son compte.');
   }
 
+  const institutionId = getTenantId();
+
+  if (!institutionId) {
+    throw new Error(
+      'Aucune institution active. Le compte stagiaire doit être rattaché à une institution.',
+    );
+  }
+
   const existingUser = await findUserByEmail(email);
 
   if (existingUser) {
@@ -59,9 +70,14 @@ export async function ensureStagiaireAccount(stagiaire: Stagiaire): Promise<Stag
       throw new Error('Ce compte est déjà lié à un autre dossier stagiaire.');
     }
 
-    if (!existingUser.stagiaire_id) {
+    if (existingUser.institution_id && existingUser.institution_id !== institutionId) {
+      throw new Error('Ce compte est déjà rattaché à une autre institution.');
+    }
+
+    if (!existingUser.stagiaire_id || !existingUser.institution_id) {
       await dataService.updateRow<User>('users', existingUser.id, {
-        stagiaire_id: stagiaire.id,
+        stagiaire_id: existingUser.stagiaire_id ?? stagiaire.id,
+        institution_id: existingUser.institution_id ?? institutionId,
       });
     }
 
@@ -83,6 +99,7 @@ export async function ensureStagiaireAccount(stagiaire: Stagiaire): Promise<Stag
     role: 'stagiaire',
     statut: 'active',
     stagiaire_id: stagiaire.id,
+    institution_id: institutionId,
   });
   const userId = account?.id ? String(account.id) : '';
 
