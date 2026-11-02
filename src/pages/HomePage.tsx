@@ -360,11 +360,6 @@ export default function HomePage() {
                   <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-black dark:text-white md:text-3xl">
                     Parlez-nous de votre organisations.
                   </h3>
-                  {/* <p className="mt-2 max-w-xl text-sm leading-relaxed text-body dark:text-body-dark">
-                    Vous lancez un projet ou améliorez un produit existant ? Partagez votre idée,
-                    votre défi ou vos délais pour en discuter ensemble.
-                  </p> */}
-
                   <form onSubmit={handleContactSubmit} className="mt-7 space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Field label="Votre nom" required>
