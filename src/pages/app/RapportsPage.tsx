@@ -4,11 +4,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
+import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
 import { useReferenceData } from '@/hooks/useReferenceData';
 import type { FinalEvaluation, Note, Presence } from '@/types/domain';
-import { average, fullName, percentage, round } from '@/utils/format';
-import { downloadCsv } from '@/utils/csv';
+import { displayValue, downloadExcel, safeFilenamePart } from '@/utils/document-export';
+import { average, formatDate, fullName, percentage, round } from '@/utils/format';
 
 type FormationStat = {
   id: string;
@@ -26,6 +27,7 @@ type Distribution = {
 
 export default function RapportsPage() {
   const { data } = useReferenceData();
+  const { activeInstitution, activeInstitutionId } = useAuth();
   const { rows: presences } = useForgeTable<Presence>('presences', { limit: 500 });
   const { rows: notes } = useForgeTable<Note>('notes', { limit: 500 });
   const { rows: finals } = useForgeTable<FinalEvaluation>('final_evaluations', {
@@ -136,20 +138,75 @@ export default function RapportsPage() {
   ];
 
   function exportStagiaires() {
-    downloadCsv(
-      `stagiaires-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['Matricule', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Domaine', 'Spécialité', 'Statut'],
-      data.stagiaires.map((stagiaire) => [
-        stagiaire.matricule,
-        stagiaire.nom,
-        stagiaire.prenom,
-        stagiaire.email,
-        stagiaire.telephone,
-        stagiaire.domaine,
-        stagiaire.specialite,
-        stagiaire.statut,
-      ]),
+    const stagiaires = data.stagiaires.filter(
+      (stagiaire) =>
+        !activeInstitutionId ||
+        !stagiaire.institution_id ||
+        stagiaire.institution_id === activeInstitutionId,
     );
+
+    downloadExcel({
+      filename: `stagiaires-${safeFilenamePart(activeInstitution?.name ?? 'institution')}-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Registre des stagiaires',
+      subtitle: `${activeInstitution?.name ?? 'Toutes les institutions'} · ${stagiaires.length} stagiaire(s)`,
+      sheetName: 'Stagiaires',
+      organization: activeInstitution
+        ? {
+            name: activeInstitution.name,
+            address: activeInstitution.address,
+            email: activeInstitution.email,
+            phone: activeInstitution.phone,
+            website: activeInstitution.website,
+          }
+        : undefined,
+      meta: [
+        ['Institution', activeInstitution?.name ?? 'Toutes les institutions'],
+        ['Stagiaires', String(stagiaires.length)],
+        ['Taux de présence', `${attendanceRate}%`],
+        ['Moyenne finale', `${finalAverage.toFixed(2)}/20`],
+        ['Exporté le', formatDate(new Date().toISOString())],
+      ],
+      table: {
+        headers: [
+          'N°',
+          'Matricule',
+          'Nom',
+          'Postnom',
+          'Prénom',
+          'Sexe',
+          'Date de naissance',
+          'Lieu de naissance',
+          'Email',
+          'Téléphone',
+          'Adresse',
+          'Établissement d’origine',
+          'Niveau d’études',
+          'Domaine',
+          'Spécialité',
+          'Statut',
+        ],
+        rows: stagiaires.map((stagiaire, index) => [
+          index + 1,
+          stagiaire.matricule,
+          stagiaire.nom,
+          displayValue(stagiaire.postnom),
+          stagiaire.prenom,
+          displayValue(stagiaire.sexe),
+          formatDate(stagiaire.date_naissance),
+          displayValue(stagiaire.lieu_naissance),
+          displayValue(stagiaire.email),
+          displayValue(stagiaire.telephone),
+          displayValue(stagiaire.adresse),
+          displayValue(stagiaire.etablissement_origine),
+          displayValue(stagiaire.niveau_etudes),
+          displayValue(stagiaire.domaine),
+          displayValue(stagiaire.specialite),
+          displayValue(stagiaire.statut),
+        ]),
+        widths: [36, 92, 105, 85, 105, 55, 100, 120, 180, 110, 180, 150, 100, 110, 110, 80],
+      },
+      note: 'Document confidentiel réservé à l’établissement.',
+    });
   }
 
   return (
@@ -160,7 +217,7 @@ export default function RapportsPage() {
         description="Analysez les effectifs, les résultats, l’assiduité et la réussite par formation."
         actions={
           <Button variant="outline" onClick={exportStagiaires} icon={<FiDownload className="h-4 w-4" />}>
-            Exporter les stagiaires (CSV)
+            Exporter les stagiaires (Excel)
           </Button>
         }
       />

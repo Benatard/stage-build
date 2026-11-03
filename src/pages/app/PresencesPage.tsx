@@ -12,7 +12,7 @@ import { dataService } from '@/services/data.service';
 import { PRESENCE_OPTIONS, optionLabel } from '@/config/options';
 import type { Presence, PresenceStatus } from '@/types/domain';
 import { confirmAction, notifyError, notifySuccess } from '@/utils/alerts';
-import { downloadCsv } from '@/utils/csv';
+import { downloadExcel, safeFilenamePart } from '@/utils/document-export';
 import { formatDate, formatTime, fullName, percentage } from '@/utils/format';
 
 type Draft = {
@@ -21,18 +21,9 @@ type Draft = {
   id?: string;
 };
 
-function safeFilenamePart(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/gi, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase();
-}
-
 export default function PresencesPage() {
   const { data } = useReferenceData();
-  const { user } = useAuth();
+  const { user, activeInstitution } = useAuth();
   const [seanceId, setSeanceId] = useState('');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [saving, setSaving] = useState(false);
@@ -97,38 +88,62 @@ export default function PresencesPage() {
     if (!seance) return;
 
     const date = formatDate(seance.date);
-    const filename = `presences-${safeFilenamePart(seance.date)}-${safeFilenamePart(seanceModuleName)}.csv`;
 
-    downloadCsv(
-      filename,
-      [
-        'Séance',
-        'Date',
-        'Horaire',
-        'Module',
-        'Promotion',
-        'Matricule',
-        'Stagiaire',
-        'Statut',
-        'Note / justification',
-        'État',
+    downloadExcel({
+      filename: `presences-${safeFilenamePart(seance.date)}-${safeFilenamePart(seanceModuleName)}`,
+      title: 'Feuille de présences',
+      subtitle: `${seance.title ?? seanceModuleName} · ${date} · ${seanceTime}`,
+      sheetName: 'Présences',
+      organization: activeInstitution
+        ? {
+            name: activeInstitution.name,
+            address: activeInstitution.address,
+            email: activeInstitution.email,
+            phone: activeInstitution.phone,
+            website: activeInstitution.website,
+          }
+        : undefined,
+      meta: [
+        ['Séance', seance.title ?? seanceModuleName],
+        ['Date', date],
+        ['Horaire', seanceTime],
+        ['Module', seanceModuleName],
+        ['Promotion', seancePromotion?.code ?? '—'],
+        [
+          'Formateur',
+          seanceFormateur ? fullName(seanceFormateur) : '—',
+        ],
+        ['Salle', seance.room ?? '—'],
+        ['Effectif', String(stats.total)],
+        ['Présents', String(stats.present)],
+        ['Absents', String(stats.absent)],
+        ['Taux de présence', `${stats.rate}%`],
       ],
-      eligibleStagiaires.map((stagiaire) => {
-        const draft = drafts[stagiaire.id];
-        return [
-          seance.title ?? seanceModuleName,
-          date,
-          seanceTime,
-          seanceModuleName,
-          seancePromotion?.code ?? '—',
-          stagiaire.matricule,
-          fullName(stagiaire),
-          optionLabel(PRESENCE_OPTIONS, draft?.status),
-          draft?.note.trim() || '—',
-          draft?.id ? 'Enregistré' : 'À enregistrer',
-        ];
-      }),
-    );
+      table: {
+        headers: [
+          'N°',
+          'Matricule',
+          'Stagiaire',
+          'Statut',
+          'Note / justification',
+          'État',
+        ],
+        rows: eligibleStagiaires.map((stagiaire, index) => {
+          const draft = drafts[stagiaire.id];
+          return [
+            index + 1,
+            stagiaire.matricule,
+            fullName(stagiaire),
+            optionLabel(PRESENCE_OPTIONS, draft?.status),
+            draft?.note.trim() || '—',
+            draft?.id ? 'Enregistré' : 'À enregistrer',
+          ];
+        }),
+        widths: [38, 100, 200, 120, 220, 100],
+      },
+      note:
+        'Feuille générée depuis StageBuild. Les statuts affichés correspondent aux valeurs actuellement saisies dans l’application.',
+    });
   }
 
   function handlePrint() {
@@ -272,7 +287,7 @@ export default function PresencesPage() {
               disabled={!seance || eligibleStagiaires.length === 0}
               icon={<FiDownload className="h-4 w-4" />}
             >
-              Exporter CSV
+              Exporter Excel
             </Button>
             <Button
               variant="outline"
@@ -280,7 +295,7 @@ export default function PresencesPage() {
               disabled={!seance || eligibleStagiaires.length === 0}
               icon={<FiPrinter className="h-4 w-4" />}
             >
-              Imprimer la fiche
+              Imprimer / PDF
             </Button>
             <Button
               onClick={() => void handleSave()}
@@ -379,56 +394,108 @@ export default function PresencesPage() {
               id="print-area"
               className="border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-8"
             >
-              <div className="flex flex-col gap-3 border-b-2 border-black pb-5 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xl font-extrabold tracking-tight">StageBuild</p>
-                  <p className="text-xs">Gestion et suivi des stagiaires</p>
-                  <p className="mt-1 text-xs">Plateforme pédagogique centralisée</p>
+              <div className="flex flex-col gap-4 border-b-[3px] border-black pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xl font-extrabold tracking-tight">
+                    {activeInstitution?.name ?? 'StageBuild'}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    {activeInstitution?.address ??
+                      'Gestion et suivi des stagiaires'}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-600">
+                    {[activeInstitution?.phone, activeInstitution?.email]
+                      .filter(Boolean)
+                      .join(' · ') || 'Plateforme pédagogique centralisée'}
+                  </p>
                 </div>
-                <div className="sm:text-right">
-                  <p className="text-base font-bold uppercase tracking-wide sm:text-lg">
+                <div className="shrink-0 sm:text-right">
+                  <p className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">
                     Fiche de présence
                   </p>
-                  <p className="text-xs">Année académique {new Date().getFullYear()}</p>
+                  <p className="mt-1 text-xs">
+                    Année académique {new Date().getFullYear()}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-600">
+                    Réf. {seance.id.slice(0, 8).toUpperCase()}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-2 break-words text-sm sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-x-8 gap-y-2 break-words text-sm sm:grid-cols-2">
                 <p>
-                  <strong>Séance :</strong> {seance.title ?? seanceModuleName}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Séance
+                  </span>
+                  <br />
+                  <strong>{seance.title ?? seanceModuleName}</strong>
                 </p>
                 <p>
-                  <strong>Date :</strong> {formatDate(seance.date)}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Date et horaire
+                  </span>
+                  <br />
+                  <strong>
+                    {formatDate(seance.date)} · {seanceTime}
+                  </strong>
                 </p>
                 <p>
-                  <strong>Horaire :</strong> {seanceTime}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Module
+                  </span>
+                  <br />
+                  <strong>{seanceModuleName}</strong>
                 </p>
                 <p>
-                  <strong>Module :</strong> {seanceModuleName}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Promotion
+                  </span>
+                  <br />
+                  <strong>{seancePromotion?.code ?? '—'}</strong>
                 </p>
                 <p>
-                  <strong>Promotion :</strong> {seancePromotion?.code ?? '—'}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Formateur
+                  </span>
+                  <br />
+                  <strong>{seanceFormateur ? fullName(seanceFormateur) : '—'}</strong>
                 </p>
                 <p>
-                  <strong>Formateur :</strong> {seanceFormateur ? fullName(seanceFormateur) : '—'}
-                </p>
-                <p>
-                  <strong>Salle :</strong> {seance.room ?? '—'}
-                </p>
-                <p>
-                  <strong>Effectif :</strong> {eligibleStagiaires.length}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Salle
+                  </span>
+                  <br />
+                  <strong>{seance.room ?? '—'}</strong>
                 </p>
               </div>
 
-              <table className="mt-6 w-full break-words border-collapse text-xs sm:text-sm">
+              <div className="mt-5 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+                {[
+                  ['Effectif', stats.total],
+                  ['Présents', stats.present],
+                  ['Absents', stats.absent],
+                  ['Taux', `${stats.rate}%`],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="border border-slate-400 px-3 py-2">
+                    <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">
+                      {label}
+                    </p>
+                    <p className="mt-0.5 text-lg font-extrabold">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <table className="mt-5 w-full break-words border-collapse text-[11px] sm:text-xs">
                 <thead>
-                  <tr className="border-b-2 border-black text-left">
-                    <th className="py-2 pr-2">N°</th>
-                    <th className="py-2 pr-2">Matricule</th>
-                    <th className="py-2 pr-2">Stagiaire</th>
-                    <th className="py-2 pr-2">Statut</th>
-                    <th className="py-2 pr-2">Observation</th>
-                    <th className="py-2 text-center">Signature</th>
+                  <tr className="bg-slate-100 text-left">
+                    <th className="w-10 border border-slate-400 px-2 py-2">N°</th>
+                    <th className="w-28 border border-slate-400 px-2 py-2">Matricule</th>
+                    <th className="border border-slate-400 px-2 py-2">Stagiaire</th>
+                    <th className="w-32 border border-slate-400 px-2 py-2">Statut</th>
+                    <th className="border border-slate-400 px-2 py-2">Observation</th>
+                    <th className="w-28 border border-slate-400 px-2 py-2 text-center">
+                      Signature
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -437,38 +504,52 @@ export default function PresencesPage() {
                     return (
                       <tr
                         key={stagiaire.id}
-                        className="break-inside-avoid border-b border-slate-300 align-top"
+                        className={`break-inside-avoid align-top ${
+                          index % 2 === 1 ? 'bg-slate-50' : ''
+                        }`}
                       >
-                        <td className="py-2 pr-2">{index + 1}</td>
-                        <td className="py-2 pr-2">{stagiaire.matricule}</td>
-                        <td className="py-2 pr-2 font-semibold">{fullName(stagiaire)}</td>
-                        <td className="py-2 pr-2">
+                        <td className="border border-slate-300 px-2 py-2">{index + 1}</td>
+                        <td className="border border-slate-300 px-2 py-2">
+                          {stagiaire.matricule}
+                        </td>
+                        <td className="border border-slate-300 px-2 py-2 font-semibold">
+                          {fullName(stagiaire)}
+                        </td>
+                        <td className="border border-slate-300 px-2 py-2">
                           {optionLabel(PRESENCE_OPTIONS, draft?.status)}
                         </td>
-                        <td className="py-2 pr-2">{draft?.note.trim() || '—'}</td>
-                        <td className="h-8 py-2" />
+                        <td className="border border-slate-300 px-2 py-2">
+                          {draft?.note.trim() || '—'}
+                        </td>
+                        <td className="h-10 border border-slate-300 px-2 py-2" />
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
 
-              <div className="mt-4 flex flex-wrap gap-4 text-xs">
-                <span>Effectif : {stats.total}</span>
-                <span>Présents : {stats.present}</span>
-                <span>Absents : {stats.absent}</span>
-                <span>Taux : {stats.rate}%</span>
+              <div className="mt-3 flex flex-wrap justify-between gap-2 text-[10px] text-slate-600">
+                <span>
+                  Statuts :{' '}
+                  {PRESENCE_OPTIONS.map((option) =>
+                    optionLabel(PRESENCE_OPTIONS, option.value),
+                  ).join(', ')}
+                </span>
+                <span>Document confidentiel · {activeInstitution?.name ?? 'StageBuild'}</span>
               </div>
 
-              <div className="mt-10 flex flex-col gap-6 text-xs sm:flex-row sm:justify-between">
-                <p>Fait le {formatDate(new Date().toISOString())}</p>
+              <div className="mt-8 flex flex-col gap-6 text-xs sm:flex-row sm:items-end sm:justify-between">
+                <p>
+                  Fait {activeInstitution?.city ? `à ${activeInstitution.city}, ` : ''}le{' '}
+                  {formatDate(new Date().toISOString())}
+                </p>
                 <div className="flex gap-12">
-                  <div className="text-center">
-                    <p>Le formateur</p>
+                  <div className="min-w-[130px] text-center">
+                    <p className="font-semibold">Le formateur</p>
                     <p className="mt-10 border-t border-black pt-2">Signature</p>
                   </div>
-                  <div className="text-center">
-                    <p>La Direction</p>
+                  <div className="min-w-[150px] text-center">
+                    <p className="font-semibold">La Direction</p>
                     <p className="mt-10 border-t border-black pt-2">Signature et cachet</p>
                   </div>
                 </div>

@@ -65,6 +65,7 @@ function numberLabel(value: unknown, suffix = ''): string {
 
 export function StagiaireBulletin() {
   const academic = useSelfAcademic();
+  const { activeInstitution } = useAuth();
   const stagiaireId = academic.stagiaireId;
   const { rows, loading, error } = useScopedRows<Bulletin>('bulletins', {
     scope: { stagiaire_id: stagiaireId },
@@ -118,7 +119,28 @@ export function StagiaireBulletin() {
           </p>
         </div>
       ) : (
-        <>
+        <div id="print-area">
+          <div className="mb-5 hidden border-b-[3px] border-black pb-4 print:block">
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <p className="text-xl font-extrabold tracking-tight">
+                  {activeInstitution?.name ?? 'StageBuild'}
+                </p>
+                <p className="mt-1 text-xs">
+                  {activeInstitution?.address ?? 'Gestion et suivi des stagiaires'}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-base font-bold uppercase tracking-wide">
+                  Bulletin de fin de formation
+                </p>
+                <p className="mt-1 text-xs">
+                  Année académique {new Date().getFullYear()}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="Moyenne générale" value={numberLabel(content.final?.final_average, '/20')} tone="primary" icon={<FiAward className="h-4 w-4" />} />
             <StatCard label="Modules" value={numberLabel(content.final?.modules_average, '/20')} tone="purple" />
@@ -217,18 +239,36 @@ export function StagiaireBulletin() {
               </p>
             </SectionCard>
           )}
-        </>
+        </div>
       )}
     </SelfGate>
   );
 }
 
 function DocumentPreview({ content }: { content: DocumentContent }) {
+  const { activeInstitution } = useAuth();
   const stagiaire = content.stagiaire ?? {};
   const final = content.final ?? {};
 
   return (
-    <div className="space-y-5">
+    <div id="print-area" className="space-y-5">
+      <div className="hidden border-b-[3px] border-black pb-4 print:block">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <p className="text-xl font-extrabold tracking-tight">
+              {activeInstitution?.name ?? 'StageBuild'}
+            </p>
+            <p className="mt-1 text-xs">
+              {activeInstitution?.address ?? 'Gestion et suivi des stagiaires'}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-base font-bold uppercase tracking-wide">Document officiel</p>
+            <p className="mt-1 text-xs">Année académique {new Date().getFullYear()}</p>
+          </div>
+        </div>
+      </div>
+
       <DefinitionGrid
         columns={2}
         items={[

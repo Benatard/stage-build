@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FiCopy, FiEdit2, FiEye, FiMail, FiRefreshCw } from 'react-icons/fi';
+import { FiCopy, FiDownload, FiEdit2, FiEye, FiFileText, FiMail, FiRefreshCw } from 'react-icons/fi';
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EntityManager } from '@/components/ui/EntityManager';
@@ -16,7 +16,14 @@ import {
 import { getRememberedPassword, rememberPassword } from '@/services/password-vault';
 import type { Inscription, Stagiaire, User } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/alerts';
-import { formatDate, fullName, getErrorMessage } from '@/utils/format';
+import {
+  displayValue,
+  downloadExcel,
+  openPdfDocument,
+  safeFilenamePart,
+  type ExportCell,
+} from '@/utils/document-export';
+import { formatDate, formatDateTime, fullName, getErrorMessage } from '@/utils/format';
 import { buildOptions } from '@/utils/options';
 
 const statusOptions = [
@@ -48,6 +55,35 @@ type CredentialsMessageInput = {
   temporaryPassword?: string;
   existingAccount?: boolean;
   loginUrl: string;
+};
+
+type AccountExportRecord = {
+  inscription: Inscription;
+  stagiaire: Stagiaire;
+  account?: User;
+  password?: string;
+  formation: string;
+  promotion: string;
+};
+
+const genderLabels: Record<string, string> = {
+  M: 'Masculin',
+  F: 'Féminin',
+  Autre: 'Autre',
+};
+
+const stagiaireStatusLabels: Record<string, string> = {
+  candidat: 'Candidat',
+  admis: 'Admis',
+  actif: 'Actif',
+  termine: 'Terminé',
+  archive: 'Archivé',
+};
+
+const accountStatusLabels: Record<string, string> = {
+  active: 'Actif',
+  inactive: 'Inactif',
+  blocked: 'Bloqué',
 };
 
 function buildCredentialsMessage({
@@ -85,7 +121,7 @@ function buildCredentialsMessage({
 }
 
 export default function InscriptionsPage() {
-  const { user } = useAuth();
+  const { user, activeInstitution, activeInstitutionId } = useAuth();
   const { data, refresh } = useReferenceData();
   const [credentials, setCredentials] = useState<CredentialsState | null>(null);
   const [accountView, setAccountView] = useState<AccountViewState | null>(null);
@@ -164,6 +200,240 @@ export default function InscriptionsPage() {
         'Vos informations de connexion StageBuild',
       )}&body=${encodeURIComponent(accountMessage)}`
     : '';
+
+  const exportInstitutionId = activeInstitutionId ?? user?.institution_id ?? null;
+
+  function belongsToInstitution(record: { institution_id?: string | null }): boolean {
+    if (!exportInstitutionId) return true;
+    return !record.institution_id || record.institution_id === exportInstitutionId;
+  }
+
+  function buildAccountExportRecords(): AccountExportRecord[] {
+    const records: AccountExportRecord[] = [];
+
+    data.inscriptions.forEach((inscription) => {
+      if (!belongsToInstitution(inscription)) return;
+
+      const stagiaire = data.stagiaires.find(
+        (item) => item.id === inscription.stagiaire_id && belongsToInstitution(item),
+      );
+      if (!stagiaire) return;
+
+      const account = data.users.find(
+        (item) =>
+          item.role === 'stagiaire' &&
+          item.stagiaire_id === stagiaire.id &&
+          belongsToInstitution(item),
+      );
+      const formation = data.formations.find((item) => item.id === inscription.formation_id);
+      const promotion = data.promotions.find((item) => item.id === inscription.promotion_id);
+
+      records.push({
+        inscription,
+        stagiaire,
+        account,
+        password: account ? getRememberedPassword(user?.id, account.id) : undefined,
+        formation: formation?.name ?? '—',
+        promotion: promotion?.code ?? '—',
+      });
+    });
+
+    return records.sort((left, right) =>
+      fullName(left.stagiaire).localeCompare(fullName(right.stagiaire), 'fr'),
+    );
+  }
+
+  function exportMetadata(records: AccountExportRecord[]): Array<[string, string]> {
+    return [
+      ['Institution', activeInstitution?.name ?? 'Toutes les institutions'],
+      ...(activeInstitution?.code ? ([['Code', activeInstitution.code]] as Array<[string, string]>) : []),
+      ...(activeInstitution?.city ? ([['Ville', activeInstitution.city]] as Array<[string, string]>) : []),
+      ['Inscriptions', String(records.length)],
+      ['Mots de passe disponibles', String(records.filter((record) => record.password).length)],
+      ['Lien de connexion', `${window.location.origin}/login`],
+      ['Exporté le', formatDateTime(new Date().toISOString())],
+    ];
+  }
+
+  const exportNote =
+    'Document confidentiel réservé à l’établissement. Les mots de passe ne sont exportés que s’ils ont été générés ou modifiés pendant la session en cours ; les autres restent chiffrés en base et ne peuvent pas être affichés.';
+
+  function exportAccountsExcel() {
+    const records = buildAccountExportRecords();
+    if (records.length === 0) {
+      notifyError('Aucune inscription', 'Aucune inscription à exporter pour cet établissement.');
+      return;
+    }
+
+    const headers = [
+      'N°',
+      'Matricule',
+      'Nom',
+      'Postnom',
+      'Prénom',
+      'Sexe',
+      'Date de naissance',
+      'Lieu de naissance',
+      'Téléphone',
+      'Email personnel',
+      'Adresse',
+      'Contact d’urgence',
+      'Téléphone d’urgence',
+      'Établissement d’origine',
+      'Niveau d’études',
+      'Diplôme',
+      'Domaine',
+      'Spécialité',
+      'Statut stagiaire',
+      'Email du compte',
+      'Téléphone du compte',
+      'Mot de passe',
+      'Statut du compte',
+      'Dernière connexion',
+      'Changement de mot de passe requis',
+      'Formation',
+      'Promotion',
+      'Début de l’inscription',
+      'Fin de l’inscription',
+      'Statut de l’inscription',
+      'Inscrit le',
+      'Institution',
+    ];
+
+    const rows: ExportCell[][] = records.map((record, index) => {
+      const { stagiaire, account, inscription } = record;
+      return [
+        index + 1,
+        stagiaire.matricule,
+        stagiaire.nom,
+        displayValue(stagiaire.postnom),
+        stagiaire.prenom,
+        displayValue(stagiaire.sexe ? genderLabels[stagiaire.sexe] ?? stagiaire.sexe : null),
+        formatDate(stagiaire.date_naissance),
+        displayValue(stagiaire.lieu_naissance),
+        displayValue(stagiaire.telephone),
+        displayValue(stagiaire.email),
+        displayValue(stagiaire.adresse),
+        displayValue(stagiaire.contact_urgence_nom),
+        displayValue(stagiaire.contact_urgence_telephone),
+        displayValue(stagiaire.etablissement_origine),
+        displayValue(stagiaire.niveau_etudes),
+        displayValue(stagiaire.diplome),
+        displayValue(stagiaire.domaine),
+        displayValue(stagiaire.specialite),
+        displayValue(stagiaireStatusLabels[stagiaire.statut] ?? stagiaire.statut),
+        account?.email ?? 'Compte non créé',
+        displayValue(account?.phone ?? stagiaire.telephone),
+        record.password ?? 'Non disponible',
+        account ? accountStatusLabels[account.statut] ?? account.statut : 'Compte non créé',
+        displayValue(account?.last_login_at ? formatDateTime(account.last_login_at) : null),
+        account ? (account.must_change_password ? 'Oui' : 'Non') : '—',
+        record.formation,
+        record.promotion,
+        formatDate(inscription.start_date),
+        formatDate(inscription.end_date),
+        statusOptions.find((option) => option.value === inscription.status)?.label ??
+          inscription.status,
+        formatDate(inscription.created_at),
+        activeInstitution?.name ?? '—',
+      ];
+    });
+
+    downloadExcel({
+      filename: `comptes-stagiaires-${safeFilenamePart(activeInstitution?.name ?? 'institution')}-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Comptes stagiaires inscrits',
+      subtitle: `${activeInstitution?.name ?? 'Toutes les institutions'} · ${records.length} inscription(s)`,
+      sheetName: 'Comptes stagiaires',
+      organization: activeInstitution
+        ? {
+            name: activeInstitution.name,
+            address: activeInstitution.address,
+            email: activeInstitution.email,
+            phone: activeInstitution.phone,
+            website: activeInstitution.website,
+          }
+        : undefined,
+      meta: exportMetadata(records),
+      table: {
+        headers,
+        rows,
+        widths: [
+          36, 92, 100, 82, 100, 62, 100, 110, 100, 160, 170, 120, 120, 140, 90, 90, 110,
+          110, 90, 160, 110, 105, 100, 120, 130, 170, 90, 100, 100, 110, 100, 140,
+        ],
+      },
+      note: exportNote,
+    });
+  }
+
+  function exportAccountsPdf() {
+    const records = buildAccountExportRecords();
+    if (records.length === 0) {
+      notifyError('Aucune inscription', 'Aucune inscription à exporter pour cet établissement.');
+      return;
+    }
+
+    const headers = [
+      'N°',
+      'Matricule',
+      'Nom complet',
+      'Sexe',
+      'Naissance',
+      'Téléphone',
+      'Email personnel',
+      'Compte stagiaire',
+      'Mot de passe',
+      'Formation',
+      'Promotion',
+      'Période',
+      'Inscription',
+      'Compte',
+    ];
+
+    const rows: ExportCell[][] = records.map((record, index) => {
+      const { stagiaire, account, inscription } = record;
+      return [
+        index + 1,
+        stagiaire.matricule,
+        fullName(stagiaire),
+        displayValue(stagiaire.sexe ? genderLabels[stagiaire.sexe] ?? stagiaire.sexe : null),
+        formatDate(stagiaire.date_naissance),
+        displayValue(account?.phone ?? stagiaire.telephone),
+        displayValue(stagiaire.email),
+        account?.email ?? 'Non créé',
+        record.password ?? 'Non disponible',
+        record.formation,
+        record.promotion,
+        `${formatDate(inscription.start_date)} → ${formatDate(inscription.end_date)}`,
+        statusOptions.find((option) => option.value === inscription.status)?.label ??
+          inscription.status,
+        account ? accountStatusLabels[account.statut] ?? account.statut : 'Non créé',
+      ];
+    });
+
+    const opened = openPdfDocument({
+      filename: `comptes-stagiaires-${safeFilenamePart(activeInstitution?.name ?? 'institution')}-${new Date().toISOString().slice(0, 10)}`,
+      title: 'Comptes stagiaires inscrits',
+      subtitle: `${activeInstitution?.name ?? 'Toutes les institutions'} · ${records.length} inscription(s)`,
+      organization: activeInstitution
+        ? {
+            name: activeInstitution.name,
+            address: activeInstitution.address,
+            email: activeInstitution.email,
+            phone: activeInstitution.phone,
+            website: activeInstitution.website,
+          }
+        : undefined,
+      meta: exportMetadata(records),
+      table: { headers, rows },
+      note: exportNote,
+      landscape: true,
+    });
+
+    if (!opened) {
+      notifyError('Export PDF bloqué', 'Autorisez les fenêtres pop-up puis réessayez.');
+    }
+  }
 
   async function copyText(label: string, value: string) {
     try {
@@ -306,6 +576,31 @@ export default function InscriptionsPage() {
             .join(' ');
         }}
         onCreateOverride={handleCreate}
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-body dark:text-body-dark">
+              Extraire uniquement les inscriptions de l’établissement
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              icon={<FiDownload className="h-3.5 w-3.5" />}
+              disabled={data.inscriptions.length === 0}
+              onClick={exportAccountsExcel}
+            >
+              Excel complet
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              icon={<FiFileText className="h-3.5 w-3.5" />}
+              disabled={data.inscriptions.length === 0}
+              onClick={exportAccountsPdf}
+            >
+              PDF / Imprimer
+            </Button>
+          </div>
+        }
         columns={[
           {
             key: 'stagiaire',

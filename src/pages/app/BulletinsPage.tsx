@@ -16,7 +16,7 @@ import { buildOptions } from '@/utils/options';
 
 export default function BulletinsPage() {
   const { data } = useReferenceData();
-  const { user } = useAuth();
+  const { user, activeInstitution } = useAuth();
   const [stagiaireId, setStagiaireId] = useState(user?.stagiaire_id ?? '');
   const [saving, setSaving] = useState(false);
 
@@ -96,8 +96,11 @@ export default function BulletinsPage() {
 
     const content = {
       organization: {
-        name: 'StageBuild',
-        address: 'Plateforme de gestion et de suivi des stagiaires',
+        name: activeInstitution?.name ?? 'StageBuild',
+        address:
+          activeInstitution?.address ?? 'Plateforme de gestion et de suivi des stagiaires',
+        email: activeInstitution?.email ?? null,
+        phone: activeInstitution?.phone ?? null,
       },
       stagiaire: {
         id: stagiaire.id,
@@ -271,15 +274,22 @@ export default function BulletinsPage() {
 
       {stagiaire && final && (
         <div id="print-area" className="mb-6 border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-8">
-          <div className="flex flex-col gap-3 border-b-2 border-black pb-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3 border-b-[3px] border-black pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xl font-extrabold tracking-tight">StageBuild</p>
-              <p className="text-xs">Gestion et suivi des stagiaires</p>
-              <p className="mt-1 text-xs">Plateforme pédagogique centralisée</p>
+              <p className="text-xl font-extrabold tracking-tight">
+                {activeInstitution?.name ?? 'StageBuild'}
+              </p>
+              <p className="mt-1 text-xs">
+                {activeInstitution?.address ?? 'Gestion et suivi des stagiaires'}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-600">
+                {[activeInstitution?.phone, activeInstitution?.email].filter(Boolean).join(' · ') ||
+                  'Plateforme pédagogique centralisée'}
+              </p>
             </div>
             <div className="sm:text-right">
               <p className="text-base font-bold uppercase tracking-wide sm:text-lg">Bulletin de fin de formation</p>
-              <p className="text-xs">Année académique {new Date().getFullYear()}</p>
+              <p className="mt-1 text-xs">Année académique {new Date().getFullYear()}</p>
             </div>
           </div>
 

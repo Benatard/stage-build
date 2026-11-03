@@ -16,7 +16,7 @@ import { buildOptions } from '@/utils/options';
 
 export default function DocumentsPage() {
   const { data } = useReferenceData();
-  const { user } = useAuth();
+  const { user, activeInstitution } = useAuth();
   const [stagiaireId, setStagiaireId] = useState(user?.stagiaire_id ?? '');
   const [type, setType] = useState('attestation_stage');
   const [title, setTitle] = useState('');
@@ -77,8 +77,11 @@ export default function DocumentsPage() {
 
     const content = {
       organization: {
-        name: 'StageBuild',
-        address: 'Plateforme de gestion et de suivi des stagiaires',
+        name: activeInstitution?.name ?? 'StageBuild',
+        address:
+          activeInstitution?.address ?? 'Plateforme de gestion et de suivi des stagiaires',
+        email: activeInstitution?.email ?? null,
+        phone: activeInstitution?.phone ?? null,
       },
       stagiaire: {
         matricule: stagiaire.matricule,
@@ -222,12 +225,23 @@ export default function DocumentsPage() {
 
       {stagiaire && (
         <div id="print-area" className="mb-6 border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-10">
-          <div className="flex flex-col gap-2 border-b-2 border-black pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3 border-b-[3px] border-black pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-lg font-extrabold tracking-tight">StageBuild</p>
-              <p className="text-xs">Gestion et suivi des stagiaires</p>
+              <p className="text-lg font-extrabold tracking-tight">
+                {activeInstitution?.name ?? 'StageBuild'}
+              </p>
+              <p className="mt-1 text-xs">
+                {activeInstitution?.address ?? 'Gestion et suivi des stagiaires'}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-600">
+                {[activeInstitution?.phone, activeInstitution?.email].filter(Boolean).join(' · ') ||
+                  'Plateforme pédagogique centralisée'}
+              </p>
             </div>
-            <p className="text-xs">Plateforme pédagogique</p>
+            <div className="text-xs sm:text-right">
+              <p className="font-semibold uppercase tracking-wide">Document officiel</p>
+              <p className="mt-1">Année académique {new Date().getFullYear()}</p>
+            </div>
           </div>
 
           {isCard ? (
