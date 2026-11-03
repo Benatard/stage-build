@@ -42,6 +42,24 @@ type Draft = {
   promotion_id: string;
 };
 
+const LOAD_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), LOAD_TIMEOUT_MS);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 const emptyDraft: Draft = {
   nom: '',
   postnom: '',
@@ -73,7 +91,10 @@ export default function ReservationPage() {
     setLoadError(null);
 
     try {
-      const items = await loadAvailability(institutionId);
+      const items = await withTimeout(
+        loadAvailability(institutionId),
+        'Le chargement des promotions a pris trop de temps. Réessayez.',
+      );
       setAvailability(items);
 
       setDraft((current) => {
@@ -113,7 +134,10 @@ export default function ReservationPage() {
       setInstitutionsLoading(true);
 
       try {
-        const catalog = await loadPublicInstitutions();
+        const catalog = await withTimeout(
+          loadPublicInstitutions(),
+          'Le chargement des institutions a pris trop de temps. Réessayez.',
+        );
         if (!active) return;
 
         setInstitutions(catalog.institutions);

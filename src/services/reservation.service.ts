@@ -171,15 +171,41 @@ export async function loadPublicInstitutions(): Promise<PublicInstitutionCatalog
   let hasPublicColumn = false;
   let lastError: unknown = null;
 
-  for (const query of queries) {
-    try {
-      rows = await sqlRows(query.sql);
-      hasPublicColumn = query.hasPublicColumn;
-      break;
-    } catch (error) {
-      lastError = error;
-      if (isInstitutionsTableMissing(error)) {
-        return { institutions: [], legacy: true };
+  try {
+    const response = await dataService.sql<SqlTuple>('select * from institutions');
+    const rawRows = (response.rows ?? []) as SqlTuple[];
+    const columns = Array.isArray(response.columns)
+      ? (response.columns as unknown[]).map((column) => String(column))
+      : [];
+
+    if (columns.length > 0) {
+      const order = ['id', 'name', 'code', 'city', 'country', 'status', 'slug', 'is_public'];
+      rows = rawRows.map((row) =>
+        order.map((name) => {
+          const index = columns.indexOf(name);
+          return index >= 0 ? row[index] ?? null : null;
+        }),
+      );
+      hasPublicColumn = columns.includes('is_public');
+    }
+  } catch (error) {
+    lastError = error;
+    if (isInstitutionsTableMissing(error)) {
+      return { institutions: [], legacy: true };
+    }
+  }
+
+  if (!rows) {
+    for (const query of queries) {
+      try {
+        rows = await sqlRows(query.sql);
+        hasPublicColumn = query.hasPublicColumn;
+        break;
+      } catch (error) {
+        lastError = error;
+        if (isInstitutionsTableMissing(error)) {
+          return { institutions: [], legacy: true };
+        }
       }
     }
   }
