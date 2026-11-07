@@ -64,6 +64,12 @@ export const platformNavigation: AppNavGroup[] = [
         permission: 'platform_institutions',
       },
       {
+        label: 'Stagiaires',
+        path: '/app/stagiaires',
+        icon: FiUsers,
+        permission: 'stagiaires',
+      },
+      {
         label: 'Messages de contact',
         path: '/app/plateforme/messages',
         icon: FiInbox,
@@ -213,6 +219,20 @@ export const appNavigation: AppNavGroup[] = [
   },
 ];
 
+function mergeNavigation(groups: AppNavGroup[]): AppNavGroup[] {
+  const seen = new Set<string>();
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (seen.has(item.path)) return false;
+        seen.add(item.path);
+        return true;
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
 export function navigationForUser(input: {
   isStagiaire: boolean;
   isSupraAdmin: boolean;
@@ -220,5 +240,7 @@ export function navigationForUser(input: {
 }): AppNavGroup[] {
   if (input.isStagiaire) return stagiaireNavigation;
   if (input.isSupraAdmin && input.isPlatformMode) return platformNavigation;
-  return input.isSupraAdmin ? [...platformNavigation, ...appNavigation] : appNavigation;
+  return input.isSupraAdmin
+    ? mergeNavigation([...platformNavigation, ...appNavigation])
+    : appNavigation;
 }

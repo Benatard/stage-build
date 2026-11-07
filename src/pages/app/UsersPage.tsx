@@ -46,6 +46,7 @@ type UserDraft = {
   role: Role;
   statut: string;
   stagiaire_id: string;
+  institution_id: string;
 };
 
 type AccountViewState = {
@@ -62,6 +63,7 @@ const emptyDraft: UserDraft = {
   role: 'stagiaire',
   statut: 'active',
   stagiaire_id: '',
+  institution_id: '',
 };
 
 function buildConnectionMessage({
@@ -183,13 +185,31 @@ export default function UsersPage() {
     );
   }
 
+  const formInstitutionId = isSupraAdmin
+    ? draft.institution_id || activeInstitutionId || ''
+    : institutionScopeId ?? '';
+
   const stagiaireOptions = useMemo(
     () =>
       buildOptions(
-        data.stagiaires,
+        data.stagiaires.filter(
+          (stagiaire) =>
+            !formInstitutionId ||
+            !stagiaire.institution_id ||
+            stagiaire.institution_id === formInstitutionId,
+        ),
         (stagiaire) => `${fullName(stagiaire)} (${stagiaire.matricule})`,
       ),
-    [data.stagiaires],
+    [data.stagiaires, formInstitutionId],
+  );
+
+  const institutionOptions = useMemo(
+    () =>
+      buildOptions(
+        data.institutions.filter((institution) => institution.status !== 'archivee'),
+        (institution) => `${institution.name}${institution.code ? ` (${institution.code})` : ''}`,
+      ),
+    [data.institutions],
   );
 
   const roleOptions = useMemo(
@@ -282,7 +302,10 @@ export default function UsersPage() {
 
   function openCreate() {
     setEditing(null);
-    setDraft(emptyDraft);
+    setDraft({
+      ...emptyDraft,
+      institution_id: activeInstitutionId ?? currentUser?.institution_id ?? '',
+    });
     setDraftPasswordVisible(false);
     setModalOpen(true);
   }
@@ -302,6 +325,7 @@ export default function UsersPage() {
       role: user.role,
       statut: user.statut,
       stagiaire_id: user.stagiaire_id ?? '',
+      institution_id: user.institution_id ?? '',
     });
     setModalOpen(true);
   }
@@ -359,13 +383,17 @@ export default function UsersPage() {
         }
 
         const targetInstitutionId =
-          draft.role === 'supra_admin' ? null : institutionScopeId;
+          draft.role === 'supra_admin'
+            ? null
+            : isSupraAdmin
+              ? draft.institution_id || null
+              : institutionScopeId;
 
         if (draft.role !== 'supra_admin' && !targetInstitutionId) {
           notifyError(
             'Institution requise',
             isSupraAdmin
-              ? 'Sélectionnez d’abord une institution dans l’en-tête avant de créer un utilisateur.'
+              ? 'Choisissez l’institution à laquelle affecter ce compte.'
               : 'Votre compte n’est rattaché à aucune institution. Contactez la plateforme.',
           );
           setSaving(false);
@@ -399,6 +427,7 @@ export default function UsersPage() {
               role: draft.role,
               statut: draft.statut as User['statut'],
               stagiaire_id: draft.stagiaire_id || null,
+              institution_id: targetInstitutionId,
             },
             password,
           );
@@ -730,7 +759,7 @@ export default function UsersPage() {
           editing
             ? 'Les informations du compte peuvent être modifiées ici. Le mot de passe se gère depuis la fiche du compte.'
             : isSupraAdmin
-              ? 'Un compte sera créé dans l’institution sélectionnée avec ces identifiants.'
+              ? 'Un compte sera créé et affecté à l’institution que vous choisissez.'
               : `Un compte sera créé pour ${activeInstitution?.name ?? 'votre institution'} avec ces identifiants.`
         }
         size="lg"
@@ -847,6 +876,28 @@ export default function UsersPage() {
               }
             />
           </Field>
+          {isSupraAdmin && !editing && draft.role !== 'supra_admin' && (
+            <Field
+              label="Institution"
+              required
+              hint="Le compte sera affecté à cette institution."
+              className="sm:col-span-2"
+            >
+              <Select
+                required
+                value={draft.institution_id}
+                placeholder="Choisir une institution"
+                options={institutionOptions}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    institution_id: event.target.value,
+                    stagiaire_id: '',
+                  }))
+                }
+              />
+            </Field>
+          )}
           <Field
             label="Dossier stagiaire lié"
             hint="Requis pour qu’un stagiaire voie ses propres données."
