@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Textarea } from '@/components/ui/Form';
+import { InstitutionLogo } from '@/components/ui/InstitutionLogo';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
@@ -310,13 +311,22 @@ export default function SettingsPage() {
               />
             </Field>
             <Field label="Logo (URL)">
-              <Input
-                value={institutionDraft.logo_url}
-                onChange={(event) =>
-                  setInstitutionDraft((current) => ({ ...current, logo_url: event.target.value }))
-                }
-                placeholder="https://…"
-              />
+              <div className="flex items-center gap-3">
+                <InstitutionLogo
+                  name={institutionDraft.name}
+                  code={activeInstitution?.code}
+                  logoUrl={institutionDraft.logo_url}
+                  color={institutionDraft.primary_color}
+                  className="h-11 w-11 border border-stroke dark:border-white/10"
+                />
+                <Input
+                  value={institutionDraft.logo_url}
+                  onChange={(event) =>
+                    setInstitutionDraft((current) => ({ ...current, logo_url: event.target.value }))
+                  }
+                  placeholder="https://…"
+                />
+              </div>
             </Field>
             <Field label="Couleur principale">
               <Input

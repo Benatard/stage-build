@@ -25,6 +25,7 @@ export type PublicInstitution = {
   code?: string | null;
   city?: string | null;
   country?: string | null;
+  logo_url?: string | null;
 };
 
 export type ReservationAvailability = {
@@ -142,7 +143,7 @@ function isPublicInstitutionValue(value: unknown): boolean {
 export async function loadPublicInstitutions(): Promise<PublicInstitutionCatalog> {
   const queries: Array<{ sql: string; hasPublicColumn: boolean }> = [
     {
-      sql: 'select id, name, code, city, country, status, slug, is_public from institutions',
+      sql: 'select id, name, code, city, country, status, slug, is_public, logo_url from institutions',
       hasPublicColumn: true,
     },
     {
@@ -179,7 +180,7 @@ export async function loadPublicInstitutions(): Promise<PublicInstitutionCatalog
       : [];
 
     if (columns.length > 0) {
-      const order = ['id', 'name', 'code', 'city', 'country', 'status', 'slug', 'is_public'];
+      const order = ['id', 'name', 'code', 'city', 'country', 'status', 'slug', 'is_public', 'logo_url'];
       rows = rawRows.map((row) =>
         order.map((name) => {
           const index = columns.indexOf(name);
@@ -215,7 +216,7 @@ export async function loadPublicInstitutions(): Promise<PublicInstitutionCatalog
   const hiddenSlug = saasConfig.defaultInstitutionSlug.trim().toLowerCase();
 
   const institutions = rows
-    .map(([id, name, code, city, country, status, slug, isPublic]) => ({
+    .map(([id, name, code, city, country, status, slug, isPublic, logoUrl]) => ({
       id: typeof id === 'string' ? id : '',
       name: typeof name === 'string' ? name : '',
       code: typeof code === 'string' ? code : null,
@@ -224,6 +225,7 @@ export async function loadPublicInstitutions(): Promise<PublicInstitutionCatalog
       status: typeof status === 'string' ? status : 'active',
       slug: typeof slug === 'string' ? slug : null,
       isPublic: hasPublicColumn ? isPublicInstitutionValue(isPublic) : null,
+      logo_url: typeof logoUrl === 'string' ? logoUrl : null,
     }))
     .filter(
       (institution) =>

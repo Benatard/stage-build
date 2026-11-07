@@ -157,6 +157,7 @@ export default function RapportsPage() {
             email: activeInstitution.email,
             phone: activeInstitution.phone,
             website: activeInstitution.website,
+            logoUrl: activeInstitution.logo_url,
           }
         : undefined,
       meta: [

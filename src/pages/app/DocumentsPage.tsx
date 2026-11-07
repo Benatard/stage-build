@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Select } from '@/components/ui/Form';
+import { InstitutionLogo } from '@/components/ui/InstitutionLogo';
 import { DOCUMENT_TYPE_OPTIONS, optionLabel } from '@/config/options';
 import { useAuth } from '@/context/AuthContext';
 import { useForgeTable } from '@/hooks/useForgeTable';
@@ -82,6 +83,7 @@ export default function DocumentsPage() {
           activeInstitution?.address ?? 'Plateforme de gestion et de suivi des stagiaires',
         email: activeInstitution?.email ?? null,
         phone: activeInstitution?.phone ?? null,
+        logo_url: activeInstitution?.logo_url ?? null,
       },
       stagiaire: {
         matricule: stagiaire.matricule,
@@ -226,17 +228,26 @@ export default function DocumentsPage() {
       {stagiaire && (
         <div id="print-area" className="mb-6 border border-stroke bg-white p-5 text-black dark:border-white/10 sm:p-10">
           <div className="flex flex-col gap-3 border-b-[3px] border-black pb-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-lg font-extrabold tracking-tight">
-                {activeInstitution?.name ?? 'StageBuild'}
-              </p>
-              <p className="mt-1 text-xs">
-                {activeInstitution?.address ?? 'Gestion et suivi des stagiaires'}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-600">
-                {[activeInstitution?.phone, activeInstitution?.email].filter(Boolean).join(' · ') ||
-                  'Plateforme pédagogique centralisée'}
-              </p>
+            <div className="flex items-center gap-3">
+              <InstitutionLogo
+                name={activeInstitution?.name}
+                code={activeInstitution?.code}
+                logoUrl={activeInstitution?.logo_url}
+                color={activeInstitution?.primary_color}
+                className="h-14 w-14 border border-black/10"
+              />
+              <div>
+                <p className="text-lg font-extrabold tracking-tight">
+                  {activeInstitution?.name ?? 'StageBuild'}
+                </p>
+                <p className="mt-1 text-xs">
+                  {activeInstitution?.address ?? 'Gestion et suivi des stagiaires'}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-600">
+                  {[activeInstitution?.phone, activeInstitution?.email].filter(Boolean).join(' · ') ||
+                    'Plateforme pédagogique centralisée'}
+                </p>
+              </div>
             </div>
             <div className="text-xs sm:text-right">
               <p className="font-semibold uppercase tracking-wide">Document officiel</p>

@@ -12,6 +12,7 @@ export type ExportOrganization = {
   email?: string | null;
   phone?: string | null;
   website?: string | null;
+  logoUrl?: string | null;
 };
 
 export type ExportDocumentOptions = {
@@ -89,6 +90,9 @@ function buildExcelHtml(options: ExportDocumentOptions): string {
   const orgDetails = organizationLines(options.organization);
 
   const titleRows = [
+    options.organization?.logoUrl
+      ? `<tr><td colspan="${columns}" style="padding:0 0 8px;"><img src="${escapeHtml(options.organization.logoUrl)}" alt="${escapeHtml(options.organization.name ?? 'Logo')}" height="48" style="height:48px;width:auto;"></td></tr>`
+      : '',
     `<tr><td colspan="${columns}" style="font-family:Arial,sans-serif;font-size:18pt;font-weight:bold;color:#0f172a;padding:6px 0;">${escapeHtml(options.title)}</td></tr>`,
     options.subtitle
       ? `<tr><td colspan="${columns}" style="font-family:Arial,sans-serif;font-size:10pt;color:#475569;padding:0 0 4px;">${escapeHtml(options.subtitle)}</td></tr>`
@@ -227,6 +231,8 @@ function buildPrintHtml(options: ExportDocumentOptions): string {
   .tools span { margin-right: auto; align-self: center; color: #64748b; font-size: 11px; }
   .sheet { padding: 18px 20px 28px; }
   .doc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 12px; border-bottom: 3px solid #0f172a; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-logo { height: 54px; width: 54px; object-fit: contain; flex-shrink: 0; }
   .brand-name { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
   .brand-detail { margin-top: 2px; color: #475569; font-size: 10px; }
   .doc-title { max-width: 55%; text-align: right; }
@@ -262,9 +268,16 @@ function buildPrintHtml(options: ExportDocumentOptions): string {
   </div>
   <main class="sheet">
     <header class="doc-header">
-      <div>
-        <div class="brand-name">${escapeHtml(options.organization?.name ?? 'StageBuild')}</div>
-        ${orgDetails.length ? `<div class="brand-detail">${orgDetails.map(escapeHtml).join(' · ')}</div>` : ''}
+      <div class="brand">
+        ${
+          options.organization?.logoUrl
+            ? `<img class="brand-logo" src="${escapeHtml(options.organization.logoUrl)}" alt="${escapeHtml(options.organization.name ?? 'Logo')}">`
+            : ''
+        }
+        <div>
+          <div class="brand-name">${escapeHtml(options.organization?.name ?? 'StageBuild')}</div>
+          ${orgDetails.length ? `<div class="brand-detail">${orgDetails.map(escapeHtml).join(' · ')}</div>` : ''}
+        </div>
       </div>
       <div class="doc-title">
         <h1>${escapeHtml(options.title)}</h1>

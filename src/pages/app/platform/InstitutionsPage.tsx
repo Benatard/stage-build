@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { PageHeader, StatCard } from '@/components/ui/Feedback';
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/Form';
+import { InstitutionLogo } from '@/components/ui/InstitutionLogo';
 import { Modal } from '@/components/ui/Modal';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { INSTITUTION_STATUS_OPTIONS, INSTITUTION_TYPE_OPTIONS, optionLabel } from '@/config/options';
@@ -301,12 +302,13 @@ export default function InstitutionsPage() {
       header: 'Institution',
       render: (row) => (
         <div className="flex items-center gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: row.primary_color ?? '#2563eb' }}
-          >
-            {(row.code ?? '?').slice(0, 3).toUpperCase()}
-          </span>
+          <InstitutionLogo
+            name={row.name}
+            code={row.code}
+            logoUrl={row.logo_url}
+            color={row.primary_color}
+            className="h-9 w-9"
+          />
           <div className="min-w-0">
             <p className="truncate font-semibold text-black dark:text-white">
               {row.name ?? 'Institution sans nom'}
@@ -651,13 +653,22 @@ export default function InstitutionsPage() {
             />
           </Field>
           <Field label="Logo (URL)" className="sm:col-span-2">
-            <Input
-              value={draft.logo_url}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, logo_url: event.target.value }))
-              }
-              placeholder="https://…"
-            />
+            <div className="flex items-center gap-3">
+              <InstitutionLogo
+                name={draft.name}
+                code={draft.code}
+                logoUrl={draft.logo_url}
+                color={draft.primary_color}
+                className="h-11 w-11 border border-stroke dark:border-white/10"
+              />
+              <Input
+                value={draft.logo_url}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, logo_url: event.target.value }))
+                }
+                placeholder="https://…"
+              />
+            </div>
           </Field>
 
           {!editing && (

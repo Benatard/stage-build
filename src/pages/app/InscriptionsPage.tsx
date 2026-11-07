@@ -351,6 +351,7 @@ export default function InscriptionsPage() {
             email: activeInstitution.email,
             phone: activeInstitution.phone,
             website: activeInstitution.website,
+            logoUrl: activeInstitution.logo_url,
           }
         : undefined,
       meta: exportMetadata(records),
@@ -422,6 +423,7 @@ export default function InscriptionsPage() {
             email: activeInstitution.email,
             phone: activeInstitution.phone,
             website: activeInstitution.website,
+            logoUrl: activeInstitution.logo_url,
           }
         : undefined,
       meta: exportMetadata(records),

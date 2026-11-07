@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, PageHeader } from '@/components/ui/Feedback';
 import { Field, Input, Select } from '@/components/ui/Form';
+import { InstitutionLogo } from '@/components/ui/InstitutionLogo';
 import { PageMeta } from '@/components/ui/PageMeta';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { GENDER_OPTIONS } from '@/config/options';
@@ -332,10 +333,27 @@ export default function ReservationPage() {
                 {created.reference}
               </p>
               {created.institution_id && (
-                <p className="mt-3 text-xs font-semibold text-body dark:text-body-dark">
-                  {institutions.find((institution) => institution.id === created.institution_id)
-                    ?.name ?? 'Institution sélectionnée'}
-                </p>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <InstitutionLogo
+                    name={
+                      institutions.find((institution) => institution.id === created.institution_id)
+                        ?.name
+                    }
+                    code={
+                      institutions.find((institution) => institution.id === created.institution_id)
+                        ?.code
+                    }
+                    logoUrl={
+                      institutions.find((institution) => institution.id === created.institution_id)
+                        ?.logo_url
+                    }
+                    className="h-8 w-8 border border-stroke dark:border-white/10"
+                  />
+                  <p className="text-xs font-semibold text-body dark:text-body-dark">
+                    {institutions.find((institution) => institution.id === created.institution_id)
+                      ?.name ?? 'Institution sélectionnée'}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -648,10 +666,18 @@ export default function ReservationPage() {
               </div>
 
               {selectedInstitution && (
-                <p className="mt-2 text-xs font-semibold text-body dark:text-body-dark">
-                  {selectedInstitution.name}
-                  {selectedInstitution.city ? ` · ${selectedInstitution.city}` : ''}
-                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <InstitutionLogo
+                    name={selectedInstitution.name}
+                    code={selectedInstitution.code}
+                    logoUrl={selectedInstitution.logo_url}
+                    className="h-8 w-8 border border-stroke dark:border-white/10"
+                  />
+                  <p className="text-xs font-semibold text-body dark:text-body-dark">
+                    {selectedInstitution.name}
+                    {selectedInstitution.city ? ` · ${selectedInstitution.city}` : ''}
+                  </p>
+                </div>
               )}
 
               {selectedPromotions.length === 0 ? (

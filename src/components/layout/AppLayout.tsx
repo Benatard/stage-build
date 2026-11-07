@@ -12,6 +12,7 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { BrandLogo } from '@/components/ui/BrandLogo';
+import { InstitutionLogo } from '@/components/ui/InstitutionLogo';
 import { navigationForUser } from '@/config/appNavigation';
 import { isForgeConfigured } from '@/config/env';
 import { ROLE_LABELS } from '@/config/permissions';
@@ -158,11 +159,33 @@ export default function AppLayout() {
         )}
       >
         <div className="flex h-[72px] items-center justify-between border-b border-stroke px-5 dark:border-white/10">
-          <Link to={homePath} className="flex flex-col gap-1">
-            <BrandLogo className="h-9 w-auto" />
-            <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-body dark:text-body-dark">
-              Suivi stagiaires
-            </p>
+          <Link to={homePath} className="flex min-w-0 items-center gap-2.5">
+            {activeInstitution ? (
+              <>
+                <InstitutionLogo
+                  name={activeInstitution.name}
+                  code={activeInstitution.code}
+                  logoUrl={activeInstitution.logo_url}
+                  color={activeInstitution.primary_color}
+                  className="h-9 w-9 border border-stroke dark:border-white/10"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-black dark:text-white">
+                    {activeInstitution.name}
+                  </p>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-body dark:text-body-dark">
+                    Suivi stagiaires
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <BrandLogo className="h-9 w-auto" />
+                <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-body dark:text-body-dark">
+                  Suivi stagiaires
+                </p>
+              </div>
+            )}
           </Link>
           <button
             type="button"
@@ -279,32 +302,52 @@ export default function AppLayout() {
           </div>
 
           {isSupraAdmin ? (
-            <label className="hidden items-center gap-2 md:flex">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">
-                Institution
-              </span>
-              <select
-                value={activeInstitutionId ?? ''}
-                onChange={(event) => handleInstitutionChange(event.target.value)}
-                className="h-9 max-w-[220px] border border-stroke bg-white px-2 text-xs font-semibold text-dark outline-none focus:border-primary dark:border-white/10 dark:bg-[#151B28] dark:text-white"
-                aria-label="Institution active"
-              >
-                <option value="">Mode plateforme (toutes)</option>
-                {institutions.map((institution) => (
-                  <option key={institution.id} value={institution.id}>
-                    {institution.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="hidden items-center gap-2 md:flex">
+              {activeInstitution && (
+                <InstitutionLogo
+                  name={activeInstitution.name}
+                  code={activeInstitution.code}
+                  logoUrl={activeInstitution.logo_url}
+                  color={activeInstitution.primary_color}
+                  className="h-8 w-8 border border-stroke dark:border-white/10"
+                />
+              )}
+              <label className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">
+                  Institution
+                </span>
+                <select
+                  value={activeInstitutionId ?? ''}
+                  onChange={(event) => handleInstitutionChange(event.target.value)}
+                  className="h-9 max-w-[220px] border border-stroke bg-white px-2 text-xs font-semibold text-dark outline-none focus:border-primary dark:border-white/10 dark:bg-[#151B28] dark:text-white"
+                  aria-label="Institution active"
+                >
+                  <option value="">Mode plateforme (toutes)</option>
+                  {institutions.map((institution) => (
+                    <option key={institution.id} value={institution.id}>
+                      {institution.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           ) : activeInstitution ? (
-            <div className="hidden min-w-0 text-right md:block">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">
-                Institution
-              </p>
-              <p className="max-w-[220px] truncate text-xs font-semibold text-dark dark:text-white">
-                {activeInstitution.name}
-              </p>
+            <div className="hidden items-center gap-2 md:flex">
+              <InstitutionLogo
+                name={activeInstitution.name}
+                code={activeInstitution.code}
+                logoUrl={activeInstitution.logo_url}
+                color={activeInstitution.primary_color}
+                className="h-8 w-8 border border-stroke dark:border-white/10"
+              />
+              <div className="min-w-0 text-right">
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-body dark:text-body-dark">
+                  Institution
+                </p>
+                <p className="max-w-[220px] truncate text-xs font-semibold text-dark dark:text-white">
+                  {activeInstitution.name}
+                </p>
+              </div>
             </div>
           ) : null}
 
