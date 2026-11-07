@@ -41,11 +41,41 @@ const defaultCoefficients = {
   attendance: 5,
 };
 
+type ManualDraft = {
+  modules: string;
+  qcm: string;
+  tp: string;
+  project: string;
+  implication: string;
+  professionalism: string;
+  attendance: string;
+  final: string;
+};
+
+const emptyManual: ManualDraft = {
+  modules: '',
+  qcm: '',
+  tp: '',
+  project: '',
+  implication: '',
+  professionalism: '',
+  attendance: '',
+  final: '',
+};
+
+function parseManual(raw: string): number | null {
+  const value = raw.trim().replace(',', '.');
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function EvaluationFinalePage() {
   const { data } = useReferenceData();
   const { user } = useAuth();
   const [stagiaireId, setStagiaireId] = useState(user?.stagiaire_id ?? '');
   const [coefficients, setCoefficients] = useState(defaultCoefficients);
+  const [manual, setManual] = useState<ManualDraft>(emptyManual);
   const [decision, setDecision] = useState('en_attente');
   const [appreciation, setAppreciation] = useState('');
   const [saving, setSaving] = useState(false);
@@ -55,6 +85,10 @@ export default function EvaluationFinalePage() {
     if (!linkedStagiaireId) return;
     setStagiaireId((current) => current || linkedStagiaireId);
   }, [user?.stagiaire_id]);
+
+  useEffect(() => {
+    setManual(emptyManual);
+  }, [stagiaireId]);
 
   const enabled = Boolean(stagiaireId);
 
@@ -78,16 +112,24 @@ export default function EvaluationFinalePage() {
       ['present', 'retard', 'sortie_autorisee'].includes(presence.status),
     ).length;
 
-    const modulesAverage = average(normalizedNotes);
+    const autoModules = average(normalizedNotes);
     const qcmPercentage = average(
       attempts.filter((attempt) => attempt.status === 'corrige').map((attempt) => attempt.percentage),
     );
-    const qcmAverage = round((qcmPercentage / 100) * 20, 2);
-    const tpAverage = average(submissions.map((item) => item.score));
-    const projectAverage = average(projects.map((item) => item.score));
-    const implicationAverage = average(implications.map((item) => item.average));
-    const professionalismAverage = average(behaviors.map((item) => item.average));
-    const attendanceRate = percentage(present, Math.max(presences.length, 1));
+    const autoQcm = round((qcmPercentage / 100) * 20, 2);
+    const autoTp = average(submissions.map((item) => item.score));
+    const autoProject = average(projects.map((item) => item.score));
+    const autoImplication = average(implications.map((item) => item.average));
+    const autoProfessionalism = average(behaviors.map((item) => item.average));
+    const autoAttendance = percentage(present, Math.max(presences.length, 1));
+
+    const modulesAverage = parseManual(manual.modules) ?? autoModules;
+    const qcmAverage = parseManual(manual.qcm) ?? autoQcm;
+    const tpAverage = parseManual(manual.tp) ?? autoTp;
+    const projectAverage = parseManual(manual.project) ?? autoProject;
+    const implicationAverage = parseManual(manual.implication) ?? autoImplication;
+    const professionalismAverage = parseManual(manual.professionalism) ?? autoProfessionalism;
+    const attendanceRate = parseManual(manual.attendance) ?? autoAttendance;
 
     const weighted =
       modulesAverage * coefficients.modules +
@@ -99,9 +141,20 @@ export default function EvaluationFinalePage() {
       (attendanceRate * 0.2) * coefficients.attendance;
 
     const totalWeight = Object.values(coefficients).reduce((sum, value) => sum + value, 0);
-    const finalAverage = totalWeight > 0 ? round(weighted / totalWeight, 2) : 0;
+    const autoFinalAverage = totalWeight > 0 ? round(weighted / totalWeight, 2) : 0;
+    const finalAverage = parseManual(manual.final) ?? autoFinalAverage;
 
     return {
+      auto: {
+        modules: autoModules,
+        qcm: autoQcm,
+        tp: autoTp,
+        project: autoProject,
+        implication: autoImplication,
+        professionalism: autoProfessionalism,
+        attendance: autoAttendance,
+        final: autoFinalAverage,
+      },
       modulesAverage,
       qcmAverage,
       tpAverage,
@@ -112,7 +165,7 @@ export default function EvaluationFinalePage() {
       finalAverage,
       hasData: normalizedNotes.length > 0 || attempts.length > 0 || submissions.length > 0,
     };
-  }, [notes, presences, attempts, submissions, projects, implications, behaviors, coefficients]);
+  }, [notes, presences, attempts, submissions, projects, implications, behaviors, coefficients, manual]);
 
   async function handleSave(publish = false) {
     if (!stagiaireId) return;
@@ -258,8 +311,84 @@ export default function EvaluationFinalePage() {
                 <span className="text-base font-medium text-body">/20</span>
               </p>
               <p className="mt-2 text-xs text-body dark:text-body-dark">
-                {computed.hasData ? 'Calculée à partir des résultats enregistrés.' : 'Aucune donnée disponible.'}
+                {parseManual(manual.final) !== null
+                  ? 'Moyenne finale saisie manuellement.'
+                  : computed.hasData
+                    ? 'Calculée à partir des résultats enregistrés.'
+                    : 'Aucune donnée disponible.'}
               </p>
+            </div>
+          </div>
+
+          <div className="mb-5 card-root border border-stroke p-5 dark:border-white/10">
+            <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+              <h2 className="text-sm font-bold text-black dark:text-white">
+                Saisie manuelle des points
+              </h2>
+              {Object.values(manual).some((value) => value.trim() !== '') && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManual(emptyManual)}
+                >
+                  Réinitialiser
+                </Button>
+              )}
+            </div>
+            <p className="mb-4 text-xs text-body dark:text-body-dark">
+              Laissez un champ vide pour utiliser la valeur calculée automatiquement. Toute valeur
+              saisie remplace le résultat automatique, y compris la moyenne finale.
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+              {([
+                { key: 'modules', label: 'Modules', unit: '/20', max: 20, auto: computed.auto.modules },
+                { key: 'qcm', label: 'QCM', unit: '/20', max: 20, auto: computed.auto.qcm },
+                { key: 'tp', label: 'TP', unit: '/20', max: 20, auto: computed.auto.tp },
+                { key: 'project', label: 'Projet', unit: '/20', max: 20, auto: computed.auto.project },
+                { key: 'implication', label: 'Implication', unit: '/5', max: 5, auto: computed.auto.implication },
+                { key: 'professionalism', label: 'Comportement', unit: '/5', max: 5, auto: computed.auto.professionalism },
+                { key: 'attendance', label: 'Présence', unit: '%', max: 100, auto: computed.auto.attendance },
+              ] as const).map((criterion) => (
+                <Field
+                  key={criterion.key}
+                  label={`${criterion.label} (${criterion.unit})`}
+                  hint={`Auto : ${criterion.auto.toFixed(2)}`}
+                >
+                  <Input
+                    type="number"
+                    min={0}
+                    max={criterion.max}
+                    step={0.01}
+                    value={manual[criterion.key]}
+                    placeholder={criterion.auto.toFixed(2)}
+                    onChange={(event) =>
+                      setManual((current) => ({
+                        ...current,
+                        [criterion.key]: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+              ))}
+            </div>
+            <div className="mt-4 max-w-xs">
+              <Field
+                label="Moyenne finale manuelle (/20)"
+                hint={`Calculée automatiquement : ${computed.auto.final.toFixed(2)}/20`}
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  max={20}
+                  step={0.01}
+                  value={manual.final}
+                  placeholder={computed.auto.final.toFixed(2)}
+                  onChange={(event) =>
+                    setManual((current) => ({ ...current, final: event.target.value }))
+                  }
+                />
+              </Field>
             </div>
           </div>
 
