@@ -3,7 +3,7 @@ import { FiCopy, FiDownload, FiEdit2, FiEye, FiFileText, FiMail, FiRefreshCw } f
 import { Badge, statusTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EntityManager } from '@/components/ui/EntityManager';
-import { Field, Input } from '@/components/ui/Form';
+import { Checkbox, Field, Input } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/context/AuthContext';
 import { useReferenceData } from '@/hooks/useReferenceData';
@@ -64,6 +64,16 @@ type AccountExportRecord = {
   password?: string;
   formation: string;
   promotion: string;
+  institutionName: string;
+};
+
+type ExportTarget = 'excel' | 'pdf';
+
+type ExportColumn = {
+  key: string;
+  label: string;
+  width?: number;
+  value: (record: AccountExportRecord, index: number) => ExportCell;
 };
 
 const genderLabels: Record<string, string> = {
@@ -85,6 +95,219 @@ const accountStatusLabels: Record<string, string> = {
   inactive: 'Inactif',
   blocked: 'Bloqué',
 };
+
+const excelExportColumns: ExportColumn[] = [
+  { key: 'index', label: 'N°', width: 36, value: (_record, index) => index + 1 },
+  { key: 'matricule', label: 'Matricule', width: 92, value: (record) => record.stagiaire.matricule },
+  { key: 'nom', label: 'Nom', width: 100, value: (record) => record.stagiaire.nom },
+  { key: 'postnom', label: 'Postnom', width: 82, value: (record) => displayValue(record.stagiaire.postnom) },
+  { key: 'prenom', label: 'Prénom', width: 100, value: (record) => record.stagiaire.prenom },
+  {
+    key: 'sexe',
+    label: 'Sexe',
+    width: 62,
+    value: (record) =>
+      displayValue(
+        record.stagiaire.sexe ? genderLabels[record.stagiaire.sexe] ?? record.stagiaire.sexe : null,
+      ),
+  },
+  {
+    key: 'date_naissance',
+    label: 'Date de naissance',
+    width: 100,
+    value: (record) => formatDate(record.stagiaire.date_naissance),
+  },
+  {
+    key: 'lieu_naissance',
+    label: 'Lieu de naissance',
+    width: 110,
+    value: (record) => displayValue(record.stagiaire.lieu_naissance),
+  },
+  {
+    key: 'telephone',
+    label: 'Téléphone',
+    width: 100,
+    value: (record) => displayValue(record.stagiaire.telephone),
+  },
+  {
+    key: 'email',
+    label: 'Email personnel',
+    width: 160,
+    value: (record) => displayValue(record.stagiaire.email),
+  },
+  { key: 'adresse', label: 'Adresse', width: 170, value: (record) => displayValue(record.stagiaire.adresse) },
+  {
+    key: 'contact_urgence_nom',
+    label: 'Contact d’urgence',
+    width: 120,
+    value: (record) => displayValue(record.stagiaire.contact_urgence_nom),
+  },
+  {
+    key: 'contact_urgence_telephone',
+    label: 'Téléphone d’urgence',
+    width: 120,
+    value: (record) => displayValue(record.stagiaire.contact_urgence_telephone),
+  },
+  {
+    key: 'etablissement_origine',
+    label: 'Établissement d’origine',
+    width: 140,
+    value: (record) => displayValue(record.stagiaire.etablissement_origine),
+  },
+  {
+    key: 'niveau_etudes',
+    label: 'Niveau d’études',
+    width: 90,
+    value: (record) => displayValue(record.stagiaire.niveau_etudes),
+  },
+  { key: 'diplome', label: 'Diplôme', width: 90, value: (record) => displayValue(record.stagiaire.diplome) },
+  { key: 'domaine', label: 'Domaine', width: 110, value: (record) => displayValue(record.stagiaire.domaine) },
+  {
+    key: 'specialite',
+    label: 'Spécialité',
+    width: 110,
+    value: (record) => displayValue(record.stagiaire.specialite),
+  },
+  {
+    key: 'statut_stagiaire',
+    label: 'Statut stagiaire',
+    width: 90,
+    value: (record) =>
+      displayValue(stagiaireStatusLabels[record.stagiaire.statut] ?? record.stagiaire.statut),
+  },
+  {
+    key: 'account_email',
+    label: 'Email du compte',
+    width: 160,
+    value: (record) => record.account?.email ?? 'Compte non créé',
+  },
+  {
+    key: 'account_phone',
+    label: 'Téléphone du compte',
+    width: 110,
+    value: (record) => displayValue(record.account?.phone ?? record.stagiaire.telephone),
+  },
+  {
+    key: 'password',
+    label: 'Mot de passe',
+    width: 105,
+    value: (record) => record.password ?? 'Non disponible',
+  },
+  {
+    key: 'account_status',
+    label: 'Statut du compte',
+    width: 100,
+    value: (record) =>
+      record.account
+        ? accountStatusLabels[record.account.statut] ?? record.account.statut
+        : 'Compte non créé',
+  },
+  {
+    key: 'last_login',
+    label: 'Dernière connexion',
+    width: 120,
+    value: (record) =>
+      displayValue(record.account?.last_login_at ? formatDateTime(record.account.last_login_at) : null),
+  },
+  {
+    key: 'must_change_password',
+    label: 'Changement de mot de passe requis',
+    width: 130,
+    value: (record) =>
+      record.account ? (record.account.must_change_password ? 'Oui' : 'Non') : '—',
+  },
+  { key: 'formation', label: 'Formation', width: 170, value: (record) => record.formation },
+  { key: 'promotion', label: 'Promotion', width: 90, value: (record) => record.promotion },
+  {
+    key: 'start_date',
+    label: 'Début de l’inscription',
+    width: 100,
+    value: (record) => formatDate(record.inscription.start_date),
+  },
+  {
+    key: 'end_date',
+    label: 'Fin de l’inscription',
+    width: 100,
+    value: (record) => formatDate(record.inscription.end_date),
+  },
+  {
+    key: 'inscription_status',
+    label: 'Statut de l’inscription',
+    width: 110,
+    value: (record) =>
+      statusOptions.find((option) => option.value === record.inscription.status)?.label ??
+      record.inscription.status,
+  },
+  {
+    key: 'created_at',
+    label: 'Inscrit le',
+    width: 100,
+    value: (record) => formatDate(record.inscription.created_at),
+  },
+  { key: 'institution', label: 'Institution', width: 140, value: (record) => record.institutionName },
+];
+
+const pdfExportColumns: ExportColumn[] = [
+  { key: 'index', label: 'N°', value: (_record, index) => index + 1 },
+  { key: 'matricule', label: 'Matricule', value: (record) => record.stagiaire.matricule },
+  { key: 'full_name', label: 'Nom complet', value: (record) => fullName(record.stagiaire) },
+  {
+    key: 'sexe',
+    label: 'Sexe',
+    value: (record) =>
+      displayValue(
+        record.stagiaire.sexe ? genderLabels[record.stagiaire.sexe] ?? record.stagiaire.sexe : null,
+      ),
+  },
+  {
+    key: 'date_naissance',
+    label: 'Naissance',
+    value: (record) => formatDate(record.stagiaire.date_naissance),
+  },
+  {
+    key: 'telephone',
+    label: 'Téléphone',
+    value: (record) => displayValue(record.account?.phone ?? record.stagiaire.telephone),
+  },
+  {
+    key: 'email',
+    label: 'Email personnel',
+    value: (record) => displayValue(record.stagiaire.email),
+  },
+  {
+    key: 'account_email',
+    label: 'Compte stagiaire',
+    value: (record) => record.account?.email ?? 'Non créé',
+  },
+  {
+    key: 'password',
+    label: 'Mot de passe',
+    value: (record) => record.password ?? 'Non disponible',
+  },
+  { key: 'formation', label: 'Formation', value: (record) => record.formation },
+  { key: 'promotion', label: 'Promotion', value: (record) => record.promotion },
+  {
+    key: 'period',
+    label: 'Période',
+    value: (record) =>
+      `${formatDate(record.inscription.start_date)} → ${formatDate(record.inscription.end_date)}`,
+  },
+  {
+    key: 'inscription_status',
+    label: 'Inscription',
+    value: (record) =>
+      statusOptions.find((option) => option.value === record.inscription.status)?.label ??
+      record.inscription.status,
+  },
+  {
+    key: 'account_status',
+    label: 'Compte',
+    value: (record) =>
+      record.account
+        ? accountStatusLabels[record.account.statut] ?? record.account.statut
+        : 'Non créé',
+  },
+];
 
 function buildCredentialsMessage({
   stagiaire,
@@ -130,6 +353,14 @@ export default function InscriptionsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordFormOpen, setPasswordFormOpen] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [exportTarget, setExportTarget] = useState<ExportTarget | null>(null);
+  const [selectedColumns, setSelectedColumns] = useState<Record<ExportTarget, string[]>>({
+    excel: excelExportColumns.map((column) => column.key),
+    pdf: pdfExportColumns.map((column) => column.key),
+  });
+  const [resetMissingPasswords, setResetMissingPasswords] = useState(true);
+  const [exportPeriod, setExportPeriod] = useState({ from: '', to: '' });
+  const [exporting, setExporting] = useState(false);
 
   function findAccount(stagiaireId: string): User | undefined {
     return data.users.find(
@@ -208,6 +439,29 @@ export default function InscriptionsPage() {
     return !record.institution_id || record.institution_id === exportInstitutionId;
   }
 
+  function inscriptionInPeriod(
+    record: AccountExportRecord,
+    from: string,
+    to: string,
+  ): boolean {
+    if (!from && !to) return true;
+
+    const start = record.inscription.start_date?.slice(0, 10) ?? null;
+    const end = record.inscription.end_date?.slice(0, 10) ?? null;
+
+    if (from) {
+      const upperBound = end ?? start;
+      if (upperBound && upperBound < from) return false;
+    }
+
+    if (to) {
+      const lowerBound = start ?? end;
+      if (lowerBound && lowerBound > to) return false;
+    }
+
+    return true;
+  }
+
   function buildAccountExportRecords(): AccountExportRecord[] {
     const records: AccountExportRecord[] = [];
 
@@ -235,6 +489,7 @@ export default function InscriptionsPage() {
         password: account ? getRememberedPassword(user?.id, account.id) : undefined,
         formation: formation?.name ?? '—',
         promotion: promotion?.code ?? '—',
+        institutionName: activeInstitution?.name ?? '—',
       });
     });
 
@@ -248,6 +503,16 @@ export default function InscriptionsPage() {
       ['Institution', activeInstitution?.name ?? 'Toutes les institutions'],
       ...(activeInstitution?.code ? ([['Code', activeInstitution.code]] as Array<[string, string]>) : []),
       ...(activeInstitution?.city ? ([['Ville', activeInstitution.city]] as Array<[string, string]>) : []),
+      ...(exportPeriod.from || exportPeriod.to
+        ? ([
+            [
+              'Période',
+              `${exportPeriod.from ? formatDate(exportPeriod.from) : '…'} → ${
+                exportPeriod.to ? formatDate(exportPeriod.to) : '…'
+              }`,
+            ],
+          ] as Array<[string, string]>)
+        : []),
       ['Inscriptions', String(records.length)],
       ['Mots de passe disponibles', String(records.filter((record) => record.password).length)],
       ['Lien de connexion', `${window.location.origin}/login`],
@@ -256,88 +521,14 @@ export default function InscriptionsPage() {
   }
 
   const exportNote =
-    'Document confidentiel réservé à l’établissement. Les mots de passe ne sont exportés que s’ils ont été générés ou modifiés pendant la session en cours ; les autres restent chiffrés en base et ne peuvent pas être affichés.';
+    'Document confidentiel destiné au stagiaire et à l’établissement. Les mots de passe affichés ont été générés ou réinitialisés lors de cet export : communiquez-les uniquement au stagiaire concerné. Les mots de passe plus anciens restent chiffrés en base et ne peuvent pas être relus.';
 
-  function exportAccountsExcel() {
-    const records = buildAccountExportRecords();
-    if (records.length === 0) {
-      notifyError('Aucune inscription', 'Aucune inscription à exporter pour cet établissement.');
-      return;
-    }
-
-    const headers = [
-      'N°',
-      'Matricule',
-      'Nom',
-      'Postnom',
-      'Prénom',
-      'Sexe',
-      'Date de naissance',
-      'Lieu de naissance',
-      'Téléphone',
-      'Email personnel',
-      'Adresse',
-      'Contact d’urgence',
-      'Téléphone d’urgence',
-      'Établissement d’origine',
-      'Niveau d’études',
-      'Diplôme',
-      'Domaine',
-      'Spécialité',
-      'Statut stagiaire',
-      'Email du compte',
-      'Téléphone du compte',
-      'Mot de passe',
-      'Statut du compte',
-      'Dernière connexion',
-      'Changement de mot de passe requis',
-      'Formation',
-      'Promotion',
-      'Début de l’inscription',
-      'Fin de l’inscription',
-      'Statut de l’inscription',
-      'Inscrit le',
-      'Institution',
-    ];
-
-    const rows: ExportCell[][] = records.map((record, index) => {
-      const { stagiaire, account, inscription } = record;
-      return [
-        index + 1,
-        stagiaire.matricule,
-        stagiaire.nom,
-        displayValue(stagiaire.postnom),
-        stagiaire.prenom,
-        displayValue(stagiaire.sexe ? genderLabels[stagiaire.sexe] ?? stagiaire.sexe : null),
-        formatDate(stagiaire.date_naissance),
-        displayValue(stagiaire.lieu_naissance),
-        displayValue(stagiaire.telephone),
-        displayValue(stagiaire.email),
-        displayValue(stagiaire.adresse),
-        displayValue(stagiaire.contact_urgence_nom),
-        displayValue(stagiaire.contact_urgence_telephone),
-        displayValue(stagiaire.etablissement_origine),
-        displayValue(stagiaire.niveau_etudes),
-        displayValue(stagiaire.diplome),
-        displayValue(stagiaire.domaine),
-        displayValue(stagiaire.specialite),
-        displayValue(stagiaireStatusLabels[stagiaire.statut] ?? stagiaire.statut),
-        account?.email ?? 'Compte non créé',
-        displayValue(account?.phone ?? stagiaire.telephone),
-        record.password ?? 'Non disponible',
-        account ? accountStatusLabels[account.statut] ?? account.statut : 'Compte non créé',
-        displayValue(account?.last_login_at ? formatDateTime(account.last_login_at) : null),
-        account ? (account.must_change_password ? 'Oui' : 'Non') : '—',
-        record.formation,
-        record.promotion,
-        formatDate(inscription.start_date),
-        formatDate(inscription.end_date),
-        statusOptions.find((option) => option.value === inscription.status)?.label ??
-          inscription.status,
-        formatDate(inscription.created_at),
-        activeInstitution?.name ?? '—',
-      ];
-    });
+  function exportAccountsExcel(records: AccountExportRecord[], selectedKeys: string[]) {
+    const columns = excelExportColumns.filter((column) => selectedKeys.includes(column.key));
+    const headers = columns.map((column) => column.label);
+    const rows: ExportCell[][] = records.map((record, index) =>
+      columns.map((column) => column.value(record, index)),
+    );
 
     downloadExcel({
       filename: `comptes-stagiaires-${safeFilenamePart(activeInstitution?.name ?? 'institution')}-${new Date().toISOString().slice(0, 10)}`,
@@ -358,59 +549,18 @@ export default function InscriptionsPage() {
       table: {
         headers,
         rows,
-        widths: [
-          36, 92, 100, 82, 100, 62, 100, 110, 100, 160, 170, 120, 120, 140, 90, 90, 110,
-          110, 90, 160, 110, 105, 100, 120, 130, 170, 90, 100, 100, 110, 100, 140,
-        ],
+        widths: columns.map((column) => column.width ?? 100),
       },
       note: exportNote,
     });
   }
 
-  function exportAccountsPdf() {
-    const records = buildAccountExportRecords();
-    if (records.length === 0) {
-      notifyError('Aucune inscription', 'Aucune inscription à exporter pour cet établissement.');
-      return;
-    }
-
-    const headers = [
-      'N°',
-      'Matricule',
-      'Nom complet',
-      'Sexe',
-      'Naissance',
-      'Téléphone',
-      'Email personnel',
-      'Compte stagiaire',
-      'Mot de passe',
-      'Formation',
-      'Promotion',
-      'Période',
-      'Inscription',
-      'Compte',
-    ];
-
-    const rows: ExportCell[][] = records.map((record, index) => {
-      const { stagiaire, account, inscription } = record;
-      return [
-        index + 1,
-        stagiaire.matricule,
-        fullName(stagiaire),
-        displayValue(stagiaire.sexe ? genderLabels[stagiaire.sexe] ?? stagiaire.sexe : null),
-        formatDate(stagiaire.date_naissance),
-        displayValue(account?.phone ?? stagiaire.telephone),
-        displayValue(stagiaire.email),
-        account?.email ?? 'Non créé',
-        record.password ?? 'Non disponible',
-        record.formation,
-        record.promotion,
-        `${formatDate(inscription.start_date)} → ${formatDate(inscription.end_date)}`,
-        statusOptions.find((option) => option.value === inscription.status)?.label ??
-          inscription.status,
-        account ? accountStatusLabels[account.statut] ?? account.statut : 'Non créé',
-      ];
-    });
+  function exportAccountsPdf(records: AccountExportRecord[], selectedKeys: string[]) {
+    const columns = pdfExportColumns.filter((column) => selectedKeys.includes(column.key));
+    const headers = columns.map((column) => column.label);
+    const rows: ExportCell[][] = records.map((record, index) =>
+      columns.map((column) => column.value(record, index)),
+    );
 
     const opened = openPdfDocument({
       filename: `comptes-stagiaires-${safeFilenamePart(activeInstitution?.name ?? 'institution')}-${new Date().toISOString().slice(0, 10)}`,
@@ -434,6 +584,69 @@ export default function InscriptionsPage() {
 
     if (!opened) {
       notifyError('Export PDF bloqué', 'Autorisez les fenêtres pop-up puis réessayez.');
+    }
+  }
+
+  function toggleExportColumn(target: ExportTarget, key: string) {
+    setSelectedColumns((current) => ({
+      ...current,
+      [target]: current[target].includes(key)
+        ? current[target].filter((item) => item !== key)
+        : [...current[target], key],
+    }));
+  }
+
+  function setAllExportColumns(target: ExportTarget, keys: string[]) {
+    setSelectedColumns((current) => ({ ...current, [target]: keys }));
+  }
+
+  async function runExport() {
+    if (!exportTarget) return;
+
+    const records = buildAccountExportRecords().filter((record) =>
+      inscriptionInPeriod(record, exportPeriod.from, exportPeriod.to),
+    );
+    const selectedKeys = selectedColumns[exportTarget];
+
+    if (records.length === 0) {
+      notifyError(
+        'Aucune inscription',
+        exportPeriod.from || exportPeriod.to
+          ? 'Aucune inscription ne correspond à la période sélectionnée.'
+          : 'Aucune inscription à exporter pour cet établissement.',
+      );
+      return;
+    }
+
+    if (selectedKeys.length === 0) {
+      notifyError('Aucune colonne', 'Sélectionnez au moins une colonne à exporter.');
+      return;
+    }
+
+    setExporting(true);
+
+    try {
+      if (resetMissingPasswords && selectedKeys.includes('password')) {
+        for (const record of records) {
+          if (!record.account || record.password) continue;
+          const password = generateTemporaryPassword();
+          await updateStagiairePassword(record.account.id, password);
+          rememberPassword(user?.id, record.account.id, password);
+          record.password = password;
+        }
+      }
+
+      if (exportTarget === 'excel') {
+        exportAccountsExcel(records, selectedKeys);
+      } else {
+        exportAccountsPdf(records, selectedKeys);
+      }
+
+      setExportTarget(null);
+    } catch (error) {
+      notifyError('Export impossible', getErrorMessage(error));
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -557,6 +770,18 @@ export default function InscriptionsPage() {
     return result.inscription;
   }
 
+  const activeExportTarget: ExportTarget = exportTarget ?? 'excel';
+  const exportColumns = activeExportTarget === 'pdf' ? pdfExportColumns : excelExportColumns;
+  const exportRecords = exportTarget
+    ? buildAccountExportRecords().filter((record) =>
+        inscriptionInPeriod(record, exportPeriod.from, exportPeriod.to),
+      )
+    : [];
+  const selectedExportKeys = selectedColumns[activeExportTarget];
+  const missingPasswordCount = exportRecords.filter(
+    (record) => record.account && !record.password,
+  ).length;
+
   return (
     <>
       <EntityManager<Inscription>
@@ -588,18 +813,24 @@ export default function InscriptionsPage() {
               variant="outline"
               icon={<FiDownload className="h-3.5 w-3.5" />}
               disabled={data.inscriptions.length === 0}
-              onClick={exportAccountsExcel}
+              onClick={() => {
+                setResetMissingPasswords(true);
+                setExportTarget('excel');
+              }}
             >
-              Excel complet
+              Exporter Excel
             </Button>
             <Button
               size="sm"
               variant="outline"
               icon={<FiFileText className="h-3.5 w-3.5" />}
               disabled={data.inscriptions.length === 0}
-              onClick={exportAccountsPdf}
+              onClick={() => {
+                setResetMissingPasswords(true);
+                setExportTarget('pdf');
+              }}
             >
-              PDF / Imprimer
+              Exporter PDF
             </Button>
           </div>
         }
@@ -692,6 +923,142 @@ export default function InscriptionsPage() {
           { name: 'status', label: 'Statut', type: 'select', options: statusOptions, required: true, defaultValue: 'en_attente' },
         ]}
       />
+
+      <Modal
+        open={Boolean(exportTarget)}
+        onClose={() => {
+          if (!exporting) setExportTarget(null);
+        }}
+        title={exportTarget === 'pdf' ? 'Exporter en PDF' : 'Exporter en Excel'}
+        description="Choisissez la période et les colonnes à inclure dans le document, puis vérifiez les mots de passe avant l’envoi aux stagiaires."
+        size="xl"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setExportTarget(null)}
+              disabled={exporting}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => void runExport()}
+              loading={exporting}
+              disabled={selectedExportKeys.length === 0}
+              icon={exportTarget === 'pdf' ? <FiFileText className="h-4 w-4" /> : <FiDownload className="h-4 w-4" />}
+            >
+              {exportTarget === 'pdf' ? 'Ouvrir le PDF' : 'Télécharger l’Excel'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          <div className="space-y-3 border border-stroke p-4 dark:border-white/10">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-black dark:text-white">
+                  Période des inscriptions
+                </p>
+                <p className="mt-1 text-xs text-body dark:text-body-dark">
+                  Seules les inscriptions dont la période chevauche cet intervalle seront
+                  exportées. Laissez vide pour tout inclure.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!exportPeriod.from && !exportPeriod.to}
+                onClick={() => setExportPeriod({ from: '', to: '' })}
+              >
+                Réinitialiser
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Du">
+                <Input
+                  type="date"
+                  value={exportPeriod.from}
+                  max={exportPeriod.to || undefined}
+                  onChange={(event) =>
+                    setExportPeriod((current) => ({ ...current, from: event.target.value }))
+                  }
+                />
+              </Field>
+              <Field label="Au">
+                <Input
+                  type="date"
+                  value={exportPeriod.to}
+                  min={exportPeriod.from || undefined}
+                  onChange={(event) =>
+                    setExportPeriod((current) => ({ ...current, to: event.target.value }))
+                  }
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border border-stroke bg-gray2/60 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+            <div>
+              <p className="text-sm font-semibold text-black dark:text-white">
+                {exportRecords.length} inscription(s) à exporter
+              </p>
+              <p className="mt-1 text-xs text-body dark:text-body-dark">
+                {selectedExportKeys.length} colonne(s) sélectionnée(s) sur {exportColumns.length}.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setAllExportColumns(activeExportTarget, exportColumns.map((column) => column.key))}
+              >
+                Tout sélectionner
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setAllExportColumns(activeExportTarget, [])}
+              >
+                Tout désélectionner
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid max-h-[45vh] grid-cols-1 gap-x-6 gap-y-2 overflow-y-auto border border-stroke p-4 dark:border-white/10 sm:grid-cols-2 lg:grid-cols-3">
+            {exportColumns.map((column) => (
+              <Checkbox
+                key={column.key}
+                label={column.label}
+                checked={selectedExportKeys.includes(column.key)}
+                onChange={() => toggleExportColumn(activeExportTarget, column.key)}
+              />
+            ))}
+          </div>
+
+          {selectedExportKeys.includes('password') && (
+            <div className="space-y-2 border border-amber-300 bg-amber-50 p-4 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <p className="font-semibold">
+                Mot de passe : {exportRecords.length - missingPasswordCount} disponible(s) ·{' '}
+                {missingPasswordCount} à générer
+              </p>
+              <p>
+                Les mots de passe existants restent chiffrés en base et ne peuvent pas être relus.
+                Pour que chaque stagiaire puisse se connecter, un nouveau mot de passe temporaire
+                peut être généré pour les comptes qui n’en ont pas. Il remplace alors l’ancien : les
+                identifiants précédemment communiqués ne fonctionneront plus.
+              </p>
+              {missingPasswordCount > 0 && (
+                <Checkbox
+                  label={`Générer un nouveau mot de passe pour les ${missingPasswordCount} compte(s) sans mot de passe disponible`}
+                  checked={resetMissingPasswords}
+                  onChange={(event) => setResetMissingPasswords(event.target.checked)}
+                  disabled={exporting}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </Modal>
 
       <Modal
         open={Boolean(accountView)}
