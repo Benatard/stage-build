@@ -18,7 +18,10 @@ type UseScopedRowsOptions = {
   order?: string;
   limit?: number;
   enabled?: boolean;
+  autoRefreshMs?: number;
 };
+
+const DEFAULT_AUTO_REFRESH_MS = 30_000;
 
 function sqlLiteral(value: ForgeListFilter): string {
   if (typeof value === 'boolean') return value ? 'true' : 'false';
@@ -94,7 +97,8 @@ export function useScopedRows<T extends { id: string }>(
   table: string,
   options: UseScopedRowsOptions,
 ) {
-  const { scope, order, limit = 200, enabled = true } = options;
+  const { scope, order, limit = 200, enabled = true, autoRefreshMs = DEFAULT_AUTO_REFRESH_MS } =
+    options;
   const tenantId = getTenantId();
   const scopeKey = useMemo(() => JSON.stringify(scope), [scope]);
   const stableScope = useMemo(
@@ -124,6 +128,7 @@ export function useScopedRows<T extends { id: string }>(
 
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
+  const signatureRef = useRef(JSON.stringify(rows));
   const queryRef = useRef<string | null>(null);
   const loadedRevisionRef = useRef(revision);
 
@@ -131,6 +136,7 @@ export function useScopedRows<T extends { id: string }>(
     if (!usable || !query || !requestKey) {
       queryRef.current = null;
       loadedRevisionRef.current = revision;
+      signatureRef.current = '[]';
       setRows([]);
       setLoading(false);
       setError(null);
@@ -144,6 +150,7 @@ export function useScopedRows<T extends { id: string }>(
     const cached = peekScopedRows<T>(requestKey);
 
     if (keyChanged) {
+      signatureRef.current = JSON.stringify(cached ?? []);
       setRows(cached ?? []);
       setLoading(!cached);
     } else if (!cached) {
@@ -180,10 +187,15 @@ export function useScopedRows<T extends { id: string }>(
       .then((result) => {
         if (!active) return;
         loadedRevisionRef.current = revision;
-        setRows(result);
+        const signature = JSON.stringify(result);
+        if (signature !== signatureRef.current) {
+          signatureRef.current = signature;
+          setRows(result);
+        }
       })
       .catch((requestError) => {
         if (!active) return;
+        signatureRef.current = '[]';
         setRows([]);
         setError(getErrorMessage(requestError, 'Chargement sécurisé impossible.'));
       })
@@ -196,6 +208,33 @@ export function useScopedRows<T extends { id: string }>(
       active = false;
     };
   }, [table, entries, order, limit, usable, query, requestKey, revision]);
+
+  useEffect(() => {
+    if (!usable || autoRefreshMs <= 0) return;
+
+    const refresh = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      setRevision((value) => value + 1);
+    };
+
+    const interval = window.setInterval(refresh, autoRefreshMs);
+
+    const handleFocus = () => refresh();
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        refresh();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [usable, autoRefreshMs]);
 
   const reload = useCallback(() => setRevision((value) => value + 1), []);
 

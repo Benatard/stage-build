@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/ui/Feedback';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { useCrud } from '@/hooks/useCrud';
 import { useForgeTable } from '@/hooks/useForgeTable';
+import { invalidateReferenceData } from '@/hooks/useReferenceData';
 import type { SelectOption } from '@/config/options';
 import { confirmDelete, notifyError, notifySuccess } from '@/utils/alerts';
 import { cn, getErrorMessage, truncate } from '@/utils/format';
@@ -200,6 +201,12 @@ export function EntityManager<T extends { id: string }>({
           result = await onCreateOverride(values);
         } finally {
           setCreatingOverride(false);
+        }
+
+        if (result) {
+          invalidateReferenceData();
+          reload();
+          onChanged?.();
         }
       } else {
         result = await create<T>(payload);

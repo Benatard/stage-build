@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { invalidateReferenceData } from '@/hooks/useReferenceData';
 import { dataService } from '@/services/data.service';
 import { getErrorMessage } from '@/utils/format';
 
@@ -17,6 +18,7 @@ export function useCrud(table: string, options: UseCrudOptions = {}) {
       setError(null);
       try {
         const row = await dataService.createRow<T>(table, payload);
+        invalidateReferenceData();
         options.onSuccess?.();
         return row;
       } catch (requestError) {
@@ -38,6 +40,7 @@ export function useCrud(table: string, options: UseCrudOptions = {}) {
       setError(null);
       try {
         const row = await dataService.updateRow<T>(table, id, payload);
+        invalidateReferenceData();
         options.onSuccess?.();
         return row;
       } catch (requestError) {
@@ -56,6 +59,7 @@ export function useCrud(table: string, options: UseCrudOptions = {}) {
       setError(null);
       try {
         await dataService.deleteRow(table, id);
+        invalidateReferenceData();
         options.onSuccess?.();
         return true;
       } catch (requestError) {

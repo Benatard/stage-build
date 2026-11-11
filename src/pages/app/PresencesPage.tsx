@@ -34,6 +34,7 @@ export default function PresencesPage() {
     filters: { seance_id: seanceId },
     limit: 500,
     enabled: Boolean(seanceId),
+    autoRefreshMs: 0,
   });
 
   const eligibleStagiaires = useMemo(() => {

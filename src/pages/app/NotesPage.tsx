@@ -34,6 +34,7 @@ export default function NotesPage() {
     filters: { evaluation_id: evaluationId },
     limit: 500,
     enabled: Boolean(evaluationId),
+    autoRefreshMs: 0,
   });
 
   const eligibleStagiaires = useMemo(() => {
